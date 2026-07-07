@@ -678,14 +678,19 @@ function loadCustomSongs() {
     const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
     if (!Array.isArray(payload)) return [];
     return payload
-      .map((item, index) => song(
-        cleanId(item.id || `custom-${index + 1}`),
-        clean(item.title),
-        clean(item.artist) || "Custom",
-        ["ua", "ru", "global"].includes(item.pack) ? item.pack : "global",
-        item.phrases || item.words || [],
-        Array.isArray(item.aliases) ? item.aliases : []
-      ))
+      .map((item, index) => {
+        const customSong = song(
+          cleanId(item.id || `custom-${index + 1}`),
+          clean(item.title),
+          clean(item.artist) || "Custom",
+          ["ua", "ru", "global"].includes(item.pack) ? item.pack : "global",
+          item.phrases || item.words || [],
+          Array.isArray(item.aliases) ? item.aliases : []
+        );
+        customSong.exact = customSong.phrases.length > 0;
+        customSong.era = clean(item.era) || (customSong.pack === "ua" ? "20" : "");
+        return customSong;
+      })
       .filter((item) => item.title);
   } catch (error) {
     console.warn(`Could not load custom-songs.json: ${error.message}`);
@@ -704,14 +709,15 @@ function refreshPresetSongIds() {
   const global = presets.find((item) => item.id === "global");
   const nostalgia = presets.find((item) => item.id === "nostalgia");
   const regionalEraIds = (era) => new Set(regionalCatalog.filter((item) => item[6] === era).map((item) => item[0]));
+  const isEra = (item, era) => item.era === era || regionalEraIds(era).has(item.id);
   const playable = songs.filter((item) => item.exact);
   if (party) party.songIds = playable.filter((item) => ["global", "ua", "ru"].includes(item.pack)).slice(0, 340).map((item) => item.id);
   if (ua) ua.songIds = playable.filter((item) => item.pack === "ua").map((item) => item.id);
   if (ru) ru.songIds = playable.filter((item) => item.pack === "ru").map((item) => item.id);
   if (regional) regional.songIds = playable.filter((item) => ["ua", "ru"].includes(item.pack)).map((item) => item.id);
-  if (hits00) hits00.songIds = playable.filter((item) => regionalEraIds("00").has(item.id)).map((item) => item.id);
-  if (hits10) hits10.songIds = playable.filter((item) => regionalEraIds("10").has(item.id)).map((item) => item.id);
-  if (hits20) hits20.songIds = playable.filter((item) => regionalEraIds("20").has(item.id)).map((item) => item.id);
+  if (hits00) hits00.songIds = playable.filter((item) => isEra(item, "00")).map((item) => item.id);
+  if (hits10) hits10.songIds = playable.filter((item) => isEra(item, "10")).map((item) => item.id);
+  if (hits20) hits20.songIds = playable.filter((item) => isEra(item, "20")).map((item) => item.id);
   if (global) global.songIds = playable.filter((item) => item.pack === "global").map((item) => item.id);
   if (nostalgia) nostalgia.songIds = playable.filter((item) => item.pack === "global" && nostalgiaIds.has(item.id)).map((item) => item.id);
 }
