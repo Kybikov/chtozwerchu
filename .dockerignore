@@ -1,0 +1,9 @@
+.git
+.idea
+node_modules
+npm-debug.log*
+cloudflared.log
+tunnel.log
+public-url.txt
+.env
+.env.*

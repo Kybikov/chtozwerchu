@@ -995,6 +995,15 @@ function stealSong(room, body) {
 }
 
 async function handleApi(req, res, url) {
+  if (req.method === "GET" && url.pathname === "/api/health") {
+    return sendJson(res, 200, {
+      ok: true,
+      uptime: Math.round(process.uptime()),
+      rooms: rooms.size,
+      songs: songs.filter((item) => item.exact).length
+    });
+  }
+
   if (req.method === "GET" && url.pathname === "/api/presets") {
     return sendJson(res, 200, {
       presets: presets.map((preset) => ({
@@ -1234,11 +1243,7 @@ function serveStatic(req, res, url) {
 }
 
 function getPublicUrl() {
-  try {
-    return fs.readFileSync(path.join(root, "public-url.txt"), "utf8").trim();
-  } catch {
-    return "";
-  }
+  return clean(process.env.PUBLIC_URL || "");
 }
 
 function contentType(filePath) {
@@ -1253,6 +1258,7 @@ function contentType(filePath) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
+    if (req.method === "GET" && url.pathname === "/health") return sendJson(res, 200, { ok: true });
     if (url.pathname.startsWith("/api/")) await handleApi(req, res, url);
     else serveStatic(req, res, url);
   } catch (error) {
