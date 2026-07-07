@@ -4,8 +4,10 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const tracksPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, "ua-modern-tracks.json");
 const outputPath = process.argv[3] ? path.resolve(process.argv[3]) : path.join(root, "custom-songs.json");
+const cacheDir = path.join(__dirname, ".cache", "lrclib");
 const maxPhrasesPerSong = Number(process.env.MAX_PHRASES_PER_SONG || 4);
 const requestTimeoutMs = Number(process.env.LRCLIB_TIMEOUT_MS || 8000);
+const requestRetries = Number(process.env.LRCLIB_RETRIES || 2);
 
 const blockedLinePatterns = [
   /^\[.*\]$/,
@@ -30,6 +32,14 @@ function cleanId(value) {
     .replace(/[а-яёіїєґ]/giu, (char) => translit[char.toLocaleLowerCase("uk-UA")] || "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || `song-${Date.now()}`;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function cachePath(track) {
+  return path.join(cacheDir, `${cleanId(`${track.artist}-${track.title}`)}.json`);
 }
 
 function stripLrcTime(line) {
@@ -85,22 +95,43 @@ function extractPhrases(lyrics) {
 }
 
 async function searchLyrics(track) {
+  fs.mkdirSync(cacheDir, { recursive: true });
+  const cachedPath = cachePath(track);
+  if (!process.env.LRCLIB_NO_CACHE && fs.existsSync(cachedPath)) {
+    const cached = JSON.parse(fs.readFileSync(cachedPath, "utf8"));
+    return cached.record || null;
+  }
+
   const params = new URLSearchParams();
   params.set("track_name", track.title);
   params.set("artist_name", track.artist);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
-  const response = await fetch(`https://lrclib.net/api/search?${params.toString()}`, {
-    headers: { "user-agent": "five-words-party-game/1.0 (local importer)" },
-    signal: controller.signal
-  }).finally(() => clearTimeout(timeout));
-  if (!response.ok) throw new Error(`LRCLIB ${response.status}`);
-  const records = await response.json();
+  let records = null;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= requestRetries; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+    try {
+      const response = await fetch(`https://lrclib.net/api/search?${params.toString()}`, {
+        headers: { "user-agent": "five-words-party-game/1.0 (local importer)" },
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeout));
+      if (!response.ok) throw new Error(`LRCLIB ${response.status}`);
+      records = await response.json();
+      break;
+    } catch (error) {
+      clearTimeout(timeout);
+      lastError = error;
+      if (attempt < requestRetries) await sleep(800 * (attempt + 1));
+    }
+  }
+
+  if (!records) throw lastError || new Error("LRCLIB request failed");
   if (!Array.isArray(records) || !records.length) return null;
 
   const normalizedTitle = clean(track.title).toLocaleLowerCase("uk-UA");
   const normalizedArtist = clean(track.artist).toLocaleLowerCase("uk-UA");
-  return records
+  const record = records
     .map((record) => {
       const trackName = clean(record.trackName).toLocaleLowerCase("uk-UA");
       const artistName = clean(record.artistName).toLocaleLowerCase("uk-UA");
@@ -114,10 +145,13 @@ async function searchLyrics(track) {
       return { record, score };
     })
     .sort((a, b) => b.score - a.score)[0]?.record || null;
+
+  fs.writeFileSync(cachedPath, `${JSON.stringify({ track, record }, null, 2)}\n`, "utf8");
+  return record;
 }
 
 async function main() {
-  const tracks = JSON.parse(fs.readFileSync(tracksPath, "utf8"));
+  const tracks = JSON.parse(fs.readFileSync(tracksPath, "utf8").replace(/^\uFEFF/, ""));
   const imported = [];
   const misses = [];
 
