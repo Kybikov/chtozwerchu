@@ -8,6 +8,7 @@ const cacheDir = path.join(__dirname, ".cache", "lrclib");
 const maxPhrasesPerSong = Number(process.env.MAX_PHRASES_PER_SONG || 4);
 const requestTimeoutMs = Number(process.env.LRCLIB_TIMEOUT_MS || 8000);
 const requestRetries = Number(process.env.LRCLIB_RETRIES || 2);
+const concurrency = Math.max(1, Number(process.env.LRCLIB_CONCURRENCY || 5));
 
 const blockedLinePatterns = [
   /^\[.*\]$/,
@@ -152,21 +153,22 @@ async function searchLyrics(track) {
 
 async function main() {
   const tracks = JSON.parse(fs.readFileSync(tracksPath, "utf8").replace(/^\uFEFF/, ""));
-  const imported = [];
-  const misses = [];
+  const results = new Array(tracks.length);
+  let cursor = 0;
 
-  for (const track of tracks) {
+  async function importTrack(track, index) {
     process.stdout.write(`Searching: ${track.artist} - ${track.title} ... `);
     try {
       const record = await searchLyrics(track);
       const lyrics = record?.plainLyrics || record?.syncedLyrics || "";
       const phrases = extractPhrases(lyrics);
       if (!record || !phrases.length) {
-        misses.push({ title: track.title, artist: track.artist, reason: record ? "no usable 5-word lines" : "not found" });
+        results[index] = { type: "miss", title: track.title, artist: track.artist, reason: record ? "no usable 5-word lines" : "not found" };
         process.stdout.write("miss\n");
-        continue;
+        return;
       }
-      imported.push({
+      results[index] = {
+        type: "imported",
         id: track.id || cleanId(`${track.artist}-${track.title}`),
         title: track.title,
         artist: track.artist,
@@ -180,13 +182,30 @@ async function main() {
           synced: Boolean(record.syncedLyrics)
         },
         phrases
-      });
+      };
       process.stdout.write(`${phrases.length} phrases\n`);
     } catch (error) {
-      misses.push({ title: track.title, artist: track.artist, reason: error.message });
+      results[index] = { type: "miss", title: track.title, artist: track.artist, reason: error.message };
       process.stdout.write(`error: ${error.message}\n`);
     }
   }
+
+  async function worker() {
+    while (cursor < tracks.length) {
+      const index = cursor;
+      cursor += 1;
+      await importTrack(tracks[index], index);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, tracks.length) }, worker));
+
+  const imported = results
+    .filter((result) => result?.type === "imported")
+    .map(({ type, ...song }) => song);
+  const misses = results
+    .filter((result) => result?.type === "miss")
+    .map(({ type, ...miss }) => miss);
 
   fs.writeFileSync(outputPath, `${JSON.stringify(imported, null, 2)}\n`, "utf8");
   const reportPath = outputPath.replace(/\.json$/i, ".report.json");

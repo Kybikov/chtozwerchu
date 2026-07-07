@@ -1,6 +1,6 @@
 {
-  "imported": 41,
-  "missed": 19,
+  "imported": 106,
+  "missed": 31,
   "misses": [
     {
       "title": "Ой на горі",
@@ -55,17 +55,12 @@
     {
       "title": "Молодість",
       "artist": "Golubenko",
-      "reason": "This operation was aborted"
+      "reason": "not found"
     },
     {
       "title": "Знайди мене",
       "artist": "Klava Koka & DOROFEEVA",
       "reason": "not found"
-    },
-    {
-      "title": "Кохаю, але не зовсім",
-      "artist": "DOROFEEVA",
-      "reason": "This operation was aborted"
     },
     {
       "title": "Різнокольорова",
@@ -96,6 +91,71 @@
       "title": "Лови момент",
       "artist": "Антитіла",
       "reason": "not found"
+    },
+    {
+      "title": "Не забудем і не пробачим",
+      "artist": "Kalush",
+      "reason": "not found"
+    },
+    {
+      "title": "Броня",
+      "artist": "Jerry Heil",
+      "reason": "not found"
+    },
+    {
+      "title": "Разноцветная",
+      "artist": "DOROFEEVA",
+      "reason": "not found"
+    },
+    {
+      "title": "Маскарад",
+      "artist": "Антитіла",
+      "reason": "not found"
+    },
+    {
+      "title": "Фари",
+      "artist": "Антитіла",
+      "reason": "This operation was aborted"
+    },
+    {
+      "title": "Kalyna",
+      "artist": "Go_A",
+      "reason": "no usable 5-word lines"
+    },
+    {
+      "title": "Сину",
+      "artist": "MamaRika",
+      "reason": "This operation was aborted"
+    },
+    {
+      "title": "Ліхтарі",
+      "artist": "Макс Барских",
+      "reason": "not found"
+    },
+    {
+      "title": "Подоляночка",
+      "artist": "Оля Полякова",
+      "reason": "not found"
+    },
+    {
+      "title": "Все буде добре",
+      "artist": "Оля Полякова",
+      "reason": "not found"
+    },
+    {
+      "title": "Сонце",
+      "artist": "Друга Ріка",
+      "reason": "not found"
+    },
+    {
+      "title": "Так мало тут тебе",
+      "artist": "Друга Ріка",
+      "reason": "not found"
+    },
+    {
+      "title": "Таємниця",
+      "artist": "Океан Ельзи",
+      "reason": "This operation was aborted"
     }
   ]
 }

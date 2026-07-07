@@ -17,7 +17,9 @@ const state = {
   introWanted: true,
   beatTimer: null,
   beatStep: 0,
-  lastResultSoundAt: 0
+  lastResultSoundAt: 0,
+  lobbyPresetDraft: "",
+  lobbyRoundsDraft: ""
 };
 
 const el = {
@@ -48,6 +50,10 @@ const el = {
   inviteLink: $("#inviteLink"),
   copyInviteButton: $("#copyInviteButton"),
   playersList: $("#playersList"),
+  lobbyControls: $("#lobbyControls"),
+  lobbyPresetSelect: $("#lobbyPresetSelect"),
+  lobbyRoundsInput: $("#lobbyRoundsInput"),
+  lobbyPresetInfo: $("#lobbyPresetInfo"),
   startGameButton: $("#startGameButton"),
   roundLabel: $("#roundLabel"),
   activeTeamName: $("#activeTeamName"),
@@ -110,13 +116,33 @@ async function init() {
 }
 
 function renderPresets() {
-  el.presetSelect.innerHTML = state.presets.map((preset) => `<option value="${preset.id}">${escapeHtml(preset.name)} (${preset.count})</option>`).join("");
+  const options = state.presets.map((preset) => `<option value="${preset.id}">${escapeHtml(preset.name)} (${preset.count})</option>`).join("");
+  el.presetSelect.innerHTML = options;
+  el.lobbyPresetSelect.innerHTML = options;
   updatePresetInfo();
+  updateLobbyPresetInfo();
 }
 
 function updatePresetInfo() {
-  const preset = state.presets.find((item) => item.id === el.presetSelect.value);
+  const preset = findPreset(el.presetSelect.value);
   el.presetInfo.textContent = preset ? preset.description : "";
+}
+
+function updateLobbyPresetInfo() {
+  const preset = findPreset(el.lobbyPresetSelect.value);
+  el.lobbyPresetInfo.textContent = preset ? preset.description : "";
+}
+
+function findPreset(id) {
+  return state.presets.find((item) => item.id === id);
+}
+
+function lobbyPresetValue() {
+  return state.lobbyPresetDraft || el.lobbyPresetSelect.value || el.presetSelect.value;
+}
+
+function lobbyRoundsValue() {
+  return Number(state.lobbyRoundsDraft || el.lobbyRoundsInput.value || el.roundsInput.value);
 }
 
 async function createRoom(options = {}) {
@@ -264,6 +290,12 @@ function renderLobby() {
   el.playersList.innerHTML = state.room.players.length
     ? state.room.players.map((player) => `<li><span>${escapeHtml(player.name)}</span><b>${teamName(player.team)}</b></li>`).join("")
     : `<li><span>Поки нікого немає</span><b>Кинь лінк</b></li>`;
+  el.lobbyControls.hidden = !state.room.isHost;
+  if (state.room.isHost) {
+    el.lobbyPresetSelect.value = state.lobbyPresetDraft || state.room.preset || el.presetSelect.value;
+    el.lobbyRoundsInput.value = state.lobbyRoundsDraft || state.room.rounds || el.roundsInput.value;
+    updateLobbyPresetInfo();
+  }
   el.startGameButton.hidden = !state.room.isHost;
 }
 
@@ -443,7 +475,7 @@ function unlockMedia() {
 }
 
 function setIntroVolume() {
-  const value = Number(el.volumeSlider.value || 42);
+  const value = Number(el.volumeSlider.value || 6);
   const volume = Math.max(0, Math.min(1, value / 100));
   el.introAudio.volume = volume;
   el.audioPlayer.volume = volume;
@@ -556,13 +588,20 @@ function wireEvents() {
   document.addEventListener("pointerdown", resumeIntroOnInteraction, { once: true });
   document.addEventListener("keydown", resumeIntroOnInteraction, { once: true });
   el.presetSelect.addEventListener("change", updatePresetInfo);
+  el.lobbyPresetSelect.addEventListener("change", () => {
+    state.lobbyPresetDraft = el.lobbyPresetSelect.value;
+    updateLobbyPresetInfo();
+  });
+  el.lobbyRoundsInput.addEventListener("input", () => {
+    state.lobbyRoundsDraft = el.lobbyRoundsInput.value;
+  });
   el.createRoomButton.addEventListener("click", createRoom);
   el.quickLocalButton.addEventListener("click", quickLocal);
   el.joinButton.addEventListener("click", joinRoom);
   el.copyInviteButton.addEventListener("click", copyInvite);
   el.startGameButton.addEventListener("click", () => action("start", {
-    preset: el.presetSelect.value,
-    rounds: Number(el.roundsInput.value),
+    preset: lobbyPresetValue(),
+    rounds: lobbyRoundsValue(),
     hostName: el.hostNameInput.value,
     hostTeam: el.hostTeamSelect.value,
     localMode: Boolean(state.room?.localMode),

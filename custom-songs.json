@@ -4,6 +4,7 @@
     "title": "Порічка",
     "artist": "YAKTAK & KOLA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Порічка"
     ],
@@ -49,6 +50,7 @@
     "title": "Погляд",
     "artist": "YAKTAK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Погляд"
     ],
@@ -94,6 +96,7 @@
     "title": "LaLaLa",
     "artist": "YAKTAK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "LaLaLa"
     ],
@@ -139,6 +142,7 @@
     "title": "Небо",
     "artist": "YAKTAK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Небо"
     ],
@@ -184,6 +188,7 @@
     "title": "Не мовчи",
     "artist": "YAKTAK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Не мовчи"
     ],
@@ -229,6 +234,7 @@
     "title": "Уночі",
     "artist": "YAKTAK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Уночі"
     ],
@@ -274,6 +280,7 @@
     "title": "Додому",
     "artist": "Kalush & Skofka",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Додому"
     ],
@@ -319,6 +326,7 @@
     "title": "Stefania",
     "artist": "Kalush Orchestra",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Stefania"
     ],
@@ -364,6 +372,7 @@
     "title": "Думи",
     "artist": "Artem Pivovarov & DOROFEEVA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Думи"
     ],
@@ -409,6 +418,7 @@
     "title": "Додому",
     "artist": "Wellboy",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Додому"
     ],
@@ -454,6 +464,7 @@
     "title": "Гуси",
     "artist": "Wellboy",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Гуси"
     ],
@@ -499,6 +510,7 @@
     "title": "Вишні",
     "artist": "Wellboy",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Вишні"
     ],
@@ -544,6 +556,7 @@
     "title": "Nozzy Bossy",
     "artist": "Wellboy",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Nozzy Bossy"
     ],
@@ -589,6 +602,7 @@
     "title": "Плакала",
     "artist": "KAZKA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Плакала"
     ],
@@ -634,6 +648,7 @@
     "title": "Свята",
     "artist": "KAZKA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Свята"
     ],
@@ -679,6 +694,7 @@
     "title": "Палала",
     "artist": "KAZKA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Палала"
     ],
@@ -724,6 +740,7 @@
     "title": "Пісня сміливих дівчат",
     "artist": "KAZKA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Пісня сміливих дівчат"
     ],
@@ -769,6 +786,7 @@
     "title": "Teresa & Maria",
     "artist": "alyona alyona & Jerry Heil",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Teresa & Maria"
     ],
@@ -814,6 +832,7 @@
     "title": "Рідні мої",
     "artist": "alyona alyona",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Рідні мої"
     ],
@@ -859,6 +878,7 @@
     "title": "Пушка",
     "artist": "alyona alyona",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Пушка"
     ],
@@ -904,6 +924,7 @@
     "title": "Мрія",
     "artist": "Jerry Heil",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Мрія"
     ],
@@ -949,6 +970,7 @@
     "title": "Пошта",
     "artist": "Jerry Heil",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Пошта"
     ],
@@ -994,6 +1016,7 @@
     "title": "Вечорниці",
     "artist": "100лиця & SKYLERR",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Вечорниці"
     ],
@@ -1039,6 +1062,7 @@
     "title": "Силуети",
     "artist": "SadSvit & Структура Щастя",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Силуети"
     ],
@@ -1084,6 +1108,7 @@
     "title": "Касета",
     "artist": "SadSvit",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Касета"
     ],
@@ -1129,6 +1154,7 @@
     "title": "Щоб не було",
     "artist": "DOROFEEVA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Щоб не було"
     ],
@@ -1174,6 +1200,7 @@
     "title": "Хартбіт",
     "artist": "DOROFEEVA",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Хартбіт"
     ],
@@ -1215,10 +1242,57 @@
     ]
   },
   {
+    "id": "dorofeeva-kokhaiu-ale-ne-zovsim",
+    "title": "Кохаю, але не зовсім",
+    "artist": "DOROFEEVA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Кохаю, але не зовсім"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Кохаю, але не зовсім",
+      "artistName": "DOROFEEVA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "тебе",
+        "кохаю",
+        "але",
+        "не"
+      ],
+      [
+        "тебе",
+        "кохаю",
+        "але",
+        "не",
+        "зовсім"
+      ],
+      [
+        "І",
+        "я",
+        "втомилась",
+        "від",
+        "сумних"
+      ],
+      [
+        "я",
+        "втомилась",
+        "від",
+        "сумних",
+        "пісень"
+      ]
+    ]
+  },
+  {
     "id": "monatik-a-shcho",
     "title": "А що?",
     "artist": "MONATIK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "А що?"
     ],
@@ -1264,6 +1338,7 @@
     "title": "Вічно танцююча людина",
     "artist": "MONATIK",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Вічно танцююча людина"
     ],
@@ -1309,6 +1384,7 @@
     "title": "Шум",
     "artist": "Go_A",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Шум"
     ],
@@ -1347,6 +1423,7 @@
     "title": "Соловей",
     "artist": "Go_A",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Соловей"
     ],
@@ -1392,6 +1469,7 @@
     "title": "Обійми",
     "artist": "Океан Ельзи",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Обійми"
     ],
@@ -1430,6 +1508,7 @@
     "title": "Без бою",
     "artist": "Океан Ельзи",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Без бою"
     ],
@@ -1475,6 +1554,7 @@
     "title": "На небі",
     "artist": "Океан Ельзи",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "На небі"
     ],
@@ -1520,6 +1600,7 @@
     "title": "911",
     "artist": "Океан Ельзи",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "911"
     ],
@@ -1565,6 +1646,7 @@
     "title": "Човен",
     "artist": "Один в каное",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Човен"
     ],
@@ -1610,6 +1692,7 @@
     "title": "У мене немає дому",
     "artist": "Один в каное",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "У мене немає дому"
     ],
@@ -1655,6 +1738,7 @@
     "title": "Не твоя війна",
     "artist": "Океан Ельзи",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Не твоя війна"
     ],
@@ -1700,6 +1784,7 @@
     "title": "Фортеця Бахмут",
     "artist": "Антитіла",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Фортеця Бахмут"
     ],
@@ -1745,6 +1830,7 @@
     "title": "TDME",
     "artist": "Антитіла",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "TDME"
     ],
@@ -1790,6 +1876,7 @@
     "title": "Люди як кораблі",
     "artist": "Скрябін",
     "pack": "ua",
+    "era": "20",
     "aliases": [
       "Люди як кораблі"
     ],
@@ -1827,6 +1914,2950 @@
         "в",
         "морі",
         "місця"
+      ]
+    ]
+  },
+  {
+    "id": "kola-chy-razom",
+    "title": "Чи разом",
+    "artist": "KOLA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Чи разом"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Чи разом?",
+      "artistName": "KOLA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Ой",
+        "чи",
+        "то",
+        "день",
+        "чи"
+      ],
+      [
+        "то",
+        "день",
+        "чи",
+        "то",
+        "ніч"
+      ],
+      [
+        "Може",
+        "ти",
+        "вже",
+        "забув",
+        "мою"
+      ],
+      [
+        "ти",
+        "вже",
+        "забув",
+        "мою",
+        "тінь"
+      ]
+    ]
+  },
+  {
+    "id": "kola-bilia-sertsia",
+    "title": "Біля серця",
+    "artist": "KOLA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Біля серця"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Біля серця",
+      "artistName": "KOLA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "А",
+        "що",
+        "якби",
+        "тебе",
+        "зі"
+      ],
+      [
+        "що",
+        "якби",
+        "тебе",
+        "зі",
+        "мною"
+      ],
+      [
+        "тебе",
+        "зі",
+        "мною",
+        "не",
+        "звело"
+      ],
+      [
+        "А",
+        "що",
+        "якби",
+        "наші",
+        "дороги"
+      ]
+    ]
+  },
+  {
+    "id": "kola-salut-papa",
+    "title": "Salut papa",
+    "artist": "KOLA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Salut papa"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Salut papa",
+      "artistName": "KOLA",
+      "synced": false
+    },
+    "phrases": [
+      [
+        "Ти",
+        "напевно",
+        "їхав",
+        "довго",
+        "по"
+      ],
+      [
+        "напевно",
+        "їхав",
+        "довго",
+        "по",
+        "снігам"
+      ],
+      [
+        "Ти",
+        "летів",
+        "напевно",
+        "понад",
+        "хмарами"
+      ],
+      [
+        "Та",
+        "літак",
+        "сховався",
+        "за",
+        "туманами"
+      ]
+    ]
+  },
+  {
+    "id": "kola-tebe-sobi",
+    "title": "Тебе-собі",
+    "artist": "KOLA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Тебе-собі"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Тебе - собі",
+      "artistName": "KOLA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Кілометрами",
+        "і",
+        "дорогами",
+        "стану",
+        "я"
+      ],
+      [
+        "Тебе",
+        "-",
+        "як",
+        "оберемок",
+        "квітів"
+      ],
+      [
+        "Показав",
+        "мені",
+        "що",
+        "таке",
+        "любов"
+      ],
+      [
+        "Скільки",
+        "доріг",
+        "ти",
+        "пройшов",
+        "без"
+      ]
+    ]
+  },
+  {
+    "id": "kola-parasoli",
+    "title": "Парасолі",
+    "artist": "KOLA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Парасолі"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Парасолі",
+      "artistName": "KOLA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "відчуваю",
+        "у",
+        "тобі",
+        "підтримку"
+      ],
+      [
+        "В",
+        "кожному",
+        "твоєму",
+        "дотику",
+        "кожну"
+      ],
+      [
+        "кожному",
+        "твоєму",
+        "дотику",
+        "кожну",
+        "хвилинку"
+      ],
+      [
+        "Дякую",
+        "за",
+        "те",
+        "що",
+        "ти"
+      ]
+    ]
+  },
+  {
+    "id": "kalush-skofka-faina",
+    "title": "Файна",
+    "artist": "Kalush & Skofka",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Файна"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Файна (feat. Skofka)",
+      "artistName": "KALUSH",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Час",
+        "летить",
+        "але",
+        "ми",
+        "в"
+      ],
+      [
+        "але",
+        "ми",
+        "в",
+        "одному",
+        "літаку"
+      ],
+      [
+        "Ми",
+        "—",
+        "квіти",
+        "поряд",
+        "у"
+      ],
+      [
+        "—",
+        "квіти",
+        "поряд",
+        "у",
+        "квітнику"
+      ]
+    ]
+  },
+  {
+    "id": "kalush-skofka-batkivshchyna",
+    "title": "Батьківщина",
+    "artist": "Kalush & Skofka",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Батьківщина"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Батьківщина",
+      "artistName": "SKOFKA; KALUSH",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Скільки",
+        "не",
+        "стріляй",
+        "в",
+        "наш"
+      ],
+      [
+        "не",
+        "стріляй",
+        "в",
+        "наш",
+        "край"
+      ],
+      [
+        "Наша",
+        "Батьківщина",
+        "б'ється",
+        "завше",
+        "збережи"
+      ],
+      [
+        "Батьківщина",
+        "б'ється",
+        "завше",
+        "збережи",
+        "її"
+      ]
+    ]
+  },
+  {
+    "id": "skofka-davai-nachystotu",
+    "title": "Давай начистоту",
+    "artist": "Skofka",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Давай начистоту"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Давай начистоту",
+      "artistName": "Skofka",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Може",
+        "я",
+        "провтикав",
+        "літак",
+        "а"
+      ],
+      [
+        "провтикав",
+        "літак",
+        "а",
+        "ти",
+        "літаєш"
+      ],
+      [
+        "а",
+        "ти",
+        "літаєш",
+        "наді",
+        "мною"
+      ],
+      [
+        "Залетим",
+        "в",
+        "клуб",
+        "і",
+        "сядем"
+      ]
+    ]
+  },
+  {
+    "id": "skofka-chuty-himn",
+    "title": "Чути гімн",
+    "artist": "Skofka",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Чути гімн"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Чути гімн",
+      "artistName": "Skofka",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "В",
+        "небі",
+        "чистому",
+        "чути",
+        "грім"
+      ],
+      [
+        "В",
+        "небі",
+        "свист",
+        "але",
+        "чути"
+      ],
+      [
+        "небі",
+        "свист",
+        "але",
+        "чути",
+        "гімн"
+      ],
+      [
+        "Горить",
+        "ліс",
+        "але",
+        "чути",
+        "гімн"
+      ]
+    ]
+  },
+  {
+    "id": "skofka-ne-byi-sobaku",
+    "title": "Не бий собаку",
+    "artist": "Skofka",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Не бий собаку"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "НЕ БИЙ СОБАКУ!",
+      "artistName": "SKOFKA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Не",
+        "перенести",
+        "біду",
+        "без",
+        "Скубі-Ду"
+      ],
+      [
+        "Коли",
+        "ти",
+        "дома",
+        "зонт",
+        "забув"
+      ],
+      [
+        "дома",
+        "зонт",
+        "забув",
+        "а",
+        "на"
+      ],
+      [
+        "забув",
+        "а",
+        "на",
+        "дворі",
+        "гроза"
+      ]
+    ]
+  },
+  {
+    "id": "skofka-pohani-susidy",
+    "title": "Погані сусіди",
+    "artist": "Skofka",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Погані сусіди"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Погані сусіди",
+      "artistName": "Skofka",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "знаю",
+        "дід",
+        "мій",
+        "воював"
+      ],
+      [
+        "дід",
+        "мій",
+        "воював",
+        "із",
+        "твоїм"
+      ],
+      [
+        "воював",
+        "із",
+        "твоїм",
+        "дідом",
+        "м-м"
+      ],
+      [
+        "Я",
+        "знаю",
+        "бачить",
+        "він",
+        "яким"
+      ]
+    ]
+  },
+  {
+    "id": "jerry-heil-kozatskomu-rodu",
+    "title": "Козацькому роду",
+    "artist": "Jerry Heil",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Козацькому роду"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "КОЗАЦЬКОМУ_РОДУ",
+      "artistName": "Jerry Heil",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Україні",
+        "Богом",
+        "даний",
+        "пеклом",
+        "раші"
+      ],
+      [
+        "Богом",
+        "даний",
+        "пеклом",
+        "раші",
+        "суджений"
+      ],
+      [
+        "Це",
+        "ім'я",
+        "кінця",
+        "рашистської",
+        "імперії"
+      ],
+      [
+        "Засвіт",
+        "встали",
+        "козаченьки",
+        "справдилось",
+        "повір'я"
+      ]
+    ]
+  },
+  {
+    "id": "jerry-heil-tuk-tuk-tuk",
+    "title": "Тук тук тук",
+    "artist": "Jerry Heil",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Тук тук тук"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "ТУК ТУК ТУК",
+      "artistName": "Jerry Heil",
+      "synced": false
+    },
+    "phrases": [
+      [
+        "Дедді",
+        "не",
+        "чекай",
+        "надягай",
+        "обручку"
+      ],
+      [
+        "Мами",
+        "й",
+        "тата",
+        "сердце",
+        "вкрав"
+      ],
+      [
+        "тата",
+        "сердце",
+        "вкрав",
+        "серед",
+        "ночі"
+      ],
+      [
+        "Глянь",
+        "у",
+        "ці",
+        "очі",
+        "-"
+      ]
+    ]
+  },
+  {
+    "id": "jerry-heil-na-nebi-ni-zori",
+    "title": "На небі ні зорі",
+    "artist": "Jerry Heil",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "На небі ні зорі"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "На небі ні зорі",
+      "artistName": "Jerry Heil",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Встанеш",
+        "о",
+        "п'ятій",
+        "—",
+        "і"
+      ],
+      [
+        "п'ятій",
+        "—",
+        "і",
+        "на",
+        "заправку"
+      ],
+      [
+        "Взяла",
+        "лиш",
+        "зарядку",
+        "якісь",
+        "теплі"
+      ],
+      [
+        "лиш",
+        "зарядку",
+        "якісь",
+        "теплі",
+        "лахи"
+      ]
+    ]
+  },
+  {
+    "id": "dorofeeva-votsap",
+    "title": "Вотсап",
+    "artist": "DOROFEEVA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Вотсап"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "вотсап",
+      "artistName": "DOROFEEVA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Вона",
+        "була",
+        "до",
+        "смерті",
+        "налякана"
+      ],
+      [
+        "Скоріше",
+        "повертайся",
+        "любий",
+        "під",
+        "моє"
+      ],
+      [
+        "повертайся",
+        "любий",
+        "під",
+        "моє",
+        "крило"
+      ],
+      [
+        "Привіт",
+        "Тільки",
+        "не",
+        "в",
+        "губи"
+      ]
+    ]
+  },
+  {
+    "id": "dorofeeva-na-samoti",
+    "title": "На самоті",
+    "artist": "DOROFEEVA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "На самоті"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "На самоті",
+      "artistName": "DOROFEEVA",
+      "synced": false
+    },
+    "phrases": [
+      [
+        "Ти",
+        "більше",
+        "не",
+        "побачиш",
+        "мого"
+      ],
+      [
+        "більше",
+        "не",
+        "побачиш",
+        "мого",
+        "суму"
+      ],
+      [
+        "Наша",
+        "любов",
+        "світила",
+        "у",
+        "темноті"
+      ],
+      [
+        "На",
+        "мені",
+        "-",
+        "твоя",
+        "футболка"
+      ]
+    ]
+  },
+  {
+    "id": "dorofeeva-krapaiut",
+    "title": "Крапають",
+    "artist": "DOROFEEVA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Крапають"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "крапають",
+      "artistName": "DOROFEEVA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "На",
+        "льодяній",
+        "підлозі",
+        "такі",
+        "солодкі"
+      ],
+      [
+        "льодяній",
+        "підлозі",
+        "такі",
+        "солодкі",
+        "сльози"
+      ],
+      [
+        "Туди",
+        "де",
+        "ми",
+        "з",
+        "тобою"
+      ],
+      [
+        "ми",
+        "з",
+        "тобою",
+        "разом",
+        "у"
+      ]
+    ]
+  },
+  {
+    "id": "dorofeeva-khai-pyshut",
+    "title": "Хай пишуть",
+    "artist": "DOROFEEVA",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Хай пишуть"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Хай пишуть",
+      "artistName": "DOROFEEVA",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Мікроскопічні",
+        "тріщини",
+        "у",
+        "мене",
+        "в"
+      ],
+      [
+        "тріщини",
+        "у",
+        "мене",
+        "в",
+        "серці"
+      ],
+      [
+        "Лікую",
+        "їх",
+        "коханням",
+        "воно",
+        "знову"
+      ],
+      [
+        "коханням",
+        "воно",
+        "знову",
+        "б'ється",
+        "здається"
+      ]
+    ]
+  },
+  {
+    "id": "tvorchi-heart-of-steel",
+    "title": "Heart of Steel",
+    "artist": "TVORCHI",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Heart of Steel"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Heart of Steel",
+      "artistName": "TVORCHI",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Sometimes",
+        "gotta",
+        "let",
+        "it",
+        "go"
+      ],
+      [
+        "Sometimes",
+        "you",
+        "just",
+        "gotta",
+        "know"
+      ],
+      [
+        "Tell",
+        "you",
+        "how",
+        "I",
+        "feel"
+      ],
+      [
+        "how",
+        "I",
+        "feel",
+        "oh",
+        "I"
+      ]
+    ]
+  },
+  {
+    "id": "tvorchi-believe",
+    "title": "Believe",
+    "artist": "TVORCHI",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Believe"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Believe",
+      "artistName": "TVORCHI",
+      "synced": false
+    },
+    "phrases": [
+      [
+        "Showed",
+        "me",
+        "your",
+        "heaven",
+        "here"
+      ],
+      [
+        "me",
+        "your",
+        "heaven",
+        "here",
+        "in"
+      ],
+      [
+        "heaven",
+        "here",
+        "in",
+        "this",
+        "town"
+      ],
+      [
+        "There’s",
+        "no",
+        "angels",
+        "in",
+        "this"
+      ]
+    ]
+  },
+  {
+    "id": "tvorchi-mova-tila",
+    "title": "Мова тіла",
+    "artist": "TVORCHI",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Мова тіла"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Мова тіла",
+      "artistName": "TVORCHI",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Без",
+        "пустих",
+        "обіцянок",
+        "і",
+        "без"
+      ],
+      [
+        "пустих",
+        "обіцянок",
+        "і",
+        "без",
+        "понтів"
+      ],
+      [
+        "Хочу",
+        "розгадати",
+        "всі",
+        "твої",
+        "секрети"
+      ],
+      [
+        "Переплелись",
+        "на",
+        "стіні",
+        "наші",
+        "силуети"
+      ]
+    ]
+  },
+  {
+    "id": "the-hardkiss-zhuravli",
+    "title": "Журавлі",
+    "artist": "The Hardkiss",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Журавлі"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Журавлі",
+      "artistName": "The Hardkiss",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Чорний",
+        "колір",
+        "—",
+        "то",
+        "моя"
+      ],
+      [
+        "колір",
+        "—",
+        "то",
+        "моя",
+        "вуаль"
+      ],
+      [
+        "Там",
+        "журавлі",
+        "летять",
+        "у",
+        "синю"
+      ],
+      [
+        "журавлі",
+        "летять",
+        "у",
+        "синю",
+        "даль"
+      ]
+    ]
+  },
+  {
+    "id": "the-hardkiss-korabli",
+    "title": "Кораблі",
+    "artist": "The Hardkiss",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Кораблі"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Кораблі",
+      "artistName": "The Hardkiss",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Ти",
+        "дзвониш",
+        "вночі",
+        "і",
+        "мовчиш"
+      ],
+      [
+        "дзвониш",
+        "вночі",
+        "і",
+        "мовчиш",
+        "не"
+      ],
+      [
+        "і",
+        "мовчиш",
+        "не",
+        "про",
+        "мене"
+      ],
+      [
+        "Знаєш",
+        "даремно",
+        "я",
+        "все",
+        "давно"
+      ]
+    ]
+  },
+  {
+    "id": "the-hardkiss-maiak",
+    "title": "Маяк",
+    "artist": "The Hardkiss",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Маяк"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Маяк",
+      "artistName": "The Hardkiss",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "І",
+        "я",
+        "обриваю",
+        "свій",
+        "дзвінок"
+      ],
+      [
+        "І",
+        "більш",
+        "не",
+        "чекаю",
+        "на"
+      ],
+      [
+        "більш",
+        "не",
+        "чекаю",
+        "на",
+        "порятунок"
+      ],
+      [
+        "Я",
+        "допливу",
+        "на",
+        "той",
+        "бік"
+      ]
+    ]
+  },
+  {
+    "id": "the-hardkiss-kosatka",
+    "title": "Косатка",
+    "artist": "The Hardkiss",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Косатка"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Косатка",
+      "artistName": "The Hardkiss",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Вона",
+        "співає",
+        "про",
+        "поля",
+        "за"
+      ],
+      [
+        "співає",
+        "про",
+        "поля",
+        "за",
+        "небокраєм"
+      ],
+      [
+        "Яких",
+        "на",
+        "жаль",
+        "ніколи",
+        "не"
+      ],
+      [
+        "на",
+        "жаль",
+        "ніколи",
+        "не",
+        "пізнає"
+      ]
+    ]
+  },
+  {
+    "id": "the-hardkiss-zhyva",
+    "title": "Жива",
+    "artist": "The Hardkiss",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Жива"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Жива",
+      "artistName": "The Hardkiss",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Скільки",
+        "людей",
+        "на",
+        "моїй",
+        "пам'яті"
+      ],
+      [
+        "Ти",
+        "з",
+        "нею",
+        "бачишся",
+        "востаннє"
+      ],
+      [
+        "Цій",
+        "душі",
+        "в",
+        "твоїх",
+        "долонях"
+      ],
+      [
+        "душі",
+        "в",
+        "твоїх",
+        "долонях",
+        "тісно"
+      ]
+    ]
+  },
+  {
+    "id": "bez-obmezhen-zori-zapalaly",
+    "title": "Зорі запалали",
+    "artist": "БЕЗ ОБМЕЖЕНЬ",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Зорі запалали"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Зорі запалали",
+      "artistName": "БЕЗ ОБМЕЖЕНЬ",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "зорі",
+        "запалали",
+        "зорі",
+        "запалали",
+        "ясні"
+      ],
+      [
+        "Ти",
+        "була",
+        "лагідна",
+        "як",
+        "море"
+      ],
+      [
+        "І",
+        "всесвіт",
+        "сяє",
+        "твоїм",
+        "світлом"
+      ],
+      [
+        "Відлуння",
+        "в",
+        "горах",
+        "–",
+        "шепіт"
+      ]
+    ]
+  },
+  {
+    "id": "bez-obmezhen-dym",
+    "title": "Дим",
+    "artist": "БЕЗ ОБМЕЖЕНЬ",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Дим"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "ДИМ",
+      "artistName": "БЕЗ ОБМЕЖЕНЬ",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Піди",
+        "навіки",
+        "згасни",
+        "як",
+        "зола"
+      ],
+      [
+        "Мене",
+        "залиш",
+        "одного",
+        "серед",
+        "ночі"
+      ],
+      [
+        "Дим",
+        "нехай",
+        "по",
+        "тобі",
+        "тут"
+      ],
+      [
+        "нехай",
+        "по",
+        "тобі",
+        "тут",
+        "залишиться"
+      ]
+    ]
+  },
+  {
+    "id": "bez-obmezhen-vilni-liudy",
+    "title": "Вільні люди",
+    "artist": "БЕЗ ОБМЕЖЕНЬ",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Вільні люди"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Вільні люди",
+      "artistName": "БЕЗ ОБМЕЖЕНЬ",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Знаєш",
+        "як",
+        "плисти",
+        "на",
+        "течію"
+      ],
+      [
+        "Посміхнись",
+        "як",
+        "станеш",
+        "на",
+        "виході"
+      ],
+      [
+        "Вже",
+        "за",
+        "мить",
+        "будеш",
+        "у"
+      ],
+      [
+        "за",
+        "мить",
+        "будеш",
+        "у",
+        "вихорі"
+      ]
+    ]
+  },
+  {
+    "id": "bez-obmezhen-heroiam",
+    "title": "Героям",
+    "artist": "БЕЗ ОБМЕЖЕНЬ",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Героям"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Героям",
+      "artistName": "БЕЗ ОБМЕЖЕНЬ",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Чи",
+        "наша",
+        "земля",
+        "ще",
+        "є"
+      ],
+      [
+        "земля",
+        "ще",
+        "є",
+        "під",
+        "ногами"
+      ],
+      [
+        "Ніщо",
+        "не",
+        "зупинить",
+        "ідею",
+        "час"
+      ],
+      [
+        "зупинить",
+        "ідею",
+        "час",
+        "якої",
+        "настав"
+      ]
+    ]
+  },
+  {
+    "id": "antytila-2step",
+    "title": "2Step",
+    "artist": "Антитіла",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "2Step"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "2step",
+      "artistName": "Ed Sheeran feat. Антитіла",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "пам'ятаю",
+        "ти",
+        "хотіла",
+        "в"
+      ],
+      [
+        "пам'ятаю",
+        "ти",
+        "хотіла",
+        "в",
+        "Рим"
+      ],
+      [
+        "Мила",
+        "обіцяю",
+        "коли",
+        "все",
+        "мине"
+      ],
+      [
+        "І",
+        "цілуватиму",
+        "тебе",
+        "де",
+        "любов-ов-ов"
+      ]
+    ]
+  },
+  {
+    "id": "monatik-kruzhyt",
+    "title": "Кружит",
+    "artist": "MONATIK",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Кружит"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Кружит",
+      "artistName": "MONATIK",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Так",
+        "особенно",
+        "сегодня",
+        "чувства",
+        "кипят"
+      ],
+      [
+        "Так",
+        "говорят",
+        "а",
+        "я",
+        "не"
+      ],
+      [
+        "а",
+        "я",
+        "не",
+        "вижу",
+        "их"
+      ],
+      [
+        "Так",
+        "особенно",
+        "сегодня",
+        "люди",
+        "шалят"
+      ]
+    ]
+  },
+  {
+    "id": "monatik-kazhdyi-raz",
+    "title": "Каждый раз",
+    "artist": "MONATIK",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Каждый раз"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Каждый раз",
+      "artistName": "MONATIK",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "При",
+        "виде",
+        "тебя",
+        "всё",
+        "тает"
+      ],
+      [
+        "Был",
+        "умом",
+        "мал",
+        "и",
+        "любил"
+      ],
+      [
+        "умом",
+        "мал",
+        "и",
+        "любил",
+        "спорить"
+      ],
+      [
+        "По",
+        "ночам",
+        "города",
+        "гордо",
+        "спят"
+      ]
+    ]
+  },
+  {
+    "id": "monatik-sylno",
+    "title": "Сильно",
+    "artist": "MONATIK",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Сильно"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "СИЛЬНО",
+      "artistName": "MONATIK",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Пока",
+        "ты",
+        "спишь",
+        "я",
+        "смотрю"
+      ],
+      [
+        "спишь",
+        "я",
+        "смотрю",
+        "тише",
+        "осторожничаю"
+      ],
+      [
+        "Я",
+        "рад",
+        "так",
+        "рад",
+        "так"
+      ],
+      [
+        "так",
+        "рад",
+        "так",
+        "радуюсь",
+        "сильно"
+      ]
+    ]
+  },
+  {
+    "id": "monatik-vitamin-d",
+    "title": "Vitamin D",
+    "artist": "MONATIK",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Vitamin D"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Vitamin D",
+      "artistName": "MONATIK",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Нет",
+        "негативных",
+        "факторов",
+        "злых",
+        "директоров"
+      ],
+      [
+        "негативных",
+        "факторов",
+        "злых",
+        "директоров",
+        "небезопасных"
+      ],
+      [
+        "злых",
+        "директоров",
+        "небезопасных",
+        "секторов",
+        "прочь"
+      ],
+      [
+        "Вся",
+        "скукота",
+        "разбежалась",
+        "и",
+        "напомнила"
+      ]
+    ]
+  },
+  {
+    "id": "go-a-rusalochki",
+    "title": "Rusalochki",
+    "artist": "Go_A",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Rusalochki"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Rusalochki",
+      "artistName": "Go_A",
+      "synced": false
+    },
+    "phrases": [
+      [
+        "Та",
+        "скажи",
+        "мені",
+        "всю",
+        "правдоньку"
+      ],
+      [
+        "Ой",
+        "та",
+        "хто",
+        "тепер",
+        "проводжає"
+      ],
+      [
+        "Да",
+        "не",
+        "приходьте",
+        "темної",
+        "ночки"
+      ],
+      [
+        "Та",
+        "не",
+        "топчіть",
+        "мені",
+        "рутоньку"
+      ]
+    ]
+  },
+  {
+    "id": "alyona-alyona-ne-vtratymo-zv-iazok",
+    "title": "Не втратимо зв'язок",
+    "artist": "alyona alyona",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Не втратимо зв'язок"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Не втратимо зв'язок",
+      "artistName": "alyona alyona",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Та",
+        "у",
+        "моїй",
+        "уяві",
+        "ми"
+      ],
+      [
+        "у",
+        "моїй",
+        "уяві",
+        "ми",
+        "вже"
+      ],
+      [
+        "уяві",
+        "ми",
+        "вже",
+        "поруч",
+        "сидимо"
+      ],
+      [
+        "Навіть",
+        "коли",
+        "вимкнуть",
+        "світло",
+        "ми"
+      ]
+    ]
+  },
+  {
+    "id": "alyona-alyona-dyki-tantsi",
+    "title": "Дикі танці",
+    "artist": "alyona alyona",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Дикі танці"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Дикі танці",
+      "artistName": "alyona alyona",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "знову",
+        "залітаю",
+        "мов",
+        "торнадо"
+      ],
+      [
+        "знову",
+        "залітаю",
+        "мов",
+        "торнадо",
+        "на"
+      ],
+      [
+        "мов",
+        "торнадо",
+        "на",
+        "цей",
+        "біт"
+      ],
+      [
+        "Я",
+        "—",
+        "хіт",
+        "я",
+        "—"
+      ]
+    ]
+  },
+  {
+    "id": "alyona-alyona-zalyshaiu-svii-dim",
+    "title": "Залишаю свій дім",
+    "artist": "alyona alyona",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Залишаю свій дім"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Залишаю свій дім",
+      "artistName": "alyona alyona",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "я",
+        "я",
+        "я",
+        "залишаю"
+      ],
+      [
+        "я",
+        "я",
+        "залишаю",
+        "свій",
+        "дім"
+      ],
+      [
+        "я",
+        "я",
+        "я",
+        "залишаю",
+        "все"
+      ],
+      [
+        "я",
+        "залишаю",
+        "все",
+        "в",
+        "нім"
+      ]
+    ]
+  },
+  {
+    "id": "khrystyna-solovii-trymai",
+    "title": "Тримай",
+    "artist": "Христина Соловій",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Тримай"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Тримай",
+      "artistName": "Христина Соловій",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Як",
+        "тобі",
+        "сказати",
+        "—",
+        "без"
+      ],
+      [
+        "сказати",
+        "—",
+        "без",
+        "тебе",
+        "не"
+      ],
+      [
+        "без",
+        "тебе",
+        "не",
+        "можу",
+        "спати"
+      ],
+      [
+        "І",
+        "місяць",
+        "по",
+        "кімнаті",
+        "розкинув"
+      ]
+    ]
+  },
+  {
+    "id": "khrystyna-solovii-ukrainska-liut",
+    "title": "Українська лють",
+    "artist": "Христина Соловій",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Українська лють"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Українська лють",
+      "artistName": "Христина Соловій",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Земля",
+        "здригнулась",
+        "і",
+        "враз",
+        "закипіла"
+      ],
+      [
+        "і",
+        "враз",
+        "закипіла",
+        "наша",
+        "кров"
+      ],
+      [
+        "Ракети",
+        "з",
+        "неба",
+        "колони",
+        "танків"
+      ],
+      [
+        "Яка",
+        "насправді",
+        "бува",
+        "українська",
+        "лють"
+      ]
+    ]
+  },
+  {
+    "id": "khrystyna-solovii-fortepiano",
+    "title": "Fortepiano",
+    "artist": "Христина Соловій",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Fortepiano"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Fortepiano",
+      "artistName": "Христина Соловій",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Чуєш",
+        "нутром",
+        "як",
+        "печаль",
+        "у"
+      ],
+      [
+        "як",
+        "печаль",
+        "у",
+        "мені",
+        "мовчить"
+      ],
+      [
+        "Трохи",
+        "пекло",
+        "як",
+        "ділили",
+        "на"
+      ],
+      [
+        "пекло",
+        "як",
+        "ділили",
+        "на",
+        "двох"
+      ]
+    ]
+  },
+  {
+    "id": "max-barskih-bude-vesna",
+    "title": "Буде весна",
+    "artist": "Max Barskih",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Буде весна"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Буде весна",
+      "artistName": "MAX BARSKIH",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Місто",
+        "в",
+        "огні",
+        "серце",
+        "болить"
+      ],
+      [
+        "Кулі",
+        "летять",
+        "поки",
+        "падає",
+        "сніг"
+      ],
+      [
+        "Ночі",
+        "без",
+        "сну",
+        "нам",
+        "не"
+      ],
+      [
+        "без",
+        "сну",
+        "нам",
+        "не",
+        "холодно"
+      ]
+    ]
+  },
+  {
+    "id": "max-barskih-tumany",
+    "title": "Тумани",
+    "artist": "Max Barskih",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Тумани"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Тумани",
+      "artistName": "MAX BARSKIH",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Ти",
+        "сьогодні",
+        "не",
+        "прийшла",
+        "ти"
+      ],
+      [
+        "сьогодні",
+        "не",
+        "прийшла",
+        "ти",
+        "сьогодні"
+      ],
+      [
+        "прийшла",
+        "ти",
+        "сьогодні",
+        "не",
+        "прийшла"
+      ],
+      [
+        "І",
+        "довго",
+        "думав",
+        "я",
+        "чому"
+      ]
+    ]
+  },
+  {
+    "id": "max-barskih-mamo-ne-plach",
+    "title": "Мамо не плач",
+    "artist": "Max Barskih",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Мамо не плач"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Мамо, не плач",
+      "artistName": "MAX BARSKIH",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Все",
+        "буде",
+        "добре",
+        "я",
+        "вірю"
+      ],
+      [
+        "буде",
+        "добре",
+        "я",
+        "вірю",
+        "чомусь"
+      ],
+      [
+        "Не",
+        "віддамо",
+        "ми",
+        "нікому",
+        "наш"
+      ],
+      [
+        "віддамо",
+        "ми",
+        "нікому",
+        "наш",
+        "дім"
+      ]
+    ]
+  },
+  {
+    "id": "mamarika-liudy",
+    "title": "Люди",
+    "artist": "MamaRika",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Люди"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Люди",
+      "artistName": "MamaRika",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Ти",
+        "питав",
+        "мене",
+        "-",
+        "чи"
+      ],
+      [
+        "мене",
+        "-",
+        "чи",
+        "буду",
+        "вірити"
+      ],
+      [
+        "чи",
+        "буду",
+        "вірити",
+        "в",
+        "людей"
+      ],
+      [
+        "Я",
+        "буду",
+        "бо",
+        "є",
+        "люди"
+      ]
+    ]
+  },
+  {
+    "id": "mamarika-kava",
+    "title": "KAVA",
+    "artist": "MamaRika",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "KAVA"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Kava",
+      "artistName": "MamaRika",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Листя",
+        "пророста",
+        "на",
+        "моїх",
+        "руках"
+      ],
+      [
+        "Під",
+        "ковдрою",
+        "давай",
+        "сховаєм",
+        "всі"
+      ],
+      [
+        "ковдрою",
+        "давай",
+        "сховаєм",
+        "всі",
+        "секрети"
+      ],
+      [
+        "Від",
+        "поглядів",
+        "чужих",
+        "що",
+        "б'ються"
+      ]
+    ]
+  },
+  {
+    "id": "olia-poliakova-koroleva-nochy",
+    "title": "Королева ночи",
+    "artist": "Оля Полякова",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Королева ночи"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Королева ночи",
+      "artistName": "Оля Полякова",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "так",
+        "верила",
+        "тебе",
+        "говорил"
+      ],
+      [
+        "так",
+        "верила",
+        "тебе",
+        "говорил",
+        "мне"
+      ],
+      [
+        "тебе",
+        "говорил",
+        "мне",
+        "о",
+        "любви"
+      ],
+      [
+        "Оказалось",
+        "не",
+        "одной",
+        "обещания",
+        "давал"
+      ]
+    ]
+  },
+  {
+    "id": "olia-poliakova-tantsiuiu-iak-v-ostannii-raz",
+    "title": "Танцюю, як в останній раз",
+    "artist": "Оля Полякова",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Танцюю, як в останній раз"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Танцюю, як в останній раз",
+      "artistName": "Оля Полякова",
+      "synced": false
+    },
+    "phrases": [
+      [
+        "І",
+        "забуду",
+        "про",
+        "те",
+        "що"
+      ],
+      [
+        "про",
+        "те",
+        "що",
+        "я",
+        "одна"
+      ],
+      [
+        "Танцюю",
+        "я",
+        "не",
+        "мов",
+        "останній"
+      ],
+      [
+        "я",
+        "не",
+        "мов",
+        "останній",
+        "раз"
+      ]
+    ]
+  },
+  {
+    "id": "druha-rika-sekret",
+    "title": "Секрет",
+    "artist": "Друга Ріка",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Секрет"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Секрет",
+      "artistName": "Друга Ріка",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Мабуть",
+        "на",
+        "небі",
+        "таки",
+        "місця"
+      ],
+      [
+        "на",
+        "небі",
+        "таки",
+        "місця",
+        "нема"
+      ],
+      [
+        "Чи",
+        "черга",
+        "моя",
+        "не",
+        "дійшла"
+      ],
+      [
+        "Замість",
+        "мене",
+        "там",
+        "ви",
+        "а"
+      ]
+    ]
+  },
+  {
+    "id": "okean-elzy-odyn-v-kanoe-misto-vesny",
+    "title": "Місто весни",
+    "artist": "Океан Ельзи & Один в каное",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Місто весни"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Місто весни",
+      "artistName": "Один в каное & Океан Ельзи",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Чому",
+        "мені",
+        "сниться",
+        "як",
+        "знову"
+      ],
+      [
+        "сниться",
+        "як",
+        "знову",
+        "і",
+        "знову"
+      ],
+      [
+        "Гуляєм",
+        "з",
+        "тобою",
+        "по",
+        "рідному"
+      ],
+      [
+        "з",
+        "тобою",
+        "по",
+        "рідному",
+        "Львову"
+      ]
+    ]
+  },
+  {
+    "id": "okean-elzy-vidpusty",
+    "title": "Відпусти",
+    "artist": "Океан Ельзи",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Відпусти"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Відпусти",
+      "artistName": "Океан Ельзи",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Тiльки",
+        "ти",
+        "не",
+        "пускаєш",
+        "мене"
+      ],
+      [
+        "Але",
+        "ж",
+        "сяють",
+        "твої",
+        "яснi"
+      ],
+      [
+        "ж",
+        "сяють",
+        "твої",
+        "яснi",
+        "очi"
+      ],
+      [
+        "Але",
+        "ж",
+        "ти",
+        "не",
+        "пускаєш"
+      ]
+    ]
+  },
+  {
+    "id": "okean-elzy-koly-tobi-vazhko",
+    "title": "Коли тобі важко",
+    "artist": "Океан Ельзи",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Коли тобі важко"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Коли тобі важко",
+      "artistName": "Океан Ельзи",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Чуть-чуть",
+        "можеш",
+        "голосніше",
+        "мені",
+        "всьо"
+      ],
+      [
+        "голосніше",
+        "мені",
+        "всьо",
+        "зробити",
+        "Дяк"
+      ],
+      [
+        "Дивися",
+        "а",
+        "правда",
+        "насправді",
+        "так"
+      ],
+      [
+        "а",
+        "правда",
+        "насправді",
+        "так",
+        "близько"
+      ]
+    ]
+  },
+  {
+    "id": "okean-elzy-iananebibuv",
+    "title": "Янанебібув",
+    "artist": "Океан Ельзи",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Янанебібув"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Янанебібув",
+      "artistName": "Океан Ельзи",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "на",
+        "небі",
+        "був",
+        "куди"
+      ],
+      [
+        "на",
+        "небі",
+        "був",
+        "куди",
+        "літав"
+      ],
+      [
+        "Я",
+        "на",
+        "небі",
+        "був",
+        "тебе"
+      ],
+      [
+        "на",
+        "небі",
+        "був",
+        "тебе",
+        "знайшов"
+      ]
+    ]
+  },
+  {
+    "id": "okean-elzy-taka-iak-ty",
+    "title": "Така як ти",
+    "artist": "Океан Ельзи",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Така як ти"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Така, Як Ти",
+      "artistName": "Океан Ельзи",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Як",
+        "сильно",
+        "в",
+        "душу",
+        "б'є"
+      ],
+      [
+        "в",
+        "душу",
+        "б'є",
+        "безжальний",
+        "дощ"
+      ],
+      [
+        "А",
+        "як",
+        "болить",
+        "зимовий",
+        "спокій"
+      ],
+      [
+        "болить",
+        "зимовий",
+        "спокій",
+        "нашого",
+        "вікна"
+      ]
+    ]
+  },
+  {
+    "id": "skriabin-mam",
+    "title": "Мам",
+    "artist": "Скрябін",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Мам"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Мам",
+      "artistName": "Скрябін",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Я",
+        "завжди",
+        "мріяв",
+        "написати",
+        "пісню"
+      ],
+      [
+        "мріяв",
+        "написати",
+        "пісню",
+        "про",
+        "маму"
+      ],
+      [
+        "Але",
+        "різні",
+        "поети",
+        "всі",
+        "слова"
+      ],
+      [
+        "поети",
+        "всі",
+        "слова",
+        "вже",
+        "сказали"
+      ]
+    ]
+  },
+  {
+    "id": "skriabin-spy-sobi-sama",
+    "title": "Спи собі сама",
+    "artist": "Скрябін",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Спи собі сама"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Спи Собі Сама",
+      "artistName": "Скрябін",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Часом",
+        "буває",
+        "так",
+        "що",
+        "хочеш"
+      ],
+      [
+        "буває",
+        "так",
+        "що",
+        "хочеш",
+        "почути"
+      ],
+      [
+        "Де",
+        "думаєш",
+        "краще",
+        "б",
+        "очей"
+      ],
+      [
+        "краще",
+        "б",
+        "очей",
+        "не",
+        "мати"
+      ]
+    ]
+  },
+  {
+    "id": "skriabin-mistsia-shchaslyvykh-liudei",
+    "title": "Місця щасливих людей",
+    "artist": "Скрябін",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Місця щасливих людей"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Місця Щасливих Людей",
+      "artistName": "Скрябін",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Можливо",
+        "треба",
+        "було",
+        "жити",
+        "як"
+      ],
+      [
+        "треба",
+        "було",
+        "жити",
+        "як",
+        "всі"
+      ],
+      [
+        "А",
+        "я",
+        "хотів",
+        "інакшим",
+        "бути"
+      ],
+      [
+        "я",
+        "хотів",
+        "інакшим",
+        "бути",
+        "завжди"
+      ]
+    ]
+  },
+  {
+    "id": "skriabin-stari-fotohrafii",
+    "title": "Старі фотографії",
+    "artist": "Скрябін",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Старі фотографії"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Старі фотографії",
+      "artistName": "Скрябін",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Здається",
+        "шо",
+        "то",
+        "було",
+        "так"
+      ],
+      [
+        "шо",
+        "то",
+        "було",
+        "так",
+        "давно"
+      ],
+      [
+        "Не",
+        "маючи",
+        "нічого",
+        "мати",
+        "всьо"
+      ],
+      [
+        "За",
+        "гроші",
+        "не",
+        "купити",
+        "тільки"
+      ]
+    ]
+  },
+  {
+    "id": "bumboks-naodyntsi",
+    "title": "Наодинці",
+    "artist": "Бумбокс",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Наодинці"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Наодинці",
+      "artistName": "Бумбокс",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Коли",
+        "ти",
+        "наодинці",
+        "всі",
+        "навколо"
+      ],
+      [
+        "Все",
+        "що",
+        "лишив",
+        "на",
+        "потім"
+      ],
+      [
+        "лишив",
+        "на",
+        "потім",
+        "мар'яни",
+        "дим"
+      ],
+      [
+        "потім",
+        "мар'яни",
+        "дим",
+        "i",
+        "попiл"
+      ]
+    ]
+  },
+  {
+    "id": "bumboks-kvity-v-volossi",
+    "title": "Квіти в волоссі",
+    "artist": "Бумбокс",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Квіти в волоссі"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Квіти в волоссі",
+      "artistName": "Бумбокс",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Вона",
+        "носила",
+        "квіти",
+        "в",
+        "волоссі"
+      ],
+      [
+        "І",
+        "ними",
+        "грався",
+        "він",
+        "і"
+      ],
+      [
+        "грався",
+        "він",
+        "і",
+        "ще",
+        "вітер"
+      ],
+      [
+        "Але",
+        "кохали",
+        "щиро",
+        "мов",
+        "діти"
+      ]
+    ]
+  },
+  {
+    "id": "bumboks-liudy",
+    "title": "Люди",
+    "artist": "Бумбокс",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Люди"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Люди",
+      "artistName": "БумБокс",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Навіть",
+        "коли",
+        "я",
+        "не",
+        "я"
+      ],
+      [
+        "Ти",
+        "все",
+        "одно",
+        "зі",
+        "мною"
+      ],
+      [
+        "І",
+        "я",
+        "без",
+        "крил",
+        "лечу"
+      ],
+      [
+        "Тільки",
+        "тоді",
+        "коли",
+        "любимо",
+        "ми"
+      ]
+    ]
+  },
+  {
+    "id": "bumboks-vakhteram",
+    "title": "Вахтерам",
+    "artist": "Бумбокс",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Вахтерам"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Вахтерам",
+      "artistName": "БумБокс",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Тебе",
+        "нравится",
+        "дым",
+        "—",
+        "чёрт"
+      ],
+      [
+        "дым",
+        "—",
+        "чёрт",
+        "с",
+        "ним"
+      ],
+      [
+        "О",
+        "чём",
+        "с",
+        "тобой",
+        "говорить"
+      ],
+      [
+        "с",
+        "тобой",
+        "говорить",
+        "потеряли",
+        "нить"
+      ]
+    ]
+  },
+  {
+    "id": "bumboks-polina",
+    "title": "Поліна",
+    "artist": "Бумбокс",
+    "pack": "ua",
+    "era": "20",
+    "aliases": [
+      "Поліна"
+    ],
+    "source": {
+      "provider": "lrclib",
+      "trackName": "Поліна",
+      "artistName": "БумБокс",
+      "synced": true
+    },
+    "phrases": [
+      [
+        "Джастін",
+        "він",
+        "може",
+        "наревіти",
+        "калюжу"
+      ],
+      [
+        "Як",
+        "раптом",
+        "шось",
+        "то",
+        "Брюс"
+      ],
+      [
+        "шось",
+        "то",
+        "Брюс",
+        "усіх",
+        "порятує"
+      ],
+      [
+        "У",
+        "всіх",
+        "тату",
+        "є",
+        "це"
       ]
     ]
   }

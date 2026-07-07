@@ -21,7 +21,7 @@
         <div class="top-actions">
           <label class="volume-control">
             <span>Гучність</span>
-            <input id="volumeSlider" type="range" min="0" max="100" value="42" />
+            <input id="volumeSlider" type="range" min="0" max="100" value="6" />
           </label>
           <div class="mode" id="modeBadge">Ведучий</div>
         </div>
@@ -117,6 +117,17 @@
           <button class="secondary" type="button" id="copyInviteButton">Скопіювати</button>
         </div>
         <ul class="players" id="playersList"></ul>
+        <div class="lobby-controls" id="lobbyControls">
+          <label>
+            <span>Плейлист</span>
+            <select id="lobbyPresetSelect"></select>
+          </label>
+          <label>
+            <span>Раунди</span>
+            <input id="lobbyRoundsInput" type="number" min="1" max="60" value="12" />
+          </label>
+          <p class="preset-note" id="lobbyPresetInfo"></p>
+        </div>
         <button class="primary pink wide" type="button" id="startGameButton">Почати гру</button>
       </section>
 
