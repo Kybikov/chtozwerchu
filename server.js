@@ -766,7 +766,8 @@ function publicRoom(room, requester = {}) {
     code: room.code,
     isHost,
     viewerTeam,
-    canPlay: room.stage === "playing" && viewerTeam === room.activeTeam,
+    localMode: Boolean(room.localMode),
+    canPlay: room.stage === "playing" && (viewerTeam === room.activeTeam || (isHost && room.localMode)),
     canAdvance: room.stage === "result" && (isHost || viewerTeam === oppositeTeam(room.activeTeam)),
     canSteal: room.stage === "result" && result && !result.won && !result.correctedBy && viewerTeam === oppositeTeam(result.team),
     stage: room.stage,
@@ -828,6 +829,7 @@ function createRoom(body) {
   const room = {
     code: roomCode,
     hostToken,
+    localMode: Boolean(body.localMode),
     stage: "lobby",
     preset,
     rounds,
@@ -1004,6 +1006,7 @@ function assertHost(room, body) {
 }
 
 function assertActiveTeam(room, body) {
+  if (body?.hostToken === room.hostToken && room.localMode) return room.activeTeam;
   const team = actorTeam(room, body);
   if (!team || team !== room.activeTeam) {
     const error = new Error("Зараз хід іншої команди");
@@ -1112,6 +1115,7 @@ async function handleApi(req, res, url) {
       room.teams.girls.name = clean(body.girlsName) || room.teams.girls.name;
       room.teams.boys.name = clean(body.boysName) || room.teams.boys.name;
       room.rounds = clamp(Number(body.rounds) || room.rounds, 1, 60);
+      if (typeof body.localMode === "boolean") room.localMode = body.localMode;
       room.preset = presets.some((item) => item.id === body.preset) ? body.preset : room.preset;
       room.deck = buildDeck(room.preset, room.rounds);
       room.roundIndex = 0;

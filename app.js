@@ -119,7 +119,7 @@ function updatePresetInfo() {
   el.presetInfo.textContent = preset ? preset.description : "";
 }
 
-async function createRoom() {
+async function createRoom(options = {}) {
   const payload = await api("/api/rooms", {
     method: "POST",
     body: {
@@ -127,6 +127,7 @@ async function createRoom() {
       rounds: Number(el.roundsInput.value),
       hostName: el.hostNameInput.value,
       hostTeam: el.hostTeamSelect.value,
+      localMode: Boolean(options.localMode),
       girlsName: el.girlsNameInput.value,
       boysName: el.boysNameInput.value
     }
@@ -142,12 +143,13 @@ async function createRoom() {
 }
 
 async function quickLocal() {
-  await createRoom();
+  await createRoom({ localMode: true });
   await action("start", {
     preset: el.presetSelect.value,
     rounds: Number(el.roundsInput.value),
     hostName: el.hostNameInput.value,
     hostTeam: el.hostTeamSelect.value,
+    localMode: true,
     girlsName: el.girlsNameInput.value,
     boysName: el.boysNameInput.value
   });
@@ -242,7 +244,7 @@ function setRoom(room) {
 
 function render() {
   if (!state.room) return;
-  el.modeBadge.textContent = state.room.isHost ? "Ведучий" : "Гравець";
+  el.modeBadge.textContent = state.room.localMode ? "1 екран" : (state.room.isHost ? "Ведучий" : "Гравець");
   el.app.dataset.host = state.room.isHost ? "true" : "false";
   renderScore();
 
@@ -563,6 +565,7 @@ function wireEvents() {
     rounds: Number(el.roundsInput.value),
     hostName: el.hostNameInput.value,
     hostTeam: el.hostTeamSelect.value,
+    localMode: Boolean(state.room?.localMode),
     girlsName: el.girlsNameInput.value,
     boysName: el.boysNameInput.value
   }));
