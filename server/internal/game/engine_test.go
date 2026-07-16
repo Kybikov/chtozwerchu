@@ -106,6 +106,25 @@ func TestTruthLieScoring(t *testing.T) {
 	}
 }
 
+func TestMelodyPreviewInjection(t *testing.T) {
+	_, room := newTestRoom(t, RoundMelody)
+	title, _, ok := MelodyPreviewNeeded(room)
+	if !ok || title == "" {
+		t.Fatal("melody round should need a preview")
+	}
+	if !SetMelodyPreview(room, "https://cdn/x.mp3") {
+		t.Fatal("SetMelodyPreview should succeed")
+	}
+	// second call is a no-op (already set)
+	if SetMelodyPreview(room, "https://cdn/other.mp3") {
+		t.Fatal("preview should only be set once")
+	}
+	view, _ := melody{}.View(room, room.Players[0]).(map[string]any)
+	if view["previewUrl"] != "https://cdn/x.mp3" {
+		t.Fatalf("view previewUrl = %v", view["previewUrl"])
+	}
+}
+
 func TestNextFlipsActiveTeam(t *testing.T) {
 	e, room := newTestRoom(t, RoundFiveWords)
 	first := room.ActiveTeam

@@ -33,9 +33,10 @@ type RoomSession struct {
 	mu       sync.Mutex
 	room     *game.Room
 	clients  map[*Client]bool
-	saved    bool        // whether the finished match has been persisted
-	timer    *time.Timer // countdown for timed rounds
-	timerKey int         // round index the timer is armed for
+	saved      bool        // whether the finished match has been persisted
+	timer      *time.Timer // countdown for timed rounds
+	timerKey   int         // round index the timer is armed for
+	previewKey int         // round index a melody preview lookup was started for
 }
 
 type clientMsg struct {
@@ -204,6 +205,10 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 		}
 		h.armTimer(s)
 	}
+	pNeed, pKey, pTitle, pArtist := false, 0, "", ""
+	if err == nil {
+		pNeed, pKey, pTitle, pArtist = h.previewRequest(s)
+	}
 	s.mu.Unlock()
 	if err != nil {
 		c.enqueue(errorMsg(err.Error()))
@@ -214,6 +219,9 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 	}
 	if toSave != nil {
 		h.persistMatch(toSave)
+	}
+	if pNeed {
+		go h.resolvePreview(s, pKey, pTitle, pArtist)
 	}
 	h.persist(s)
 }
@@ -259,6 +267,36 @@ func (h *Hub) fireTimeout(s *RoomSession, key int) {
 		m.c.enqueue(m.b)
 	}
 	h.persist(s)
+}
+
+// previewRequest returns a melody preview lookup to perform, if any. Caller
+// holds s.mu.
+func (h *Hub) previewRequest(s *RoomSession) (bool, int, string, string) {
+	title, artist, ok := game.MelodyPreviewNeeded(s.room)
+	if !ok || s.previewKey == s.room.RoundIndex {
+		return false, 0, "", ""
+	}
+	s.previewKey = s.room.RoundIndex
+	return true, s.room.RoundIndex, title, artist
+}
+
+// resolvePreview fetches a Deezer preview and pushes it to clients when ready.
+func (h *Hub) resolvePreview(s *RoomSession, key int, title, artist string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
+	defer cancel()
+	previewURL, err := store.DeezerPreview(ctx, title, artist)
+	if err != nil || previewURL == "" {
+		return
+	}
+	s.mu.Lock()
+	var msgs []clientMsg
+	if s.room.RoundIndex == key && game.SetMelodyPreview(s.room, previewURL) {
+		msgs = s.renderAll()
+	}
+	s.mu.Unlock()
+	for _, m := range msgs {
+		m.c.enqueue(m.b)
+	}
 }
 
 // resolveUser maps an auth token to a user id and display name.
@@ -314,10 +352,14 @@ func (h *Hub) attach(c *Client, s *RoomSession, p *game.Player) {
 	you := youAre(p, s.room.Code)
 	msgs := s.renderAll()
 	h.armTimer(s)
+	pNeed, pKey, pTitle, pArtist := h.previewRequest(s)
 	s.mu.Unlock()
 	c.enqueue(you)
 	for _, m := range msgs {
 		m.c.enqueue(m.b)
+	}
+	if pNeed {
+		go h.resolvePreview(s, pKey, pTitle, pArtist)
 	}
 	h.persist(s)
 }

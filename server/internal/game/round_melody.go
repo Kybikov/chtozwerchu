@@ -116,6 +116,32 @@ func melodyHints(d *melodyData) []string {
 	return hints
 }
 
+// MelodyPreviewNeeded returns the current melody round's track when it still
+// needs a preview URL resolved.
+func MelodyPreviewNeeded(room *Room) (title, artist string, ok bool) {
+	if room == nil || room.Current == nil || room.Current.Type != RoundMelody {
+		return "", "", false
+	}
+	d, is := room.Current.Data.(*melodyData)
+	if !is || d.Song.PreviewURL != "" {
+		return "", "", false
+	}
+	return d.Song.Title, d.Song.Artist, true
+}
+
+// SetMelodyPreview sets the preview URL on the current melody round.
+func SetMelodyPreview(room *Room, url string) bool {
+	if room == nil || room.Current == nil || room.Current.Type != RoundMelody {
+		return false
+	}
+	d, ok := room.Current.Data.(*melodyData)
+	if !ok || d.Song.PreviewURL != "" {
+		return false
+	}
+	d.Song.PreviewURL = url
+	return true
+}
+
 func firstLetter(s string) string {
 	for _, r := range s {
 		return string(r)
