@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Action is a single player/host input directed at the current round.
 type Action struct {
@@ -43,6 +46,18 @@ type RoundHandler interface {
 	Action(room *Room, act Action) error
 	// View returns a redacted, JSON-serializable payload for the given viewer.
 	View(room *Room, viewer *Player) any
+}
+
+// TimedRound is implemented by rounds that run against a countdown. The engine
+// sets a deadline of now+Duration() when the round starts.
+type TimedRound interface {
+	Duration() time.Duration
+}
+
+// TimeoutHandler is implemented by timed rounds to resolve themselves when the
+// deadline passes.
+type TimeoutHandler interface {
+	OnTimeout(room *Room)
 }
 
 var registry = map[RoundType]RoundHandler{}

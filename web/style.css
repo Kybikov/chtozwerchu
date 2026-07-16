@@ -1278,3 +1278,20 @@ audio {
 .history-list li.lost { border-left-color: var(--red); }
 .history-list li span { color: var(--muted); }
 .history-list li.empty { justify-content: center; color: var(--muted); }
+
+/* round countdown */
+.round-timer {
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--line);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.round-timer.low {
+  background: rgba(255, 71, 101, 0.25);
+  border-color: var(--red);
+  color: #ffd7de;
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 50% { transform: scale(1.08); } }

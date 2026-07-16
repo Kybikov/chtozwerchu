@@ -10,6 +10,7 @@ const state = {
   room: null,
   reconnectTimer: null,
   intended: false, // user intentionally in a room
+  timerInterval: null,
 };
 
 function loadSession() {
@@ -223,6 +224,11 @@ function showScreen(name) {
   show("gameScreen", name === "game");
   show("finalScreen", name === "final");
   $("scoreBar").hidden = name === "home";
+  if (name !== "game") {
+    clearInterval(state.timerInterval);
+    const t = $("roundTimer");
+    if (t) t.classList.add("hidden");
+  }
 }
 function updateScore(r) {
   const g = r.teams.girls, b = r.teams.boys;
@@ -288,12 +294,31 @@ function renderGame(r) {
   $("activeTeamName").textContent = activeName;
   const typeName = (state.meta.roundTypes.find((t) => t.id === r.roundType) || {}).name || r.roundType;
   $("roundTypeBadge").textContent = typeName;
+  updateTimer(r);
 
   const stage = $("roundStage");
   const renderer = ROUND_RENDERERS[r.roundType];
   stage.innerHTML = renderer ? renderer(r) : `<div class="pad">Раунд ${esc(r.roundType)}</div>`;
   if (r.stage === "result") stage.insertAdjacentHTML("beforeend", resultFooter(r));
   wireRound(r);
+}
+
+function updateTimer(r) {
+  clearInterval(state.timerInterval);
+  const el = $("roundTimer");
+  if (!r.deadlineMs || r.stage !== "playing") {
+    el.classList.add("hidden");
+    return;
+  }
+  const tick = () => {
+    const rem = Math.max(0, Math.round((r.deadlineMs - Date.now()) / 1000));
+    el.textContent = "⏱ " + rem + "с";
+    el.classList.remove("hidden");
+    el.classList.toggle("low", rem <= 10);
+    if (rem <= 0) clearInterval(state.timerInterval);
+  };
+  tick();
+  state.timerInterval = setInterval(tick, 400);
 }
 
 function myTurn(r) {

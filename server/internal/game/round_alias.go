@@ -1,10 +1,23 @@
 package game
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 func init() { register(alias{}) }
 
 type alias struct{}
+
+// Duration is the countdown for an alias round.
+func (alias) Duration() time.Duration { return 75 * time.Second }
+
+// OnTimeout resolves the round when the countdown ends.
+func (alias) OnTimeout(room *Room) {
+	if d, ok := room.Current.Data.(*aliasData); ok {
+		resolveAlias(room, d)
+	}
+}
 
 type aliasData struct {
 	Cards       []AliasCard

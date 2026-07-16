@@ -19,6 +19,7 @@ type RoomView struct {
 	RoundIndex int                 `json:"roundIndex"`
 	Rounds     int                 `json:"rounds"`
 	RoundType  RoundType           `json:"roundType,omitempty"`
+	DeadlineMs int64               `json:"deadlineMs,omitempty"`
 	Round      any                 `json:"round,omitempty"`
 	You        *YouInfo            `json:"you,omitempty"`
 	Winner     Team                `json:"winner,omitempty"`
@@ -38,6 +39,9 @@ func BuildView(room *Room, viewer *Player) RoomView {
 	}
 	if room.Current != nil {
 		v.RoundType = room.Current.Type
+		if !room.Current.Deadline.IsZero() {
+			v.DeadlineMs = room.Current.Deadline.UnixMilli()
+		}
 		if h, err := Handler(room.Current.Type); err == nil {
 			v.Round = h.View(room, viewer)
 		}

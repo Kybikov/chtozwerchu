@@ -208,9 +208,27 @@ func (e *Engine) startRound(room *Room) error {
 		Data:       data,
 		StartedAt:  time.Now(),
 	}
+	if timed, ok := h.(TimedRound); ok {
+		room.Current.Deadline = time.Now().Add(timed.Duration())
+	}
 	room.Stage = StagePlaying
 	room.touch()
 	return nil
+}
+
+// Timeout resolves the current round when its deadline passes.
+func (e *Engine) Timeout(room *Room) {
+	if room.Current == nil || room.Stage != StagePlaying {
+		return
+	}
+	h, err := Handler(room.Current.Type)
+	if err != nil {
+		return
+	}
+	if to, ok := h.(TimeoutHandler); ok {
+		to.OnTimeout(room)
+		room.touch()
+	}
 }
 
 // Apply routes an action to engine-level handlers or the current round.

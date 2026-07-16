@@ -30,10 +30,12 @@ type Hub struct {
 
 // RoomSession binds a game room to the clients watching it.
 type RoomSession struct {
-	mu      sync.Mutex
-	room    *game.Room
-	clients map[*Client]bool
-	saved   bool // whether the finished match has been persisted
+	mu       sync.Mutex
+	room     *game.Room
+	clients  map[*Client]bool
+	saved    bool        // whether the finished match has been persisted
+	timer    *time.Timer // countdown for timed rounds
+	timerKey int         // round index the timer is armed for
 }
 
 type clientMsg struct {
@@ -200,6 +202,7 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 		} else if s.room.Stage != game.StageFinal {
 			s.saved = false
 		}
+		h.armTimer(s)
 	}
 	s.mu.Unlock()
 	if err != nil {
@@ -211,6 +214,49 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 	}
 	if toSave != nil {
 		h.persistMatch(toSave)
+	}
+	h.persist(s)
+}
+
+// armTimer schedules (or clears) the round countdown. Caller holds s.mu.
+func (h *Hub) armTimer(s *RoomSession) {
+	r := s.room
+	timed := r.Stage == game.StagePlaying && r.Current != nil && !r.Current.Deadline.IsZero()
+	if !timed {
+		if s.timer != nil {
+			s.timer.Stop()
+			s.timer = nil
+		}
+		s.timerKey = 0
+		return
+	}
+	if s.timer != nil && s.timerKey == r.RoundIndex {
+		return // already armed for this round
+	}
+	if s.timer != nil {
+		s.timer.Stop()
+	}
+	key := r.RoundIndex
+	s.timerKey = key
+	d := time.Until(r.Current.Deadline)
+	if d < 0 {
+		d = 0
+	}
+	s.timer = time.AfterFunc(d, func() { h.fireTimeout(s, key) })
+}
+
+// fireTimeout resolves a timed round when its deadline passes.
+func (h *Hub) fireTimeout(s *RoomSession, key int) {
+	s.mu.Lock()
+	if s.room.RoundIndex != key || s.room.Stage != game.StagePlaying {
+		s.mu.Unlock()
+		return
+	}
+	h.engine.Timeout(s.room)
+	msgs := s.renderAll()
+	s.mu.Unlock()
+	for _, m := range msgs {
+		m.c.enqueue(m.b)
 	}
 	h.persist(s)
 }
@@ -267,6 +313,7 @@ func (h *Hub) attach(c *Client, s *RoomSession, p *game.Player) {
 	p.Connected = true
 	you := youAre(p, s.room.Code)
 	msgs := s.renderAll()
+	h.armTimer(s)
 	s.mu.Unlock()
 	c.enqueue(you)
 	for _, m := range msgs {

@@ -66,11 +66,12 @@ type RoundSpec struct {
 // RoundState is the live state of the current round. The concrete shape lives
 // in the round-specific Data payload; the engine only tracks common fields.
 type RoundState struct {
-	Type       RoundType   `json:"type"`
-	ActiveTeam Team        `json:"activeTeam"`
-	Data       RoundData   `json:"-"` // in-memory typed state, never serialized directly
+	Type       RoundType    `json:"type"`
+	ActiveTeam Team         `json:"activeTeam"`
+	Data       RoundData    `json:"-"` // in-memory typed state, never serialized directly
 	Result     *RoundResult `json:"result,omitempty"`
-	StartedAt  time.Time   `json:"startedAt"`
+	StartedAt  time.Time    `json:"startedAt"`
+	Deadline   time.Time    `json:"-"` // zero when the round is untimed
 }
 
 // RoundResult is the outcome of a resolved round.
