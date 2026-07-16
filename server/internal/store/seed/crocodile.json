@@ -1,0 +1,22 @@
+[
+  { "id": "c-lion-king", "emoji": "🦁👑", "answer": "Король Лев", "hint": "Мультфільм Disney про левеня Сімбу", "pack": "movies" },
+  { "id": "c-spider-man", "emoji": "🕷️🧍", "answer": "Людина-павук", "hint": "Супергерой у червоно-синьому костюмі", "pack": "movies" },
+  { "id": "c-titanic", "emoji": "🚢🧊💔", "answer": "Титанік", "hint": "Корабель, айсберг і трагічна історія кохання", "pack": "movies" },
+  { "id": "c-harry-potter", "emoji": "⚡🧙👓", "answer": "Гаррі Поттер", "hint": "Хлопчик-чарівник зі шрамом", "pack": "movies" },
+  { "id": "c-star-wars", "emoji": "⭐⚔️🚀", "answer": "Зоряні війни", "hint": "Джедаї, світлові мечі та далека галактика", "pack": "movies" },
+  { "id": "c-frozen", "emoji": "❄️👸⛄", "answer": "Крижане серце", "hint": "Дві сестри, сніговик і чарівний лід", "pack": "movies" },
+  { "id": "c-batman", "emoji": "🦇🧍🌃", "answer": "Бетмен", "hint": "Темний лицар міста Готем", "pack": "movies" },
+  { "id": "c-shrek", "emoji": "🟢👹💚", "answer": "Шрек", "hint": "Зелений огр із болота", "pack": "movies" },
+  { "id": "c-nemo", "emoji": "🐠🔍🌊", "answer": "У пошуках Немо", "hint": "Тато шукає загублену рибку", "pack": "movies" },
+  { "id": "c-jurassic", "emoji": "🦖🏝️🔬", "answer": "Парк Юрського періоду", "hint": "Острів із оживленими динозаврами", "pack": "movies" },
+  { "id": "c-fast-food", "emoji": "🍔🍟🥤", "answer": "Фастфуд", "hint": "Швидка їжа з бургером і колою", "pack": "general" },
+  { "id": "c-birthday", "emoji": "🎂🎉🎈", "answer": "День народження", "hint": "Торт зі свічками і подарунки", "pack": "general" },
+  { "id": "c-football", "emoji": "⚽🥅🏆", "answer": "Футбол", "hint": "Гра з м'ячем і воротами", "pack": "general" },
+  { "id": "c-rainbow", "emoji": "🌧️🌈☀️", "answer": "Веселка", "hint": "Кольорова дуга після дощу", "pack": "general" },
+  { "id": "c-coffee", "emoji": "☕🌅😌", "answer": "Ранкова кава", "hint": "Гарячий напій, щоб прокинутися", "pack": "general" },
+  { "id": "c-love", "emoji": "❤️😍💌", "answer": "Кохання", "hint": "Сильне почуття між двома людьми", "pack": "general" },
+  { "id": "c-vacation", "emoji": "✈️🏖️🌴", "answer": "Відпустка", "hint": "Політ на море відпочивати", "pack": "general" },
+  { "id": "c-gym", "emoji": "🏋️💪🏃", "answer": "Спортзал", "hint": "Місце, де качають м'язи", "pack": "general" },
+  { "id": "c-pizza-party", "emoji": "🍕🎮👫", "answer": "Вечірка з піцою", "hint": "Друзі, ігри і піца", "pack": "general" },
+  { "id": "c-sea-sunset", "emoji": "🌊🌇📸", "answer": "Захід сонця на морі", "hint": "Гарне фото біля води надвечір", "pack": "general" }
+]

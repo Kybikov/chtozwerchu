@@ -1,50 +1,88 @@
-# Five Words Party Game
+# Хто зверху? — онлайн
 
-Локальна браузерна гра для двох команд у стилі "Хто зверху?".
+Повноцінна онлайн пати-гра у форматі шоу «Хто зверху?»: дві команди
+(рожеві «Дівчата» проти синіх «Хлопців») грають серію різнотипних раундів
+із наскрізним рахунком і фіналом.
 
-## Local
+Технічне завдання — [`docs/TZ.md`](docs/TZ.md).
+
+## Стек
+
+- **Бекенд:** Go 1.24, `net/http` + `gorilla/websocket` (realtime-хаб).
+- **Стан кімнат:** in-memory (авторитетний інстанс), Redis для реєстру/снапшотів.
+- **Дані:** PostgreSQL (`pgx/v5`) — каталог пісень/питань, юзери, історія матчів.
+- **Фронт:** статичний SPA (`web/`) на WebSocket, дизайн під «Хто зверху».
+- **Деплой:** docker-compose (postgres + redis + app).
+
+## Раунди
+
+| Раунд | Тип |
+|---|---|
+| 5 слів | відкривай слова → вгадай пісню |
+| Вгадай мелодію | сніпет/наспів → назви пісню |
+| Аліас | пояснюй слово, команда вгадує |
+| Крокодил | загадка емодзі-ребусом |
+| Правда чи брехня | голосуй правда/брехня |
+
+## Запуск через Docker Compose
 
 ```bash
-npm start
+docker compose up --build
 ```
 
-Default local URL:
+Відкрий: `http://127.0.0.1:3000`
 
-```text
-http://127.0.0.1:5507
-```
+Сервіси: `postgres`, `redis`, `app` (порт 3000). При першому старті БД
+автоматично мігрує й засівається каталогом (пісні з `custom-songs.json`,
+питання/слова/загадки з `server/internal/store/seed/`).
 
-## Docker
+## Локальна розробка без Docker
+
+Каталог можна вантажити напряму з ембед-сідів (без Postgres/Redis):
 
 ```bash
-docker build -t five-words-game .
-docker run --rm -p 3000:3000 five-words-game
+cd server
+DATABASE_URL="" REDIS_URL="" PORT=5599 WEB_DIR=../web go run ./cmd/server
 ```
 
-Open:
+Відкрий: `http://127.0.0.1:5599`
 
-```text
-http://127.0.0.1:3000
-```
+> `DATABASE_URL=""` / `REDIS_URL=""` (порожні, але **задані**) вимикають
+> персистенцію. Якщо змінні не задані взагалі — використовуються дефолти
+> для docker-compose (`postgres://khz:khz@localhost:5432/...`).
 
-## Coolify
+## Змінні середовища
 
-1. Push this folder to GitHub.
-2. In Coolify create a new app from the GitHub repository.
-3. Build Pack: `Dockerfile`.
-4. Exposed port: `3000`.
-5. Optional env:
-   - `PUBLIC_URL=https://your-domain.com`
+| Змінна | Призначення | Дефолт |
+|---|---|---|
+| `PORT` | HTTP-порт | `3000` |
+| `DATABASE_URL` | Postgres DSN (порожній → embedded) | локальний postgres |
+| `REDIS_URL` | Redis URL (порожній → без Redis) | локальний redis |
+| `WEB_DIR` | тека зі статикою | `./web` |
+| `PUBLIC_URL` | базовий URL для інвайт-лінків | авто з браузера |
 
-If `PUBLIC_URL` is empty, invite links use the current browser domain automatically.
-
-Health checks:
+## Health
 
 ```text
 /health
 /api/health
 ```
 
-## Notes
+## Імпорт пісень (LRCLIB)
 
-Rooms are stored in memory. Restarting the container clears active rooms and scores.
+```bash
+npm run import:lyrics
+```
+
+Оновлює `custom-songs.json`; скопіюй його в
+`server/internal/store/seed/songs.json`, щоб потрапив у сід.
+
+## Стан реалізації
+
+- [x] Ядро: WS-хаб, ігровий рушій, лоббі, 5 раундів, redacted-view під гравця
+- [x] Postgres (міграції + сід) та Redis (реєстр/снапшоти)
+- [x] docker-compose, Go multi-stage Dockerfile
+- [x] Фронт на WebSocket зі збереженим дизайном
+- [ ] Аудіо-прев'ю для «Вгадай мелодію» (Deezer) — наступний етап
+- [ ] Акаунти (реєстрація) та історія матчів — наступний етап
+- [ ] Таймери раундів, анімації, звук перемоги — поліш

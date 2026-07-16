@@ -1042,3 +1042,181 @@ audio {
     min-height: 38px;
   }
 }
+
+/* ============================================================
+   Хто зверху? online — additions for lobby, rounds, transport
+   ============================================================ */
+
+.hidden { display: none !important; }
+
+.conn-banner {
+  margin: 0 0 14px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(255, 71, 101, 0.16);
+  border: 1px solid rgba(255, 71, 101, 0.5);
+  color: #ffd7de;
+  text-align: center;
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 12px 22px;
+  border-radius: 18px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+}
+
+.team.active {
+  outline: 3px solid var(--yellow);
+  box-shadow: 0 0 34px rgba(255, 242, 70, 0.4);
+}
+
+/* round type pickers */
+.rounds-pick { margin-top: 6px; }
+.pick-title {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.round-types { display: flex; flex-wrap: wrap; gap: 8px; }
+.round-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  user-select: none;
+}
+.round-chip input { accent-color: var(--pink); }
+.round-chip:has(input:checked) {
+  background: linear-gradient(120deg, rgba(255, 47, 167, 0.3), rgba(22, 183, 255, 0.28));
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lobby-hint { margin-top: 12px; text-align: center; color: var(--muted); }
+.player.off { opacity: 0.45; }
+
+/* generic round chrome */
+#roundStage { display: grid; gap: 18px; }
+.round-head {
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+.round-head .pot {
+  display: inline-block;
+  min-width: 2.2rem;
+  padding: 2px 12px;
+  border-radius: 14px;
+  background: var(--yellow);
+  color: #1a1000;
+  font-size: 1.3rem;
+}
+.host-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.result-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.result-footer .wait { color: var(--muted); }
+
+/* melody */
+.mel-card {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  padding: 26px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.mel-live { font-size: 1.3rem; font-weight: 800; text-align: center; }
+.mel-audio { width: min(460px, 100%); }
+.hints { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; color: var(--yellow); font-weight: 700; }
+
+/* alias */
+.alias-card {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 30px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.alias-card.explain { background: linear-gradient(140deg, rgba(255,47,167,0.18), rgba(22,183,255,0.18)); }
+.alias-role { color: var(--muted); margin: 0; }
+.alias-word { font-size: 2.6rem; margin: 0; text-transform: uppercase; }
+.taboo { color: #ffb9d6; font-size: 0.95rem; }
+.taboo span { margin: 0 4px; text-decoration: line-through; }
+.alias-summary { padding: 20px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.alias-words { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; }
+.alias-words li { padding: 6px 12px; border-radius: 12px; background: rgba(255,255,255,0.08); }
+
+/* crocodile */
+.croc-card {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  padding: 30px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.croc-emoji { font-size: 4.4rem; line-height: 1.1; }
+.croc-hint { color: var(--yellow); font-weight: 700; margin: 0; }
+.croc-answer { font-size: 1.3rem; }
+
+/* truth or lie */
+.tl-card {
+  padding: 34px 26px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.tl-statement { font-size: 1.5rem; font-weight: 700; margin: 0; }
+.tl-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.primary.big { padding: 22px; font-size: 1.3rem; }
+.tl-verdict {
+  padding: 18px;
+  border-radius: 18px;
+  text-align: center;
+  font-size: 1.1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--line);
+}
+.tl-verdict.good { border-color: rgba(108,255,176,0.6); }
+.tl-verdict.bad { border-color: rgba(255,71,101,0.6); }
+
+/* song reveal */
+.song-reveal {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.song-reveal strong { font-size: 1.5rem; }
+.phrase-full { color: var(--muted); font-style: italic; margin: 0; }

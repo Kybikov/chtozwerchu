@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>5 слів</title>
+    <title>Хто зверху? — онлайн</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -15,20 +15,20 @@
           <span class="logo-mark">?</span>
         </div>
         <div class="brand">
-          <span>музичний раунд</span>
-          <h1>5 слів</h1>
+          <span>онлайн пати-гра</span>
+          <h1>Дівчата проти хлопців</h1>
         </div>
         <div class="top-actions">
           <label class="volume-control">
             <span>Гучність</span>
             <input id="volumeSlider" type="range" min="0" max="100" value="6" />
           </label>
-          <div class="mode" id="modeBadge">Ведучий</div>
+          <div class="mode" id="modeBadge">Меню</div>
         </div>
       </header>
-      <audio id="introAudio" src="assets/intro.mp3" preload="auto" autoplay loop></audio>
+      <audio id="introAudio" src="assets/intro.mp3" preload="auto" loop></audio>
 
-      <section class="score">
+      <section class="score" id="scoreBar" hidden>
         <article class="team girls" id="girlsCard">
           <span id="girlsScoreName">Дівчата</span>
           <strong id="girlsScore">0</strong>
@@ -39,10 +39,14 @@
         </article>
       </section>
 
-      <section class="screen setup" id="hostSetup">
+      <div id="connBanner" class="conn-banner" hidden>Зʼєднання втрачено — перепідключення…</div>
+      <div id="toast" class="toast" hidden></div>
+
+      <!-- HOME: create or join -->
+      <section class="screen setup" id="homeScreen">
         <div class="hero-panel">
           <p class="kicker">Створи кімнату</p>
-          <h2>Дівчата проти хлопців</h2>
+          <h2>Нова гра</h2>
           <div class="form-grid">
             <label>
               <span>Твоє імʼя</span>
@@ -64,30 +68,30 @@
               <input id="boysNameInput" value="Хлопці" autocomplete="off" />
             </label>
             <label>
-              <span>Плейлист</span>
+              <span>Плейлист (музика)</span>
               <select id="presetSelect"></select>
             </label>
             <label>
-              <span>Раунди</span>
-              <input id="roundsInput" type="number" min="1" max="60" value="12" />
+              <span>Раундів</span>
+              <input id="roundsInput" type="number" min="1" max="60" value="10" />
             </label>
           </div>
-          <p class="preset-note" id="presetInfo"></p>
+          <div class="rounds-pick">
+            <span class="pick-title">Раунди у грі</span>
+            <div class="round-types" id="roundTypesPick"></div>
+          </div>
           <div class="buttons">
             <button class="primary pink" type="button" id="createRoomButton">Створити кімнату</button>
-            <button class="secondary" type="button" id="quickLocalButton">Грати на одному екрані</button>
           </div>
         </div>
-      </section>
 
-      <section class="screen setup hidden" id="joinSetup">
         <div class="hero-panel small">
           <p class="kicker">Запрошення</p>
           <h2>Зайти в гру</h2>
           <div class="form-grid single">
             <label>
               <span>Код кімнати</span>
-              <input id="roomCodeInput" autocomplete="off" />
+              <input id="roomCodeInput" autocomplete="off" maxlength="5" />
             </label>
             <label>
               <span>Імʼя</span>
@@ -107,10 +111,11 @@
         </div>
       </section>
 
-      <section class="screen lobby hidden" id="lobby">
+      <!-- LOBBY -->
+      <section class="screen lobby hidden" id="lobbyScreen">
         <div class="room-code">
           <span>Код кімнати</span>
-          <strong id="lobbyCode">ABCDE</strong>
+          <strong id="lobbyCode">-----</strong>
         </div>
         <div class="invite">
           <input id="inviteLink" readonly />
@@ -123,57 +128,30 @@
             <select id="lobbyPresetSelect"></select>
           </label>
           <label>
-            <span>Раунди</span>
-            <input id="lobbyRoundsInput" type="number" min="1" max="60" value="12" />
+            <span>Раундів</span>
+            <input id="lobbyRoundsInput" type="number" min="1" max="60" value="10" />
           </label>
-          <p class="preset-note" id="lobbyPresetInfo"></p>
+          <div class="rounds-pick">
+            <span class="pick-title">Раунди у грі</span>
+            <div class="round-types" id="lobbyRoundTypesPick"></div>
+          </div>
         </div>
         <button class="primary pink wide" type="button" id="startGameButton">Почати гру</button>
+        <p class="lobby-hint" id="lobbyHint"></p>
       </section>
 
-      <section class="screen game hidden" id="game">
+      <!-- GAME -->
+      <section class="screen game hidden" id="gameScreen">
         <div class="round-line">
-          <span id="roundLabel">Раунд 1/12</span>
+          <span id="roundLabel">Раунд 1/10</span>
           <strong id="activeTeamName">Дівчата</strong>
-          <b><span id="potentialPoints">4</span> бали</b>
+          <b id="roundTypeBadge">5 слів</b>
         </div>
-
-        <div class="word-board" id="wordBoard"></div>
-
-        <div class="guess-panel">
-          <input id="guessInput" placeholder="Закриті слова по порядку" autocomplete="off" />
-          <button class="primary blue" type="button" id="submitGuessButton">Відповісти</button>
-        </div>
-
-        <div class="host-actions">
-          <button class="secondary" type="button" id="openRandomButton">Випадкове слово</button>
-          <button class="ghost good" type="button" id="hostCorrectButton">Зарахувати</button>
-          <button class="ghost bad" type="button" id="hostWrongButton">Спалити</button>
-          <button class="ghost" type="button" id="finishButton">Фінал</button>
-        </div>
+        <div id="roundStage"></div>
       </section>
 
-      <section class="screen result hidden" id="result">
-        <div class="result-card">
-          <p class="kicker">Правильні слова і пісня</p>
-          <h2 id="resultTitle">Вгадали</h2>
-          <p id="resultText"></p>
-          <div class="song">
-            <strong id="answerTitle"></strong>
-            <span id="answerArtist"></span>
-          </div>
-          <audio id="audioPlayer" controls autoplay></audio>
-          <p class="preview" id="previewStatus"></p>
-          <a class="youtube" id="youtubeLink" href="#" target="_blank" rel="noreferrer">Відкрити на YouTube</a>
-          <div class="buttons center">
-            <button class="primary blue" type="button" id="stealSongButton">Зарахувати відповідь</button>
-            <button class="primary pink" type="button" id="nextRoundButton">Наступний раунд</button>
-            <button class="secondary" type="button" id="resultFinishButton">Фінал</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen final hidden" id="final">
+      <!-- FINAL -->
+      <section class="screen final hidden" id="finalScreen">
         <div class="result-card">
           <p class="kicker">Фінал</p>
           <h2 id="winnerTitle">Перемога</h2>
