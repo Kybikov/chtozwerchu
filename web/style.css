@@ -1338,3 +1338,75 @@ audio {
 }
 #winnerTitle { animation: winner-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1); }
 @keyframes winner-pop { from { transform: scale(0.4); opacity: 0; } }
+
+/* chat */
+.chat {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: min(320px, calc(100vw - 24px));
+  z-index: 40;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: rgba(8, 13, 34, 0.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.chat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: linear-gradient(120deg, rgba(255, 47, 167, 0.28), rgba(22, 183, 255, 0.24));
+  font-weight: 800;
+}
+.chat-min {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 900;
+}
+.chat-msgs {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px;
+  height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chat-msg {
+  padding: 7px 11px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--line);
+  font-size: 0.92rem;
+  word-break: break-word;
+}
+.chat-msg.girls { border-left-color: var(--pink); }
+.chat-msg.boys { border-left-color: var(--blue); }
+.chat-msg.mine { background: rgba(255, 255, 255, 0.12); }
+.chat-msg b { margin-right: 6px; }
+.chat-input {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+}
+.chat-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+.chat-input .secondary { padding: 10px 14px; }
+.chat.min .chat-msgs,
+.chat.min .chat-input { display: none; }

@@ -46,6 +46,19 @@ type actionPayload struct {
 	Payload map[string]any `json:"payload"`
 }
 
+type chatPayload struct {
+	Text string `json:"text"`
+}
+
+// chatOut is a chat message pushed to clients.
+type chatOut struct {
+	Type string    `json:"type"` // "chat"
+	From string    `json:"from"`
+	Team game.Team `json:"team"`
+	Text string    `json:"text"`
+	TS   int64     `json:"ts"`
+}
+
 // youAreMsg identifies the client and hands it a private reconnect token.
 type youAreMsg struct {
 	Type     string `json:"type"`

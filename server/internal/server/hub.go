@@ -37,7 +37,10 @@ type RoomSession struct {
 	timer      *time.Timer // countdown for timed rounds
 	timerKey   int         // round index the timer is armed for
 	previewKey int         // round index a melody preview lookup was started for
+	chatLog    []chatOut   // recent chat, capped
 }
+
+const chatHistoryLimit = 30
 
 type clientMsg struct {
 	c *Client
@@ -90,6 +93,8 @@ func (h *Hub) handleMessage(c *Client, data []byte) {
 		h.setTeam(c, m.Payload)
 	case "action":
 		h.doAction(c, m.Payload)
+	case "chat":
+		h.chat(c, m.Payload)
 	case "leave":
 		h.disconnect(c)
 	default:
@@ -171,6 +176,37 @@ func (h *Hub) setTeam(c *Client, payload json.RawMessage) {
 		h.engine.SetPlayerTeam(s.room, c.player, p.Team)
 		return nil
 	})
+}
+
+func (h *Hub) chat(c *Client, payload json.RawMessage) {
+	if c.session == nil || c.player == nil {
+		return
+	}
+	var p chatPayload
+	_ = json.Unmarshal(payload, &p)
+	text := strings.TrimSpace(p.Text)
+	if text == "" {
+		return
+	}
+	if len([]rune(text)) > 300 {
+		text = string([]rune(text)[:300])
+	}
+	msg := chatOut{Type: "chat", From: c.player.Name, Team: c.player.Team, Text: text, TS: time.Now().UnixMilli()}
+	s := c.session
+	s.mu.Lock()
+	s.chatLog = append(s.chatLog, msg)
+	if len(s.chatLog) > chatHistoryLimit {
+		s.chatLog = s.chatLog[len(s.chatLog)-chatHistoryLimit:]
+	}
+	clients := make([]*Client, 0, len(s.clients))
+	for cl := range s.clients {
+		clients = append(clients, cl)
+	}
+	s.mu.Unlock()
+	b, _ := json.Marshal(msg)
+	for _, cl := range clients {
+		cl.enqueue(b)
+	}
 }
 
 func (h *Hub) doAction(c *Client, payload json.RawMessage) {
@@ -367,8 +403,17 @@ func (h *Hub) attach(c *Client, s *RoomSession, p *game.Player) {
 	msgs := s.renderAll()
 	h.armTimer(s)
 	pNeed, pKey, pTitle, pArtist := h.previewRequest(s)
+	history := make([][]byte, 0, len(s.chatLog))
+	for _, m := range s.chatLog {
+		if b, err := json.Marshal(m); err == nil {
+			history = append(history, b)
+		}
+	}
 	s.mu.Unlock()
 	c.enqueue(you)
+	for _, b := range history {
+		c.enqueue(b)
+	}
 	for _, m := range msgs {
 		m.c.enqueue(m.b)
 	}

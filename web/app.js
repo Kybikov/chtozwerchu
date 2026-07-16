@@ -12,6 +12,7 @@ const state = {
   intended: false, // user intentionally in a room
   timerInterval: null,
   celebrated: false,
+  lastSfxRound: null,
 };
 
 function loadSession() {
@@ -109,10 +110,34 @@ function handleMessage(msg) {
       state.room = msg;
       render();
       break;
+    case "chat":
+      appendChat(msg);
+      break;
     case "error":
       toast(msg.message || "Помилка");
       break;
   }
+}
+
+// ---- chat ----
+function appendChat(m) {
+  const list = $("chatMsgs");
+  if (!list) return;
+  const li = document.createElement("li");
+  li.className = "chat-msg " + (m.team === "boys" ? "boys" : "girls");
+  const mine = state.room && state.room.you && m.from === state.room.you.name;
+  li.innerHTML = `<b>${esc(m.from)}</b> ${esc(m.text)}`;
+  if (mine) li.classList.add("mine");
+  list.appendChild(li);
+  while (list.children.length > 60) list.removeChild(list.firstChild);
+  list.scrollTop = list.scrollHeight;
+}
+function sendChat() {
+  const input = $("chatInput");
+  const text = input.value.trim();
+  if (!text) return;
+  sendRaw("chat", { text });
+  input.value = "";
 }
 
 // ---- meta / presets / round types ----
@@ -200,8 +225,10 @@ function render() {
   const r = state.room;
   if (!r) {
     showScreen("home");
+    show("chatBox", false);
     return;
   }
+  show("chatBox", true);
   const stage = r.stage;
   // score bar
   $("scoreBar").hidden = stage === "lobby" ? false : false;
@@ -231,6 +258,7 @@ function showScreen(name) {
     if (t) t.classList.add("hidden");
   }
   if (name !== "final") state.celebrated = false;
+  if (name !== "game") state.lastSfxRound = null;
 }
 function updateScore(r) {
   const g = r.teams.girls, b = r.teams.boys;
@@ -321,6 +349,30 @@ function celebrate(winner) {
   playFanfare();
 }
 
+// short win/lose cue on result
+function playSfx(won) {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const seq = won ? [659.25, 987.77] : [311.13, 207.65];
+    seq.forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = won ? "square" : "sawtooth";
+      o.frequency.value = f;
+      const t = ctx.currentTime + i * 0.12;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.2, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      o.connect(g).connect(ctx.destination);
+      o.start(t);
+      o.stop(t + 0.26);
+    });
+    setTimeout(() => ctx.close(), 900);
+  } catch {}
+}
+
 function playFanfare() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -358,6 +410,11 @@ function renderGame(r) {
   stage.innerHTML = renderer ? renderer(r) : `<div class="pad">Раунд ${esc(r.roundType)}</div>`;
   if (r.stage === "result") stage.insertAdjacentHTML("beforeend", resultFooter(r));
   wireRound(r);
+
+  if (r.stage === "result" && state.lastSfxRound !== r.roundIndex) {
+    state.lastSfxRound = r.roundIndex;
+    playSfx(!!(r.round && r.round.result && r.round.result.won));
+  }
 }
 
 function updateTimer(r) {
@@ -674,6 +731,9 @@ function boot() {
   $("myTeamSwitch").querySelectorAll(".team-btn").forEach((b) =>
     b.addEventListener("click", () => sendRaw("set_team", { team: b.dataset.team }))
   );
+  $("chatSend").addEventListener("click", sendChat);
+  $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChat(); });
+  $("chatHead").addEventListener("click", () => $("chatBox").classList.toggle("min"));
   $("backLobbyButton").addEventListener("click", () => action("lobby"));
   $("copyInviteButton").addEventListener("click", () => {
     navigator.clipboard.writeText($("inviteLink").value).then(() => toast("Скопійовано"));
