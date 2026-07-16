@@ -56,6 +56,9 @@ func BuildView(room *Room, viewer *Player) RoomView {
 	return v
 }
 
+// Winner returns the leading team, or "" on a draw.
+func Winner(room *Room) Team { return winner(room) }
+
 func winner(room *Room) Team {
 	g := room.Teams[TeamGirls].Score
 	b := room.Teams[TeamBoys].Score

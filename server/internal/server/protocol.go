@@ -20,13 +20,15 @@ type createPayload struct {
 	Rounds     int              `json:"rounds"`
 	RoundTypes []game.RoundType `json:"roundTypes"`
 	Preset     string           `json:"preset"`
+	AuthToken  string           `json:"authToken"`
 }
 
 type joinPayload struct {
-	Code  string    `json:"code"`
-	Name  string    `json:"name"`
-	Team  game.Team `json:"team"`
-	Token string    `json:"token"`
+	Code      string    `json:"code"`
+	Name      string    `json:"name"`
+	Team      game.Team `json:"team"`
+	Token     string    `json:"token"`
+	AuthToken string    `json:"authToken"`
 }
 
 type configPayload struct {

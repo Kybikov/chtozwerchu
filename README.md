@@ -61,6 +61,21 @@ DATABASE_URL="" REDIS_URL="" PORT=5599 WEB_DIR=../web go run ./cmd/server
 | `WEB_DIR` | тека зі статикою | `./web` |
 | `PUBLIC_URL` | базовий URL для інвайт-лінків | авто з браузера |
 
+## Акаунти (гість + реєстрація)
+
+Грати можна гостем (лише імʼя). Реєстрація зберігає історію матчів і статистику.
+Працює лише коли підключено Postgres (у embedded-режимі повертає 503).
+
+| Метод | Ендпоінт | Призначення |
+|---|---|---|
+| POST | `/api/auth/register` | `{email, password, displayName}` → `{token, user}` |
+| POST | `/api/auth/login` | `{email, password}` → `{token, user}` |
+| GET | `/api/me` | (Bearer) профіль + статистика |
+| GET | `/api/me/history` | (Bearer) останні матчі |
+
+Токен (`Authorization: Bearer …`) можна передавати у WS-повідомленнях
+`create_room`/`join` полем `authToken` — тоді матч зараховується акаунту.
+
 ## Health
 
 ```text
@@ -83,6 +98,6 @@ npm run import:lyrics
 - [x] Postgres (міграції + сід) та Redis (реєстр/снапшоти)
 - [x] docker-compose, Go multi-stage Dockerfile
 - [x] Фронт на WebSocket зі збереженим дизайном
+- [x] Акаунти (гість + реєстрація), історія матчів і статистика в Postgres
 - [ ] Аудіо-прев'ю для «Вгадай мелодію» (Deezer) — наступний етап
-- [ ] Акаунти (реєстрація) та історія матчів — наступний етап
 - [ ] Таймери раундів, анімації, звук перемоги — поліш

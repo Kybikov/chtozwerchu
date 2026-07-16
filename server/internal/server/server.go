@@ -17,11 +17,12 @@ type Server struct {
 	cfg     config.Config
 	hub     *Hub
 	catalog *store.Catalog
+	db      *store.DB // optional (nil in embedded mode disables accounts)
 }
 
 // New builds the HTTP server.
-func New(cfg config.Config, hub *Hub, catalog *store.Catalog) *Server {
-	return &Server{cfg: cfg, hub: hub, catalog: catalog}
+func New(cfg config.Config, hub *Hub, catalog *store.Catalog, db *store.DB) *Server {
+	return &Server{cfg: cfg, hub: hub, catalog: catalog, db: db}
 }
 
 // Handler returns the root HTTP handler.
@@ -32,6 +33,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/health", s.health)
 	mux.HandleFunc("/api/meta", s.meta)
 	mux.HandleFunc("/api/presets", s.presets)
+	s.registerAuthRoutes(mux)
 	mux.HandleFunc("/", s.static)
 	return mux
 }

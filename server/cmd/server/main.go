@@ -17,29 +17,31 @@ func main() {
 	ctx := context.Background()
 
 	var catalog *store.Catalog
+	var db *store.DB
 	if cfg.DatabaseURL == "" {
-		log.Printf("DATABASE_URL empty — using embedded catalog (no persistence)")
+		log.Printf("DATABASE_URL empty — using embedded catalog (no accounts/history)")
 		c, err := store.EmbeddedCatalog()
 		if err != nil {
 			log.Fatalf("embedded catalog: %v", err)
 		}
 		catalog = c
 	} else {
-		db, err := store.Connect(ctx, cfg.DatabaseURL)
+		conn, err := store.Connect(ctx, cfg.DatabaseURL)
 		if err != nil {
 			log.Fatalf("postgres: %v", err)
 		}
-		defer db.Close()
-		if err := db.Migrate(ctx); err != nil {
+		defer conn.Close()
+		if err := conn.Migrate(ctx); err != nil {
 			log.Fatalf("migrate: %v", err)
 		}
-		if err := db.Seed(ctx); err != nil {
+		if err := conn.Seed(ctx); err != nil {
 			log.Fatalf("seed: %v", err)
 		}
-		catalog, err = db.LoadCatalog(ctx)
+		catalog, err = conn.LoadCatalog(ctx)
 		if err != nil {
 			log.Fatalf("catalog: %v", err)
 		}
+		db = conn
 	}
 	log.Printf("catalog loaded: %d songs", len(catalog.Songs("")))
 
@@ -54,8 +56,8 @@ func main() {
 	}
 
 	engine := game.NewEngine(catalog)
-	hub := server.NewHub(engine, cache)
-	srv := server.New(cfg, hub, catalog)
+	hub := server.NewHub(engine, cache, db, cfg.JWTSecret)
+	srv := server.New(cfg, hub, catalog, db)
 
 	httpSrv := &http.Server{
 		Addr:              ":" + cfg.Port,

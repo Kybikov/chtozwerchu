@@ -166,6 +166,7 @@ function createRoom() {
       rounds: Number($("roundsInput").value) || 10,
       roundTypes: pickedTypes($("roundTypesPick")),
       preset: $("presetSelect").value,
+      authToken: authToken(),
     })
   );
   playIntro();
@@ -177,7 +178,7 @@ function joinRoom() {
   const team = $("playerTeamSelect").value;
   state.intended = true;
   saveSession({ code, token: "", name, team });
-  ensureOpen(() => sendRaw("join", { code, name, team }));
+  ensureOpen(() => sendRaw("join", { code, name, team, authToken: authToken() }));
   playIntro();
 }
 function ensureOpen(fn) {
@@ -492,6 +493,85 @@ function submitGuess() {
   if (gi) gi.value = "";
 }
 
+// ---- accounts ----
+function authToken() {
+  return state.auth && state.auth.token ? state.auth.token : "";
+}
+async function loadAuth() {
+  const token = localStorage.getItem("khz:auth");
+  if (!token) return renderAccount();
+  try {
+    const res = await fetch("/api/me", { headers: { Authorization: "Bearer " + token } });
+    if (!res.ok) throw new Error("bad");
+    const data = await res.json();
+    state.auth = { token, user: data.user, stats: data.stats };
+  } catch {
+    localStorage.removeItem("khz:auth");
+    state.auth = null;
+  }
+  renderAccount();
+}
+async function authRequest(path) {
+  const body = {
+    email: $("authEmail").value.trim(),
+    password: $("authPassword").value,
+    displayName: $("authName").value.trim(),
+  };
+  if (!body.email || !body.password) return toast("Введи email і пароль");
+  try {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast(data.error || "Помилка");
+    localStorage.setItem("khz:auth", data.token);
+    state.auth = { token: data.token, user: data.user, stats: { matches: 0, wins: 0, points: 0 } };
+    $("authPassword").value = "";
+    toast("Вітаємо, " + data.user.displayName + "!");
+    loadAuth();
+  } catch {
+    toast("Сервер недоступний");
+  }
+}
+function logout() {
+  localStorage.removeItem("khz:auth");
+  state.auth = null;
+  renderAccount();
+}
+function renderAccount() {
+  const guest = !state.auth;
+  show("accountGuest", guest);
+  show("accountUser", !guest);
+  $("historyList").classList.add("hidden");
+  if (!guest) {
+    const u = state.auth.user, s = state.auth.stats || {};
+    $("accountName").textContent = "Привіт, " + u.displayName;
+    $("accountStats").textContent = `${s.matches || 0} ігор · ${s.wins || 0} перемог · ${s.points || 0} балів`;
+    if ($("hostNameInput") && !$("hostNameInput").value) $("hostNameInput").value = u.displayName;
+  }
+}
+async function loadHistory() {
+  const list = $("historyList");
+  if (!list.classList.contains("hidden")) { list.classList.add("hidden"); return; }
+  if (!state.auth) return;
+  try {
+    const res = await fetch("/api/me/history", { headers: { Authorization: "Bearer " + state.auth.token } });
+    const data = await res.json();
+    const items = data.matches || [];
+    list.innerHTML = items.length
+      ? items.map((m) => {
+          const d = new Date(m.endedAt).toLocaleDateString("uk-UA");
+          return `<li class="${m.won ? "won" : "lost"}"><b>${m.won ? "🏆 Перемога" : "Поразка"}</b><span>${m.score} балів · ${d}</span></li>`;
+        }).join("")
+      : '<li class="empty">Ще немає зіграних ігор</li>';
+    list.classList.remove("hidden");
+  } catch {
+    toast("Не вдалося завантажити історію");
+  }
+}
+
 // ---- audio / misc ----
 function playIntro() {
   const a = $("introAudio");
@@ -501,6 +581,11 @@ function playIntro() {
 // ---- boot ----
 function boot() {
   loadMeta();
+  loadAuth();
+  $("loginButton").addEventListener("click", () => authRequest("/api/auth/login"));
+  $("registerButton").addEventListener("click", () => authRequest("/api/auth/register"));
+  $("logoutButton").addEventListener("click", logout);
+  $("historyButton").addEventListener("click", loadHistory);
   $("createRoomButton").addEventListener("click", createRoom);
   $("joinButton").addEventListener("click", joinRoom);
   $("startGameButton").addEventListener("click", () => sendRaw("start_game", {}));

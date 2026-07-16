@@ -1220,3 +1220,61 @@ audio {
 }
 .song-reveal strong { font-size: 1.5rem; }
 .phrase-full { color: var(--muted); font-style: italic; margin: 0; }
+
+/* account panel */
+.account-panel {
+  width: min(820px, 100%);
+  margin-bottom: 18px;
+  padding: 16px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 26px;
+  background: rgba(8, 13, 34, 0.7);
+  backdrop-filter: blur(14px);
+}
+.account-forms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.account-forms input {
+  flex: 1 1 150px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+.account-forms .secondary { flex: 0 0 auto; padding: 12px 18px; }
+.account-hint { margin: 10px 2px 0; color: var(--muted); font-size: 0.85rem; }
+.account-user {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.account-greet { display: grid; gap: 2px; }
+.account-greet b { font-size: 1.1rem; }
+.account-greet span { color: var(--muted); font-size: 0.9rem; }
+.account-actions { display: flex; gap: 8px; }
+.history-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.history-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid var(--line);
+}
+.history-list li.won { border-left-color: var(--green); }
+.history-list li.lost { border-left-color: var(--red); }
+.history-list li span { color: var(--muted); }
+.history-list li.empty { justify-content: center; color: var(--muted); }

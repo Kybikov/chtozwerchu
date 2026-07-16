@@ -44,6 +44,30 @@
 
       <!-- HOME: create or join -->
       <section class="screen setup" id="homeScreen">
+        <div class="account-panel" id="accountPanel">
+          <div class="account-guest" id="accountGuest">
+            <div class="account-forms">
+              <input id="authEmail" type="email" placeholder="email" autocomplete="username" />
+              <input id="authPassword" type="password" placeholder="пароль" autocomplete="current-password" />
+              <input id="authName" type="text" placeholder="імʼя (для реєстрації)" autocomplete="nickname" />
+              <button class="secondary" type="button" id="loginButton">Увійти</button>
+              <button class="secondary" type="button" id="registerButton">Реєстрація</button>
+            </div>
+            <p class="account-hint">Можна грати гостем — акаунт лише зберігає історію та статистику.</p>
+          </div>
+          <div class="account-user hidden" id="accountUser">
+            <div class="account-greet">
+              <b id="accountName">—</b>
+              <span id="accountStats"></span>
+            </div>
+            <div class="account-actions">
+              <button class="secondary" type="button" id="historyButton">Історія</button>
+              <button class="ghost" type="button" id="logoutButton">Вийти</button>
+            </div>
+          </div>
+          <ul class="history-list hidden" id="historyList"></ul>
+        </div>
+
         <div class="hero-panel">
           <p class="kicker">Створи кімнату</p>
           <h2>Нова гра</h2>
