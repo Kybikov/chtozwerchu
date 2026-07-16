@@ -26,6 +26,8 @@
 
 ## Запуск через Docker Compose
 
+Повна інструкція деплою (Coolify + SSH) — [`DEPLOY.md`](DEPLOY.md).
+
 ```bash
 docker compose up --build
 ```
