@@ -11,6 +11,7 @@ const state = {
   reconnectTimer: null,
   intended: false, // user intentionally in a room
   timerInterval: null,
+  celebrated: false,
 };
 
 function loadSession() {
@@ -229,6 +230,7 @@ function showScreen(name) {
     const t = $("roundTimer");
     if (t) t.classList.add("hidden");
   }
+  if (name !== "final") state.celebrated = false;
 }
 function updateScore(r) {
   const g = r.teams.girls, b = r.teams.boys;
@@ -251,6 +253,11 @@ function renderLobby(r) {
     li.innerHTML = `<b>${esc(p.name)}</b><span>${p.host ? "ведучий" : p.team === "girls" ? "дівчата" : "хлопці"}</span>`;
     list.appendChild(li);
   });
+  // team switch highlight
+  const myTeam = state.room.you ? state.room.you.team : null;
+  $("myTeamSwitch").querySelectorAll(".team-btn").forEach((b) =>
+    b.classList.toggle("on", b.dataset.team === myTeam)
+  );
   // host-only controls
   const controls = $("lobbyControls");
   controls.style.display = state.isHost ? "" : "none";
@@ -285,6 +292,56 @@ function renderFinal(r) {
   $("winnerTitle").textContent = title;
   $("winnerText").textContent = `${g.name}: ${g.score} — ${b.name}: ${b.score}`;
   $("backLobbyButton").style.display = state.isHost ? "" : "none";
+  if (!state.celebrated) {
+    state.celebrated = true;
+    celebrate(r.winner);
+  }
+}
+
+// ---- victory celebration ----
+function celebrate(winner) {
+  const colors =
+    winner === "girls" ? ["#ff2fa7", "#ff5cc4", "#fff246"]
+    : winner === "boys" ? ["#16b7ff", "#1555ff", "#fff246"]
+    : ["#ff2fa7", "#16b7ff", "#fff246"];
+  const host = $("finalScreen");
+  const layer = document.createElement("div");
+  layer.className = "confetti";
+  for (let i = 0; i < 90; i++) {
+    const p = document.createElement("i");
+    p.style.left = Math.random() * 100 + "%";
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = Math.random() * 0.8 + "s";
+    p.style.animationDuration = 1.8 + Math.random() * 1.6 + "s";
+    p.style.transform = `rotate(${Math.random() * 360}deg)`;
+    layer.appendChild(p);
+  }
+  host.appendChild(layer);
+  setTimeout(() => layer.remove(), 4200);
+  playFanfare();
+}
+
+function playFanfare() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C E G C
+    notes.forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const gain = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.value = f;
+      const t = ctx.currentTime + i * 0.14;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.25, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(gain).connect(ctx.destination);
+      o.start(t);
+      o.stop(t + 0.4);
+    });
+    setTimeout(() => ctx.close(), 1500);
+  } catch {}
 }
 
 // ---- game / rounds ----
@@ -614,6 +671,9 @@ function boot() {
   $("createRoomButton").addEventListener("click", createRoom);
   $("joinButton").addEventListener("click", joinRoom);
   $("startGameButton").addEventListener("click", () => sendRaw("start_game", {}));
+  $("myTeamSwitch").querySelectorAll(".team-btn").forEach((b) =>
+    b.addEventListener("click", () => sendRaw("set_team", { team: b.dataset.team }))
+  );
   $("backLobbyButton").addEventListener("click", () => action("lobby"));
   $("copyInviteButton").addEventListener("click", () => {
     navigator.clipboard.writeText($("inviteLink").value).then(() => toast("Скопійовано"));

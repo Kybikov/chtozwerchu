@@ -128,6 +128,15 @@ func (e *Engine) SetConfig(room *Room, rounds int, types []RoundType, preset str
 	room.touch()
 }
 
+// SetPlayerTeam moves a player between teams in the lobby.
+func (e *Engine) SetPlayerTeam(room *Room, player *Player, team Team) {
+	if room.Stage != StageLobby || player == nil || !team.Valid() {
+		return
+	}
+	player.Team = team
+	room.touch()
+}
+
 // StartGame builds the deck and opens the first round.
 func (e *Engine) StartGame(room *Room) error {
 	if room.Stage != StageLobby {

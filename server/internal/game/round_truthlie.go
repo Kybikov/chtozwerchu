@@ -1,10 +1,23 @@
 package game
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 func init() { register(truthLie{}) }
 
 type truthLie struct{}
+
+// Duration is the countdown for a truth/lie round.
+func (truthLie) Duration() time.Duration { return 25 * time.Second }
+
+// OnTimeout resolves the round as a wrong answer when time runs out.
+func (truthLie) OnTimeout(room *Room) {
+	if d, ok := room.Current.Data.(*truthLieData); ok {
+		resolveTruthLie(room, d, false)
+	}
+}
 
 type truthLieData struct {
 	Stmt Statement

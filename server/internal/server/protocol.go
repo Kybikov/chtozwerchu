@@ -31,6 +31,10 @@ type joinPayload struct {
 	AuthToken string    `json:"authToken"`
 }
 
+type setTeamPayload struct {
+	Team game.Team `json:"team"`
+}
+
 type configPayload struct {
 	Rounds     int              `json:"rounds"`
 	RoundTypes []game.RoundType `json:"roundTypes"`

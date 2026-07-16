@@ -1,10 +1,23 @@
 package game
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 func init() { register(crocodile{}) }
 
 type crocodile struct{}
+
+// Duration is the countdown for a crocodile round.
+func (crocodile) Duration() time.Duration { return 45 * time.Second }
+
+// OnTimeout resolves the round as unguessed when time runs out.
+func (crocodile) OnTimeout(room *Room) {
+	if d, ok := room.Current.Data.(*crocodileData); ok {
+		resolveCrocodile(room, d, false, "")
+	}
+}
 
 type crocodileData struct {
 	Puzzle    CrocodilePuzzle

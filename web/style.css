@@ -1295,3 +1295,46 @@ audio {
   animation: pulse 1s ease-in-out infinite;
 }
 @keyframes pulse { 50% { transform: scale(1.08); } }
+
+/* lobby team switch */
+.my-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.my-team > span { color: var(--muted); }
+.team-btn {
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-weight: 800;
+}
+.team-btn.girls.on { background: linear-gradient(120deg, var(--pink), var(--pink-hot)); border-color: #fff; }
+.team-btn.boys.on { background: linear-gradient(120deg, var(--blue), var(--blue-deep)); border-color: #fff; }
+
+/* victory confetti */
+.final { position: relative; }
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+.confetti i {
+  position: absolute;
+  top: -20px;
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  to { transform: translateY(115vh) rotate(720deg); opacity: 0.2; }
+}
+#winnerTitle { animation: winner-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes winner-pop { from { transform: scale(0.4); opacity: 0; } }

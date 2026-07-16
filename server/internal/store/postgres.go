@@ -50,7 +50,9 @@ func (db *DB) Migrate(ctx context.Context) error {
 	return nil
 }
 
-// Seed loads bundled content into empty tables.
+// Seed loads bundled content, adding any rows not yet present (idempotent
+// upsert via ON CONFLICT DO NOTHING). New seed items land on the next restart
+// without wiping existing data.
 func (db *DB) Seed(ctx context.Context) error {
 	if err := db.seedSongs(ctx); err != nil {
 		return err
@@ -67,14 +69,6 @@ func (db *DB) Seed(ctx context.Context) error {
 	return nil
 }
 
-func (db *DB) tableEmpty(ctx context.Context, table string) (bool, error) {
-	var n int
-	if err := db.pool.QueryRow(ctx, "SELECT count(*) FROM "+table).Scan(&n); err != nil {
-		return false, err
-	}
-	return n == 0, nil
-}
-
 type seedSong struct {
 	ID      string     `json:"id"`
 	Title   string     `json:"title"`
@@ -86,19 +80,14 @@ type seedSong struct {
 }
 
 func (db *DB) seedSongs(ctx context.Context) error {
-	empty, err := db.tableEmpty(ctx, "songs")
-	if err != nil || !empty {
-		return err
-	}
 	var songs []seedSong
 	if err := json.Unmarshal(seedSongs, &songs); err != nil {
 		return fmt.Errorf("parse songs seed: %w", err)
 	}
-	batch := db.pool
 	for _, s := range songs {
 		aliases, _ := json.Marshal(orEmptyStr(s.Aliases))
 		phrases, _ := json.Marshal(orEmptyPhrases(s.Phrases))
-		if _, err := batch.Exec(ctx,
+		if _, err := db.pool.Exec(ctx,
 			`INSERT INTO songs (id, title, artist, pack, era, aliases, phrases)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
 			s.ID, s.Title, s.Artist, orDefault(s.Pack, "ua"), s.Era, aliases, phrases); err != nil {
@@ -109,10 +98,6 @@ func (db *DB) seedSongs(ctx context.Context) error {
 }
 
 func (db *DB) seedStatements(ctx context.Context) error {
-	empty, err := db.tableEmpty(ctx, "statements")
-	if err != nil || !empty {
-		return err
-	}
 	var items []game.Statement
 	if err := json.Unmarshal(seedStatements, &items); err != nil {
 		return fmt.Errorf("parse statements seed: %w", err)
@@ -129,10 +114,6 @@ func (db *DB) seedStatements(ctx context.Context) error {
 }
 
 func (db *DB) seedAlias(ctx context.Context) error {
-	empty, err := db.tableEmpty(ctx, "alias_cards")
-	if err != nil || !empty {
-		return err
-	}
 	var items []game.AliasCard
 	if err := json.Unmarshal(seedAlias, &items); err != nil {
 		return fmt.Errorf("parse alias seed: %w", err)
@@ -150,10 +131,6 @@ func (db *DB) seedAlias(ctx context.Context) error {
 }
 
 func (db *DB) seedCrocodile(ctx context.Context) error {
-	empty, err := db.tableEmpty(ctx, "crocodile_puzzles")
-	if err != nil || !empty {
-		return err
-	}
 	var items []game.CrocodilePuzzle
 	if err := json.Unmarshal(seedCrocodile, &items); err != nil {
 		return fmt.Errorf("parse crocodile seed: %w", err)

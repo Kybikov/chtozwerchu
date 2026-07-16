@@ -18,5 +18,17 @@
   { "id": "c-vacation", "emoji": "✈️🏖️🌴", "answer": "Відпустка", "hint": "Політ на море відпочивати", "pack": "general" },
   { "id": "c-gym", "emoji": "🏋️💪🏃", "answer": "Спортзал", "hint": "Місце, де качають м'язи", "pack": "general" },
   { "id": "c-pizza-party", "emoji": "🍕🎮👫", "answer": "Вечірка з піцою", "hint": "Друзі, ігри і піца", "pack": "general" },
-  { "id": "c-sea-sunset", "emoji": "🌊🌇📸", "answer": "Захід сонця на морі", "hint": "Гарне фото біля води надвечір", "pack": "general" }
+  { "id": "c-sea-sunset", "emoji": "🌊🌇📸", "answer": "Захід сонця на морі", "hint": "Гарне фото біля води надвечір", "pack": "general" },
+  { "id": "c-pirates", "emoji": "🏴‍☠️⚓💰", "answer": "Пірати Карибського моря", "hint": "Джек Горобець і скарби", "pack": "movies" },
+  { "id": "c-matrix", "emoji": "🕶️💊🟢", "answer": "Матриця", "hint": "Червона чи синя пігулка?", "pack": "movies" },
+  { "id": "c-avatar", "emoji": "💙🌿🏹", "answer": "Аватар", "hint": "Сині наві на планеті Пандора", "pack": "movies" },
+  { "id": "c-minions", "emoji": "💛👓🍌", "answer": "Міньйони", "hint": "Жовті помічники лиходія", "pack": "movies" },
+  { "id": "c-toy-story", "emoji": "🤠🚀🧸", "answer": "Історія іграшок", "hint": "Ковбой і космічний рейнджер оживають", "pack": "movies" },
+  { "id": "c-ny", "emoji": "🎄🎅❄️", "answer": "Новий рік", "hint": "Ялинка, подарунки і свято взимку", "pack": "general" },
+  { "id": "c-wedding", "emoji": "👰🤵💍", "answer": "Весілля", "hint": "Наречена, наречений і обручки", "pack": "general" },
+  { "id": "c-school-day", "emoji": "🎒📚✏️", "answer": "Перший дзвоник", "hint": "Початок навчального року", "pack": "general" },
+  { "id": "c-storm", "emoji": "⛈️🌊🚤", "answer": "Шторм на морі", "hint": "Негода і хвилі на воді", "pack": "general" },
+  { "id": "c-picnic", "emoji": "🧺🌳🥪", "answer": "Пікнік", "hint": "Їжа на природі", "pack": "general" },
+  { "id": "c-detective", "emoji": "🕵️🔍🧩", "answer": "Детектив", "hint": "Розслідування і пошук доказів", "pack": "general" },
+  { "id": "c-space", "emoji": "🚀🌌👨‍🚀", "answer": "Політ у космос", "hint": "Ракета, зорі й астронавт", "pack": "general" }
 ]

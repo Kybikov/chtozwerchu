@@ -1,10 +1,23 @@
 package game
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 func init() { register(melody{}) }
 
 type melody struct{}
+
+// Duration is the countdown for a melody round.
+func (melody) Duration() time.Duration { return 40 * time.Second }
+
+// OnTimeout resolves the round as unguessed when time runs out.
+func (melody) OnTimeout(room *Room) {
+	if d, ok := room.Current.Data.(*melodyData); ok {
+		resolveMelody(room, d, false, "")
+	}
+}
 
 type melodyData struct {
 	Song  Song

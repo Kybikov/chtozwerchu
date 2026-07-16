@@ -86,6 +86,8 @@ func (h *Hub) handleMessage(c *Client, data []byte) {
 		h.hostAction(c, func(s *RoomSession) error { return h.engine.StartGame(s.room) })
 	case "set_config":
 		h.setConfig(c, m.Payload)
+	case "set_team":
+		h.setTeam(c, m.Payload)
 	case "action":
 		h.doAction(c, m.Payload)
 	case "leave":
@@ -155,6 +157,18 @@ func (h *Hub) setConfig(c *Client, payload json.RawMessage) {
 	_ = json.Unmarshal(payload, &p)
 	h.mutate(c, func(s *RoomSession) error {
 		h.engine.SetConfig(s.room, p.Rounds, p.RoundTypes, p.Preset)
+		return nil
+	})
+}
+
+func (h *Hub) setTeam(c *Client, payload json.RawMessage) {
+	if c.session == nil || c.player == nil {
+		return
+	}
+	var p setTeamPayload
+	_ = json.Unmarshal(payload, &p)
+	h.mutate(c, func(s *RoomSession) error {
+		h.engine.SetPlayerTeam(s.room, c.player, p.Team)
 		return nil
 	})
 }
