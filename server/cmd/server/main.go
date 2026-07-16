@@ -25,11 +25,17 @@ func main() {
 			log.Fatalf("embedded catalog: %v", err)
 		}
 		catalog = c
-	} else {
-		conn, err := store.Connect(ctx, cfg.DatabaseURL)
-		if err != nil {
-			log.Fatalf("postgres: %v", err)
+	} else if conn, err := store.Connect(ctx, cfg.DatabaseURL); err != nil {
+		// Stay up even if Postgres is unreachable: the game is fully playable
+		// in embedded mode; accounts/history simply require a working DB.
+		log.Printf("postgres unavailable (%v) — falling back to embedded catalog. "+
+			"Point DATABASE_URL at a reachable Postgres to enable accounts/history.", err)
+		c, e2 := store.EmbeddedCatalog()
+		if e2 != nil {
+			log.Fatalf("embedded catalog: %v", e2)
 		}
+		catalog = c
+	} else {
 		defer conn.Close()
 		if err := conn.Migrate(ctx); err != nil {
 			log.Fatalf("migrate: %v", err)
