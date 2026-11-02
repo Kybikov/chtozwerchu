@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -32,15 +33,20 @@ type Hub struct {
 
 // RoomSession binds a game room to the clients watching it.
 type RoomSession struct {
-	mu         sync.Mutex
-	room       *game.Room
-	clients    map[*Client]bool
-	saved      bool // whether the finished match has been persisted
-	saving     bool
-	timer      *time.Timer // countdown for timed rounds
-	timerKey   int         // round index the timer is armed for
-	previewKey int         // round index a melody preview lookup was started for
-	chatLog    []chatOut   // recent chat, capped
+	mediaLast      time.Time
+	mediaRequested time.Time
+	mediaProgress  time.Time
+	mediaClock     time.Time
+	mediaTimer     *time.Timer
+	mu             sync.Mutex
+	room           *game.Room
+	clients        map[*Client]bool
+	saved          bool // whether the finished match has been persisted
+	saving         bool
+	timer          *time.Timer // countdown for timed rounds
+	timerKey       int         // round index the timer is armed for
+	previewKey     int         // round index a melody preview lookup was started for
+	chatLog        []chatOut   // recent chat, capped
 }
 
 const chatHistoryLimit = 30
@@ -98,6 +104,8 @@ func (h *Hub) handleMessage(c *Client, data []byte) {
 		h.joinRoom(c, m.Payload)
 	case "watch":
 		h.watchRoom(c, m.Payload)
+	case "media_status":
+		h.receiveMedia(c, m.Payload)
 	case "start_game":
 		h.hostAction(c, func(s *RoomSession) error { return h.engine.StartGame(s.room) })
 	case "set_config":
@@ -121,6 +129,8 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 	}
 	var p createPayload
 	_ = json.Unmarshal(payload, &p)
+	c.mediaSupported = p.Protocol >= 2
+	c.partyTV = false
 	userID, displayName := h.resolveUser(p.AuthToken)
 	if userID == nil && p.AuthToken == "" {
 		userID, displayName = c.userID, c.displayName
@@ -141,6 +151,7 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 		RoundTypes: p.RoundTypes,
 		Preset:     p.Preset,
 		UserID:     userID,
+		VoteMode:   p.VoteMode,
 	})
 	s := &RoomSession{room: room, clients: map[*Client]bool{}}
 	h.mu.Lock()
@@ -160,6 +171,8 @@ func (h *Hub) joinRoom(c *Client, payload json.RawMessage) {
 	}
 	var p joinPayload
 	_ = json.Unmarshal(payload, &p)
+	c.mediaSupported = p.Protocol >= 2
+	c.partyTV = false
 	code := strings.ToUpper(strings.TrimSpace(p.Code))
 	s := h.session(code)
 	if s == nil {
@@ -204,7 +217,7 @@ func (h *Hub) setConfig(c *Client, payload json.RawMessage) {
 	var p configPayload
 	_ = json.Unmarshal(payload, &p)
 	h.mutate(c, func(s *RoomSession) error {
-		h.engine.SetConfig(s.room, p.Rounds, p.RoundTypes, p.Preset)
+		h.engine.SetConfig(s.room, p.Rounds, p.RoundTypes, p.Preset, p.VoteMode)
 		return nil
 	})
 }
@@ -269,6 +282,9 @@ func (h *Hub) doAction(c *Client, payload json.RawMessage) {
 				return errors.New("Цю картку вже завершено.")
 			}
 		}
+		if handled, err := h.mediaAction(s, c, p); handled {
+			return err
+		}
 		return h.engine.Apply(s.room, game.Action{
 			// The React client includes the round and card to reject delayed clicks.
 			Name:    p.Name,
@@ -295,6 +311,11 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 		return
 	}
 	s.mu.Lock()
+	if !s.clients[c] {
+		s.mu.Unlock()
+		c.enqueue(errorMsg("Це підключення вже замінено. Відкрий кімнату заново."))
+		return
+	}
 	err := fn(s)
 	var msgs []clientMsg
 	if err == nil {
@@ -304,6 +325,7 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 		}
 		h.archiveParty(s)
 		h.armTimer(s)
+		h.armMediaWatchdog(s)
 	}
 	pNeed, pKey, pTitle, pArtist := false, 0, "", ""
 	if err == nil {
@@ -347,13 +369,14 @@ func (h *Hub) armTimer(s *RoomSession) {
 	if d < 0 {
 		d = 0
 	}
-	s.timer = time.AfterFunc(d, func() { h.fireTimeout(s, key) })
+	deadline := r.Current.Deadline
+	s.timer = time.AfterFunc(d, func() { h.fireTimeout(s, key, deadline) })
 }
 
 // fireTimeout resolves a timed round when its deadline passes.
-func (h *Hub) fireTimeout(s *RoomSession, key int) {
+func (h *Hub) fireTimeout(s *RoomSession, key int, deadline time.Time) {
 	s.mu.Lock()
-	if s.room.RoundIndex != key || s.room.Stage != game.StagePlaying || s.room.Paused {
+	if s.room.RoundIndex != key || s.room.Stage != game.StagePlaying || s.room.Paused || s.room.Current == nil || !s.room.Current.Deadline.Equal(deadline) {
 		s.mu.Unlock()
 		return
 	}
@@ -419,7 +442,9 @@ func (h *Hub) resolveUser(token string) (*string, string) {
 
 func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 	var p struct {
-		Code string `json:"code"`
+		Code    string `json:"code"`
+		TVToken string `json:"tvToken"`
+		TV      bool   `json:"tv"`
 	}
 	if json.Unmarshal(payload, &p) != nil {
 		c.enqueue(errorMsg("Перевір код кімнати."))
@@ -436,6 +461,31 @@ func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 	c.session = s
 	c.player = nil
 	s.mu.Lock()
+	s.room.EnsureMedia()
+	if p.TV || p.TVToken != "" {
+		if subtle.ConstantTimeCompare([]byte(p.TVToken), []byte(s.room.TVToken)) != 1 {
+			s.mu.Unlock()
+			c.session = nil
+			c.enqueue(errorMsg("Посилання TV недійсне. Відкрий нове з пульта ведучого."))
+			return
+		}
+		c.partyTV = true
+		c.mediaSupported = true
+		for old := range s.clients {
+			if old.partyTV {
+				delete(s.clients, old)
+				old.enqueue([]byte(`{"type":"replaced","message":"Звук передано іншому TV-екрану."}`))
+				go func(peer *Client) { time.Sleep(100 * time.Millisecond); peer.conn.Close() }(old)
+			}
+		}
+		if s.room.Media.Output == "tv" {
+			h.engine.Pause(s.room)
+			s.room.Media.Ready = false
+			s.room.Media.Enabled = false
+		}
+	} else {
+		c.partyTV = false
+	}
 	if len(s.clients) >= 64 {
 		s.mu.Unlock()
 		c.session = nil
@@ -443,19 +493,38 @@ func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 		return
 	}
 	s.clients[c] = true
-	view := game.BuildView(s.room, nil)
+	s.refreshMediaPresence()
+	msgs := s.renderAll()
 	s.mu.Unlock()
-	c.enqueue([]byte(`{"type":"watching"}`))
-	c.enqueue(stateMsg(view))
+	ack, _ := json.Marshal(map[string]any{"type": "watching", "tv": c.partyTV})
+	c.enqueue(ack)
+	for _, m := range msgs {
+		m.c.enqueue(m.b)
+	}
 }
 
 func (h *Hub) attach(c *Client, s *RoomSession, p *game.Player) {
 	c.session = s
 	c.player = p
 	s.mu.Lock()
+	if p.IsHost {
+		for old := range s.clients {
+			if old.player == p {
+				delete(s.clients, old)
+				old.enqueue([]byte(`{"type":"replaced","message":"Пульт ведучого відкрито на іншому пристрої."}`))
+				go func(peer *Client) { time.Sleep(100 * time.Millisecond); peer.conn.Close() }(old)
+			}
+		}
+		h.engine.Pause(s.room)
+		s.room.Media.Ready = false
+		if s.room.Media.Output == "host" {
+			s.room.Media.Enabled = false
+		}
+	}
 	s.clients[c] = true
+	s.refreshMediaPresence()
 	p.Connected = true
-	you := youAre(p, s.room.Code)
+	you := youAre(p, s.room.Code, s.room.TVToken)
 	msgs := s.renderAll()
 	h.armTimer(s)
 	pNeed, pKey, pTitle, pArtist := h.previewRequest(s)
@@ -487,6 +556,13 @@ func (h *Hub) disconnect(c *Client) {
 	c.session = nil
 	s.mu.Lock()
 	delete(s.clients, c)
+	s.refreshMediaPresence()
+	if c.partyTV && s.room.Media.Output == "tv" && s.audioOwner() == nil {
+		h.engine.Pause(s.room)
+		s.room.Media.Ready = false
+		s.room.Media.Notice = "TV від’єднався. Поверни екран або обери звук на телефоні."
+		h.armTimer(s)
+	}
 	if c.player != nil {
 		stillHere := false
 		for cl := range s.clients {
@@ -555,8 +631,13 @@ func (h *Hub) scheduleCleanup(code string) {
 	})
 }
 
-func youAre(p *game.Player, code string) []byte {
+func youAre(p *game.Player, code string, tvTokens ...string) []byte {
+	tvToken := ""
+	if p.IsHost && len(tvTokens) > 0 {
+		tvToken = tvTokens[0]
+	}
 	b, _ := json.Marshal(youAreMsg{
+		TVToken:  tvToken,
 		Type:     "you_are",
 		PlayerID: p.ID,
 		Token:    p.Token,

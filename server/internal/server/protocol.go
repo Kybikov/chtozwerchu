@@ -13,6 +13,8 @@ type inMsg struct {
 }
 
 type createPayload struct {
+	Protocol   int              `json:"protocol"`
+	VoteMode   string           `json:"voteMode"`
 	HostName   string           `json:"hostName"`
 	HostTeam   game.Team        `json:"hostTeam"`
 	GirlsName  string           `json:"girlsName"`
@@ -24,6 +26,7 @@ type createPayload struct {
 }
 
 type joinPayload struct {
+	Protocol  int       `json:"protocol"`
 	Code      string    `json:"code"`
 	Name      string    `json:"name"`
 	Team      game.Team `json:"team"`
@@ -36,6 +39,7 @@ type setTeamPayload struct {
 }
 
 type configPayload struct {
+	VoteMode   string           `json:"voteMode"`
 	Rounds     int              `json:"rounds"`
 	RoundTypes []game.RoundType `json:"roundTypes"`
 	Preset     string           `json:"preset"`
@@ -63,6 +67,7 @@ type chatOut struct {
 
 // youAreMsg identifies the client and hands it a private reconnect token.
 type youAreMsg struct {
+	TVToken  string `json:"tvToken,omitempty"`
 	Type     string `json:"type"`
 	PlayerID string `json:"playerId"`
 	Token    string `json:"token"`

@@ -77,11 +77,12 @@ type RoundState struct {
 
 // RoundResult is the outcome of a resolved round.
 type RoundResult struct {
-	Won    bool   `json:"won"`
-	Points int    `json:"points"`
-	Team   Team   `json:"team"`
-	Answer string `json:"answer"`
-	Detail string `json:"detail,omitempty"`
+	Voting *VoteResult `json:"voting,omitempty"`
+	Won    bool        `json:"won"`
+	Points int         `json:"points"`
+	Team   Team        `json:"team"`
+	Answer string      `json:"answer"`
+	Detail string      `json:"detail,omitempty"`
 }
 
 // RoundData is implemented by each round's internal state struct.
@@ -94,6 +95,49 @@ type RoomConfig struct {
 	Rounds     int         `json:"rounds"`
 	RoundTypes []RoundType `json:"roundTypes"`
 	Preset     string      `json:"preset"`
+	VoteMode   string      `json:"voteMode"`
+}
+
+type RoomMedia struct {
+	Enabled     bool    `json:"enabled"`
+	TVConnected bool    `json:"tvConnected"`
+	Output      string  `json:"output"`
+	Connected   bool    `json:"connected"`
+	Ready       bool    `json:"ready"`
+	Playing     bool    `json:"playing"`
+	Pending     bool    `json:"pending"`
+	Wanted      bool    `json:"wanted"`
+	Position    float64 `json:"position"`
+	Duration    float64 `json:"duration"`
+	Volume      int     `json:"volume"`
+	Revision    uint64  `json:"revision"`
+	Notice      string  `json:"notice,omitempty"`
+}
+
+func (r *Room) EnsureMedia() {
+	if r.Media == nil {
+		r.Media = &RoomMedia{Output: "host", Volume: 65, Revision: 1}
+	}
+	if r.TVToken == "" {
+		r.TVToken = longID()
+	}
+}
+func (r *Room) StopMedia() {
+	r.EnsureMedia()
+	if r.Media.Wanted || r.Media.Playing || r.Media.Pending {
+		r.Media.Revision++
+	}
+	r.Media.Wanted = false
+	r.Media.Playing = false
+	r.Media.Pending = false
+}
+func (r *Room) ResetMedia() {
+	r.StopMedia()
+	r.Media.Position = 0
+	r.Media.Duration = 0
+	r.Media.Ready = false
+	r.Media.Notice = ""
+	r.Media.Revision++
 }
 
 // Room is the authoritative game state for a single lobby/match.
@@ -101,6 +145,8 @@ type Room struct {
 	MatchID    string              `json:"-"`
 	Code       string              `json:"code"`
 	HostToken  string              `json:"-"`
+	TVToken    string              `json:"-"`
+	Media      *RoomMedia          `json:"media,omitempty"`
 	Stage      Stage               `json:"stage"`
 	Config     RoomConfig          `json:"config"`
 	Teams      map[Team]*TeamState `json:"teams"`

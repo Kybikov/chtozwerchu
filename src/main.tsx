@@ -13,6 +13,7 @@ const PartyScreen = lazy(() => import("./components/PartyScreen"));
 import "./styles.css";
 import "./platform.css";
 import "./party.css";
+import "./party-extensions.css";
 const screen = new URLSearchParams(location.search).get("screen");
 const root =
   import.meta.hot?.data.root ?? createRoot(document.getElementById("root")!);

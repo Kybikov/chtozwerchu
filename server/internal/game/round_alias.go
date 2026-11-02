@@ -49,7 +49,7 @@ func (alias) Start(room *Room, cat Catalog) (RoundData, error) {
 func chooseExplainer(room *Room) string {
 	// Prefer a connected player on the active team; fall back to the host.
 	for _, p := range room.Players {
-		if p.Team == room.ActiveTeam && p.Connected {
+		if p.Team == room.ActiveTeam && p.Connected && !p.IsHost {
 			return p.ID
 		}
 	}

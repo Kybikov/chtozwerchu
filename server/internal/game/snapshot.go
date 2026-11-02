@@ -12,6 +12,7 @@ type PrivateSnapshot struct {
 	Room      *Room              `json:"room"`
 	MatchID   string             `json:"matchId"`
 	HostToken string             `json:"hostToken"`
+	TVToken   string             `json:"tvToken"`
 	Tokens    map[string]string  `json:"tokens"`
 	Accounts  map[string]*string `json:"accounts"`
 	Deck      []RoundSpec        `json:"deck"`
@@ -21,7 +22,7 @@ type PrivateSnapshot struct {
 }
 
 func Snapshot(r *Room) ([]byte, error) {
-	snap := PrivateSnapshot{Room: r, MatchID: r.MatchID, HostToken: r.HostToken, Tokens: map[string]string{}, Accounts: map[string]*string{}, Deck: r.Deck, Current: r.Current}
+	snap := PrivateSnapshot{Room: r, MatchID: r.MatchID, HostToken: r.HostToken, TVToken: r.TVToken, Tokens: map[string]string{}, Accounts: map[string]*string{}, Deck: r.Deck, Current: r.Current}
 	for _, p := range r.Players {
 		snap.Tokens[p.ID] = p.Token
 		snap.Accounts[p.ID] = p.UserID
@@ -50,6 +51,14 @@ func RestoreSnapshot(raw []byte) (*Room, error) {
 	}
 	r.MatchID = s.MatchID
 	r.HostToken = s.HostToken
+	r.TVToken = s.TVToken
+	r.EnsureMedia()
+	r.StopMedia()
+	r.Media.Ready = false
+	r.Media.Connected = false
+	r.Media.TVConnected = false
+	r.Media.Enabled = false
+	r.Media.Revision++
 	r.Deck = s.Deck
 	r.Current = s.Current
 	for _, p := range r.Players {

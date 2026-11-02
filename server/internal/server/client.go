@@ -10,21 +10,23 @@ import (
 
 const (
 	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
+	pongWait   = 15 * time.Second
+	pingPeriod = 5 * time.Second
 	maxMessage = 16 * 1024
 	sendBuffer = 32
 )
 
 // Client is a single WebSocket connection.
 type Client struct {
-	hub         *Hub
-	conn        *websocket.Conn
-	send        chan []byte
-	session     *RoomSession
-	player      *game.Player
-	userID      *string
-	displayName string
+	mediaSupported bool
+	partyTV        bool
+	hub            *Hub
+	conn           *websocket.Conn
+	send           chan []byte
+	session        *RoomSession
+	player         *game.Player
+	userID         *string
+	displayName    string
 }
 
 func (c *Client) readPump() {

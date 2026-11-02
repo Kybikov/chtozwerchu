@@ -36,6 +36,7 @@ type CreateParams struct {
 	RoundTypes []RoundType
 	Preset     string
 	UserID     *string
+	VoteMode   string
 }
 
 // CreateRoom builds a fresh lobby with the host as its first player.
@@ -69,6 +70,7 @@ func (e *Engine) CreateRoom(p CreateParams) (*Room, *Player) {
 			Rounds:     rounds,
 			RoundTypes: types,
 			Preset:     firstNonEmpty(p.Preset, "party"),
+			VoteMode:   validVoteMode(p.VoteMode),
 		},
 		Teams: map[Team]*TeamState{
 			TeamGirls: {Name: firstNonEmpty(strings.TrimSpace(p.GirlsName), "Дівчата")},
@@ -79,6 +81,7 @@ func (e *Engine) CreateRoom(p CreateParams) (*Room, *Player) {
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
+	room.EnsureMedia()
 	return room, host
 }
 
@@ -118,7 +121,7 @@ func (e *Engine) Join(room *Room, name string, team Team, token string) (*Player
 }
 
 // SetConfig updates lobby settings (host only, lobby stage only).
-func (e *Engine) SetConfig(room *Room, rounds int, types []RoundType, preset string) {
+func (e *Engine) SetConfig(room *Room, rounds int, types []RoundType, preset string, voteModes ...string) {
 	if room.Stage != StageLobby {
 		return
 	}
@@ -130,6 +133,9 @@ func (e *Engine) SetConfig(room *Room, rounds int, types []RoundType, preset str
 	}
 	if preset != "" {
 		room.Config.Preset = preset
+	}
+	if len(voteModes) > 0 && voteModes[0] != "" {
+		room.Config.VoteMode = validVoteMode(voteModes[0])
 	}
 	room.touch()
 }
@@ -201,6 +207,7 @@ func (e *Engine) hasContent(room *Room, t RoundType) bool {
 }
 
 func (e *Engine) startRound(room *Room) error {
+	room.ResetMedia()
 	if room.RoundIndex >= len(room.Deck) {
 		room.Stage = StageFinal
 		room.Current = nil
@@ -245,6 +252,7 @@ func (e *Engine) Timeout(room *Room) {
 	}
 	if to, ok := h.(TimeoutHandler); ok {
 		to.OnTimeout(room)
+		room.StopMedia()
 		room.touch()
 	}
 }
@@ -289,6 +297,7 @@ func (e *Engine) Apply(room *Room, act Action) error {
 		room.Paused = false
 		room.Stage = StageFinal
 		room.Current = nil
+		room.StopMedia()
 		room.touch()
 		return nil
 	case "lobby":
@@ -307,6 +316,9 @@ func (e *Engine) Apply(room *Room, act Action) error {
 		if err := h.Action(room, act); err != nil {
 			return err
 		}
+		if room.Stage != StagePlaying {
+			room.StopMedia()
+		}
 		room.touch()
 		return nil
 	}
@@ -324,6 +336,7 @@ func (e *Engine) Next(room *Room) error {
 
 // ToLobby resets scores and returns the room to the lobby for a new game.
 func (e *Engine) ToLobby(room *Room) error {
+	room.ResetMedia()
 	room.Stage = StageLobby
 	room.Current = nil
 	room.Deck = nil
@@ -347,6 +360,7 @@ func (e *Engine) recordRound(room *Room) {
 
 // Pause stops the server deadline. Reconnecting a host never resumes by itself.
 func (e *Engine) Pause(room *Room) {
+	room.StopMedia()
 	if room.Paused || room.Stage != StagePlaying || room.Current == nil {
 		return
 	}
@@ -356,6 +370,13 @@ func (e *Engine) Pause(room *Room) {
 		room.Current.Deadline = time.Time{}
 	}
 	room.touch()
+}
+
+func validVoteMode(mode string) string {
+	if mode == "players" {
+		return mode
+	}
+	return "team"
 }
 
 func (r *Room) touch() { r.UpdatedAt = time.Now() }

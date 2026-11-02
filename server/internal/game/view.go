@@ -1,5 +1,7 @@
 package game
 
+import "time"
+
 // YouInfo tells a client who it is inside the room.
 type YouInfo struct {
 	PlayerID   string `json:"playerId"`
@@ -11,6 +13,8 @@ type YouInfo struct {
 
 // RoomView is the redacted, per-viewer snapshot sent over the wire.
 type RoomView struct {
+	ServerTime  int64               `json:"serverTime"`
+	Media       *RoomMedia          `json:"media,omitempty"`
 	Code        string              `json:"code"`
 	Stage       Stage               `json:"stage"`
 	Config      RoomConfig          `json:"config"`
@@ -33,6 +37,8 @@ type RoomView struct {
 // BuildView renders the room for a specific viewer (may be nil for spectators).
 func BuildView(room *Room, viewer *Player) RoomView {
 	v := RoomView{
+		ServerTime: time.Now().UnixMilli(),
+		Media:      room.Media,
 		Code:       room.Code,
 		Stage:      room.Stage,
 		Config:     room.Config,

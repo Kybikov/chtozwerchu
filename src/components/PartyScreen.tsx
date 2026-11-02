@@ -35,7 +35,9 @@ import Backdrop from "./Backdrop";
 import { Brand } from "./Home";
 import { AccountButton, useIdentity } from "../lib/identity";
 import { contests, useParty, type Contest, type PartyView } from "../lib/party";
-import { usePlayer } from "../lib/usePlayer";
+import { usePartyAudio } from "../lib/usePartyAudio";
+import PartyVote, { VoteModePicker } from "./PartyVote";
+import PartySound, { TVSoundGate } from "./PartySound";
 import WakeSlider from "./react-bits/WakeSlider";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
@@ -52,6 +54,7 @@ export default function PartyScreen() {
   const [team, setTeam] = useState<Team>("girls");
   const [names, setNames] = useState({ girls: "Дівчата", boys: "Хлопці" });
   const [rounds, setRounds] = useState(10);
+  const [voteMode, setVoteMode] = useState<"team" | "players">("team");
   const [types, setTypes] = useState<Contest[]>(contests.map((c) => c.id));
   const [sheet, setSheet] = useState<
     "invite" | "leave" | "settings" | "finish" | null
@@ -60,7 +63,7 @@ export default function PartyScreen() {
   const [privateOpen, setPrivateOpen] = useState(false);
   const [stageOnly, setStageOnly] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [now, setNow] = useState(Date.now());
+  const now = party.serverNow;
   const busy = party.status === "connecting" || party.status === "reconnecting";
   const host = !!s?.you?.host;
   const online = party.status === "connected";
@@ -71,27 +74,16 @@ export default function PartyScreen() {
     !!s.you &&
     (host || s.you.team === s.activeTeam);
   const [notice, setNotice] = useState("");
-  const player = usePlayer(
-    s?.roundType === "melody" && s.stage === "playing"
-      ? s.round?.previewUrl || ""
-      : "",
-    setNotice,
-  );
+  const sound = usePartyAudio(party, setNotice);
+  const player = sound.player;
   useEffect(() => {
     if (user && !name) setName(user.displayName);
   }, [user]);
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 150);
-    return () => clearInterval(timer);
-  }, []);
   useEffect(() => {
     setGuess("");
     setPrivateOpen(false);
     setNotice("");
   }, [s?.roundIndex, s?.stage]);
-  useEffect(() => {
-    if (s?.paused || !online || s?.stage !== "playing") player.pause();
-  }, [s?.paused, online, s?.stage]);
   useEffect(() => {
     if (notice) {
       const timer = setTimeout(() => setNotice(""), 6000);
@@ -130,6 +122,7 @@ export default function PartyScreen() {
         rounds,
         roundTypes: types,
         preset: "party",
+        voteMode,
       });
     }
   };
@@ -163,11 +156,8 @@ export default function PartyScreen() {
     (remaining > 25 ? 3 : remaining > 10 ? 2 : 1) -
       (s?.round?.hints?.length || 0),
   );
-  const startMelody = async () => {
-    if (!host || !online) return;
-    if (s?.round?.previewStatus !== "unavailable" && !(await player.play()))
-      return;
-    if (!party.action("resume")) player.pause();
+  const startMelody = () => {
+    if (host && online) party.action("resume");
   };
   const expand = async () => {
     try {
@@ -177,9 +167,31 @@ export default function PartyScreen() {
       setNotice("Повноекранний режим недоступний у цьому браузері.");
     }
   };
+  if (!s && party.watching)
+    return (
+      <div className="app-shell party-shell viewer-wait-shell">
+        <Backdrop effects={false} />
+        <audio ref={player.ref} preload="metadata" />
+        <Panel className="viewer-wait">
+          <Monitor size={38} />
+          <h1>
+            {party.error
+              ? "Не вдалося відкрити сцену"
+              : "Підключаємо вашу сцену"}
+          </h1>
+          <p role={party.error ? "alert" : "status"}>
+            {party.error || "Зачекайте, поки екран приєднається до кімнати."}
+          </p>
+          <a href="/" className="button button-soft">
+            На головну
+            <ArrowLeft size={18} />
+          </a>
+        </Panel>
+      </div>
+    );
   return (
     <div
-      className={`app-shell party-shell ${stageOnly || party.watching ? "party-stage-only" : ""}`}
+      className={`app-shell party-shell ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
     >
       <Backdrop effects={localStorage.getItem("khz:effects") !== "off"} />
       <audio ref={player.ref} preload="metadata" />
@@ -313,6 +325,11 @@ export default function PartyScreen() {
                       </label>
                     ))}
                   </div>
+                  <VoteModePicker
+                    value={voteMode}
+                    onChange={setVoteMode}
+                    disabled={busy}
+                  />
                   <div className="field-label">
                     Скільки раундів?
                     <div className="choice-row">
@@ -564,6 +581,23 @@ export default function PartyScreen() {
                   </span>
                   <h2>{s.result?.answer}</h2>
                   <p>{s.result?.detail}</p>
+                  {s.result?.voting && (
+                    <div className="vote-result-summary">
+                      <span>
+                        Правда <b>{s.result.voting.truth}</b>
+                      </span>
+                      <span>
+                        Брехня <b>{s.result.voting.lie}</b>
+                      </span>
+                      <p>
+                        {s.result.voting.outcome === "tie"
+                          ? "Голоси навпіл. Цього разу без балів."
+                          : s.result.voting.outcome === "empty"
+                            ? "Команда не встигла проголосувати."
+                            : `Рішення більшості · ${s.result.voting.cast} з ${s.result.voting.eligible} голосів`}
+                      </p>
+                    </div>
+                  )}
                   <div className="party-result-points">
                     +{s.result?.points || 0}
                     <span>{s.teams[s.result?.team || s.activeTeam].name}</span>
@@ -630,24 +664,30 @@ export default function PartyScreen() {
                   {s.roundType === "melody" && (
                     <div className="melody-stage">
                       <div
-                        className={`melody-disc ${player.playing ? "spinning" : ""}`}
+                        className={`melody-disc ${s.media?.playing ? "spinning" : ""}`}
                         aria-hidden="true"
                       >
                         <DiscIcon />
                       </div>
                       <h3>Знайомий мотив?</h3>
                       <p>Назвіть пісню та виконавця.</p>
-                      {!party.watching && (
+                      {host && (
                         <>
                           <Button
                             variant="primary"
-                            disabled={!player.ready || !online || s.paused}
+                            disabled={
+                              !s.media?.ready ||
+                              !online ||
+                              s.paused ||
+                              party.pending
+                            }
                             onClick={() => {
-                              if (player.playing) player.pause();
-                              else void player.play();
+                              party.action(
+                                s.media?.playing ? "pause" : "audio_replay",
+                              );
                             }}
                           >
-                            {player.playing ? (
+                            {s.media?.playing ? (
                               <Pause size={22} />
                             ) : (
                               <Play size={22} fill="currentColor" />
@@ -656,13 +696,15 @@ export default function PartyScreen() {
                               ? s.round?.previewStatus === "unavailable"
                                 ? "Фрагмент недоступний"
                                 : "Шукаємо фрагмент…"
-                              : player.playing
+                              : s.media?.playing
                                 ? "Пауза музики"
                                 : "Слухати фрагмент"}
                           </Button>
                           <span className="potential-caption">
-                            Відтворення на цьому пристрої · {melodyPoints} бали
-                            · швидша відповідь дає більше
+                            {s.media?.output === "tv"
+                              ? "Звук на TV"
+                              : "Звук на пульті"}{" "}
+                            · {melodyPoints} бали · швидша відповідь дає більше
                           </span>
                         </>
                       )}
@@ -689,27 +731,12 @@ export default function PartyScreen() {
                     <div className="truth-stage">
                       <span className="truth-quote">“</span>
                       <h3>{s.round?.statement}</h3>
-                      <p>Порадьтеся командою й дайте одну відповідь.</p>
-                      {canAct && (
-                        <div className="truth-options">
-                          <Button
-                            onClick={() =>
-                              party.action("vote", { truth: true })
-                            }
-                          >
-                            <Check size={23} />
-                            Правда
-                          </Button>
-                          <Button
-                            onClick={() =>
-                              party.action("vote", { truth: false })
-                            }
-                          >
-                            <X size={23} />
-                            Брехня
-                          </Button>
-                        </div>
-                      )}
+                      <PartyVote
+                        state={s}
+                        online={online}
+                        pending={party.pending}
+                        action={party.action}
+                      />
                     </div>
                   )}
                   {s.roundType === "alias" && (
@@ -764,9 +791,11 @@ export default function PartyScreen() {
                           variant="primary"
                           disabled={
                             !online ||
-                            (s.round?.awaitingAudio &&
-                              !player.ready &&
-                              s.round.previewStatus !== "unavailable")
+                            party.pending ||
+                            !!s.media?.pending ||
+                            (s.roundType === "melody" &&
+                              !s.media?.ready &&
+                              s.round?.previewStatus !== "unavailable")
                           }
                           onClick={() =>
                             s.round?.awaitingAudio
@@ -778,7 +807,7 @@ export default function PartyScreen() {
                           {s.round?.awaitingAudio
                             ? s.round.previewStatus === "unavailable"
                               ? "Грати з наспівом ведучого"
-                              : player.ready
+                              : s.media?.ready
                                 ? "Увімкнути й почати"
                                 : "Завантажуємо фрагмент…"
                             : "Продовжити гру"}
@@ -788,9 +817,30 @@ export default function PartyScreen() {
                   )}
                 </div>
               )}
+              {party.isTV && (
+                <TVSoundGate
+                  armed={sound.armed}
+                  online={online}
+                  selected={s.media?.output === "tv"}
+                  allowSound={sound.allowSound}
+                />
+              )}
             </Panel>
             {!party.watching && (
               <aside className="party-controls">
+                {host && s.config.roundTypes.includes("melody") && (
+                  <PartySound
+                    state={s}
+                    tvToken={party.tvToken}
+                    online={online}
+                    pending={party.pending}
+                    armed={sound.armed}
+                    ownerHere={sound.ownerHere}
+                    allowSound={sound.allowSound}
+                    action={party.action}
+                    onNotice={setNotice}
+                  />
+                )}
                 <Panel className="party-control-panel">
                   <div className="section-label">
                     {host ? <ShieldCheck size={17} /> : <Users size={17} />}
@@ -816,7 +866,7 @@ export default function PartyScreen() {
                             <Button
                               key={t}
                               className={`${t} ${s.you?.team === t ? "selected" : ""}`}
-                              disabled={!online}
+                              disabled={!online || party.pending}
                               onClick={() =>
                                 party.send("set_team", { team: t })
                               }
@@ -831,7 +881,7 @@ export default function PartyScreen() {
                           <Button
                             variant="primary"
                             className="party-primary-action"
-                            disabled={!online}
+                            disabled={!online || party.pending}
                             onClick={() => party.send("start_game")}
                           >
                             <Play size={20} fill="currentColor" />
@@ -842,6 +892,7 @@ export default function PartyScreen() {
                             onClick={() => {
                               setRounds(s.rounds);
                               setTypes(s.config.roundTypes);
+                              setVoteMode(s.config.voteMode || "team");
                               setSheet("settings");
                             }}
                           >
@@ -874,7 +925,7 @@ export default function PartyScreen() {
                       {host && (
                         <Button
                           variant="primary"
-                          disabled={!online}
+                          disabled={!online || party.pending}
                           onClick={() => party.action("lobby")}
                         >
                           <RotateCcw size={18} />
@@ -897,7 +948,7 @@ export default function PartyScreen() {
                         <Button
                           variant="primary"
                           className="party-primary-action"
-                          disabled={!online}
+                          disabled={!online || party.pending}
                           onClick={() => party.action("next")}
                         >
                           {s.roundIndex >= s.rounds ? (
@@ -963,14 +1014,14 @@ export default function PartyScreen() {
                         <div className="alias-host-controls">
                           <Button
                             variant="primary"
-                            disabled={!canAct}
+                            disabled={!canAct || party.pending}
                             onClick={() => party.action("correct")}
                           >
                             <Check size={21} />
                             Відгадали
                           </Button>
                           <Button
-                            disabled={!canAct}
+                            disabled={!canAct || party.pending}
                             onClick={() => party.action("skip")}
                           >
                             <SkipForward size={19} />
@@ -978,7 +1029,7 @@ export default function PartyScreen() {
                           </Button>
                           <Button
                             variant="ghost"
-                            disabled={!canAct}
+                            disabled={!canAct || party.pending}
                             onClick={() => party.action("end")}
                           >
                             Завершити пояснення
@@ -1018,8 +1069,12 @@ export default function PartyScreen() {
                               onSubmit={(e) => {
                                 e.preventDefault();
                                 if (guess.trim()) {
-                                  party.action("guess", { text: guess.trim() });
-                                  setGuess("");
+                                  if (
+                                    party.action("guess", {
+                                      text: guess.trim(),
+                                    })
+                                  )
+                                    setGuess("");
                                 }
                               }}
                             >
@@ -1034,7 +1089,7 @@ export default function PartyScreen() {
                               </label>
                               <Button
                                 type="submit"
-                                disabled={!guess.trim()}
+                                disabled={!guess.trim() || party.pending}
                                 aria-label="Надіслати відповідь"
                               >
                                 <ArrowRight size={20} />
@@ -1057,10 +1112,21 @@ export default function PartyScreen() {
                           )}
                         </>
                       ) : null}
+                      {host &&
+                        s.roundType === "truth_lie" &&
+                        s.round?.voting?.mode === "players" && (
+                          <Button
+                            disabled={!online || s.paused || party.pending}
+                            onClick={() => party.action("close_vote")}
+                          >
+                            <CheckCheck size={18} />
+                            Підбити голоси
+                          </Button>
+                        )}
                       {host && !s.round?.awaitingAudio && (
                         <div className="party-pause-control">
                           <Button
-                            disabled={!online}
+                            disabled={!online || party.pending}
                             onClick={() =>
                               party.action(s.paused ? "resume" : "pause")
                             }
@@ -1072,16 +1138,6 @@ export default function PartyScreen() {
                             )}
                             {s.paused ? "Продовжити гру" : "Пауза гри"}
                           </Button>
-                        </div>
-                      )}
-                      {s.roundType === "melody" && (
-                        <div className="party-volume">
-                          <Volume2 size={17} />
-                          <WakeSlider
-                            value={player.volume}
-                            onChange={player.setVolume}
-                            ariaLabel="Гучність фрагмента"
-                          />
                         </div>
                       )}
                       {host && (
@@ -1237,6 +1293,7 @@ export default function PartyScreen() {
         description="Конкурси чергуватимуться в обраному порядку."
       >
         <div className="account-form">
+          <VoteModePicker value={voteMode} onChange={setVoteMode} />
           <div className="field-label">
             Кількість раундів
             <div className="choice-row">
@@ -1275,6 +1332,7 @@ export default function PartyScreen() {
                   rounds,
                   roundTypes: types,
                   preset: "party",
+                  voteMode,
                 })
               )
                 setSheet(null);
