@@ -34,6 +34,7 @@ import {
 } from "../lib/studioRoom";
 import { api, curated, formatTime, type Track, type Team } from "../lib/music";
 import { matchWinner } from "../lib/match";
+import PreparedSongs from "./PreparedSongs";
 
 export default function RemotePanel() {
   const [connection] = useState(() => linkConnection("host"));
@@ -667,6 +668,14 @@ export default function RemotePanel() {
           {searching && <LoaderCircle size={18} className="spin" />}
         </div>
         {searchError && <p className="inline-error">{searchError}</p>}
+        <PreparedSongs
+          songs={s?.library ?? []}
+          busy={locked || !room.presence.station || s?.phase !== "ready"}
+          onLoad={(id) => {
+            if (room.action({ type: "load_prepared", trackId: id }))
+              setSheet(null);
+          }}
+        />
         <div className="track-library">
           {query
             ? tracks.map((t) => (

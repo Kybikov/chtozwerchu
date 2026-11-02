@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   ArrowRight,
   AudioLines,
+  BookmarkPlus,
   Check,
   ChevronRight,
   CircleHelp,
@@ -68,6 +69,15 @@ import LocalArchive from "./components/LocalArchive";
 import WordTimingEditor from "./components/WordTimingEditor";
 import { serializeLyrics, timingCount } from "./lib/wordTiming";
 import type { WordCue } from "./lib/music";
+import PreparedSongs from "./components/PreparedSongs";
+import {
+  listPrepared,
+  readPrepared,
+  savePrepared,
+  removePrepared,
+  validPrepared,
+  type PreparedSummary,
+} from "./lib/preparedSongs";
 
 type Sheet =
   | "library"
@@ -79,7 +89,7 @@ type Sheet =
   | "history"
   | "connect"
   | null;
-type LocalAudio = { file: File; trackId: number };
+type LocalAudio = { file: Blob; trackId: number };
 export default function App() {
   const identity = useIdentity();
   const [network, setNetwork] = useState<RoomAccess | null>(savedRoom);
@@ -105,6 +115,9 @@ export default function App() {
   const [stageOnly, setStageOnly] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const [localAudio, setLocalAudio] = useState<LocalAudio | null>(null);
+  const [preparedSongs, setPreparedSongs] = useState<PreparedSummary[]>([]);
+  const [preparedBusy, setPreparedBusy] = useState(false);
+  const [preparedLoaded, setPreparedLoaded] = useState(false);
   const [awarded, setAwarded] = useState<Team | null>(
     () =>
       session.history.find((r) => r.round === session.round)?.awarded ?? null,
@@ -125,6 +138,22 @@ export default function App() {
     scoreLock = useRef(false),
     targetLock = useRef(false);
   const tell = useCallback((message: string) => setToast(message), []);
+  useEffect(() => {
+    let live = true;
+    void listPrepared()
+      .then((songs) => {
+        if (live) {
+          setPreparedSongs(songs);
+          setPreparedLoaded(true);
+        }
+      })
+      .catch((e) => {
+        if (live) tell(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [tell]);
   const player = usePlayer(audioURL, tell);
   const {
     needRefresh: [needsUpdate],
@@ -242,7 +271,7 @@ export default function App() {
     };
   }, [audioURL]);
   const loadTrack = useCallback(
-    async (id: number, preserve = false) => {
+    async (id: number, preserve = false, prepared = false) => {
       const version = ++requestVersion.current;
       setTrackBusy(true);
       const completed = latestSession.current.history.find(
@@ -262,6 +291,41 @@ export default function App() {
       setAudioURL("");
       setLocalAudio(null);
       try {
+        if (prepared) {
+          const saved = await readPrepared(id);
+          if (!saved)
+            throw new Error(
+              "Підготовку не знайдено на цьому пристрої. Обери іншу пісню.",
+            );
+          if (version !== requestVersion.current) return false;
+          const audio = saved.file ? { trackId: id, file: saved.file } : null;
+          try {
+            await setMany([
+              [`khz:track:${id}`, saved.track],
+              [`khz:lrc:${id}`, saved.track.cues],
+              ["khz:audio", audio ?? undefined],
+            ]);
+          } catch {
+            if (version === requestVersion.current)
+              tell(
+                "Підготовку відкрито. Перевір вільне місце перед наступними збереженнями.",
+              );
+          }
+          if (version !== requestVersion.current) return false;
+          setTrack(saved.track);
+          setLocalAudio(audio);
+          setAudioURL(
+            audio ? URL.createObjectURL(audio.file) : saved.track.preview,
+          );
+          setSession((s) => ({
+            ...s,
+            trackId: id,
+            offset: saved.offset,
+            target: saved.target,
+            aligned: true,
+          }));
+          return true;
+        }
         let value: Track;
         try {
           value = await api<Track>(`/api/music/track?id=${id}`);
@@ -378,6 +442,49 @@ export default function App() {
     setAwarded(completed?.awarded ?? null);
     scoreLock.current = !!completed;
     targetLock.current = false;
+  };
+  const currentPreparation =
+    track && session.aligned && player.ready
+      ? {
+          schema: 1 as const,
+          track,
+          offset: session.offset,
+          target: session.target,
+          duration: player.duration,
+          ...(localAudio ? { file: localAudio.file } : {}),
+          savedAt: Date.now(),
+        }
+      : null;
+  const canPrepare =
+    phase === "ready" &&
+    !trackBusy &&
+    !!currentPreparation &&
+    validPrepared(currentPreparation);
+  const savePreparation = async () => {
+    if (!canPrepare || !currentPreparation || preparedBusy) return;
+    setPreparedBusy(true);
+    try {
+      await savePrepared(currentPreparation);
+      setPreparedSongs(await listPrepared());
+      tell("Пісню підготовлено. Відкривай її з розділу «Готові до гри».");
+    } catch (e) {
+      tell(e instanceof Error ? e.message : "Не вдалося зберегти підготовку.");
+    } finally {
+      setPreparedBusy(false);
+    }
+  };
+  const deletePreparation = async (id: number) => {
+    setPreparedBusy(true);
+    try {
+      await removePrepared(id);
+      setPreparedSongs(await listPrepared());
+      tell("Підготовку прибрано з набору.");
+    } catch (e) {
+      tell(e instanceof Error ? e.message : "Не вдалося прибрати підготовку.");
+      throw e;
+    } finally {
+      setPreparedBusy(false);
+    }
   };
   const startRound = () => {
     if (session.history.some((r) => r.round === session.round)) {
@@ -665,7 +772,8 @@ export default function App() {
           track={track}
           localAudio={!!localAudio}
           session={session}
-          loadTrack={(id) => loadTrack(id)}
+          library={preparedLoaded ? preparedSongs : null}
+          loadTrack={(id, prepared) => loadTrack(id, false, prepared)}
           onExit={(state) => {
             player.pause();
             rememberRoom(null);
@@ -915,6 +1023,18 @@ export default function App() {
                       Мій аудіофайл
                     </Button>
                   </div>
+                  <Button
+                    className="save-prepared"
+                    disabled={!canPrepare || preparedBusy}
+                    onClick={() => void savePreparation()}
+                  >
+                    <BookmarkPlus size={17} />
+                    {preparedBusy
+                      ? "Зберігаємо…"
+                      : preparedSongs.some((p) => p.id === track?.id)
+                        ? "Оновити підготовку"
+                        : "Зберегти підготовку"}
+                  </Button>
                   <div className="transport">
                     <Button
                       variant="ghost"
@@ -1283,6 +1403,15 @@ export default function App() {
             description="Знайди трек або обери знайомий хіт. Конкретну версію запису перевіряємо перед грою."
             wide
           >
+            <PreparedSongs
+              songs={preparedSongs}
+              busy={trackBusy || preparedBusy || phase !== "ready"}
+              onLoad={(id) => {
+                void loadTrack(id, false, true);
+                setSheet(null);
+              }}
+              onRemove={deletePreparation}
+            />
             <label className="search-field">
               <Search size={20} />
               <input

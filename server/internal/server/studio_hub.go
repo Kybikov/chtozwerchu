@@ -61,16 +61,17 @@ type studioPeer struct {
 	once sync.Once
 }
 type studioEnvelope struct {
-	Type    string       `json:"type"`
-	Token   string       `json:"token"`
-	Role    string       `json:"role"`
-	Code    string       `json:"code"`
-	Action  studioAction `json:"action"`
-	Audio   studioAudio  `json:"audio"`
-	Track   musicTrack   `json:"track"`
-	Offset  int64        `json:"offset"`
-	Aligned bool         `json:"aligned"`
-	Target  int          `json:"target"`
+	Library []studioPrepared `json:"library"`
+	Type    string           `json:"type"`
+	Token   string           `json:"token"`
+	Role    string           `json:"role"`
+	Code    string           `json:"code"`
+	Action  studioAction     `json:"action"`
+	Audio   studioAudio      `json:"audio"`
+	Track   musicTrack       `json:"track"`
+	Offset  int64            `json:"offset"`
+	Aligned bool             `json:"aligned"`
+	Target  int              `json:"target"`
 }
 
 func newStudioHub(dir string, databases ...*store.DB) *studioHub {
@@ -559,6 +560,38 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 	}
 	now := time.Now()
 	switch e.Type {
+	case "library":
+		if p.role != "station" {
+			fail(errors.New("Підготовлені пісні передає лише пристрій сцени."))
+			return
+		}
+		if !validStudioLibrary(e.Library) {
+			fail(errors.New("Перевір список підготовлених пісень."))
+			return
+		}
+		same := len(room.State.Library) == len(e.Library)
+		if same {
+			for i := range e.Library {
+				if room.State.Library[i] != e.Library[i] {
+					same = false
+					break
+				}
+			}
+		}
+		if same {
+			return
+		}
+		previous := room.State.Library
+		previousVersion := room.State.Version
+		room.State.Library = e.Library
+		room.State.Version++
+		if err := h.save(room); err != nil {
+			room.State.Library = previous
+			room.State.Version = previousVersion
+			fail(errors.New("Не вдалося зберегти набір пісень."))
+			return
+		}
+		h.broadcast(room, true)
 	case "prepare_error":
 		if p.role != "station" {
 			fail(errors.New("Цю дію виконує екран гри."))
@@ -645,6 +678,19 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 			return
 		}
 		a := e.Action
+		if a.Type == "load_track" || a.Type == "load_prepared" {
+			present := false
+			for peer := range room.clients {
+				if peer.role == "station" {
+					present = true
+					break
+				}
+			}
+			if !present {
+				fail(errors.New("Поверни екран гри в мережу перед зміною пісні."))
+				return
+			}
+		}
 		if len(a.ID) < 8 || len(a.ID) > 80 {
 			fail(errors.New("Некоректний ідентифікатор дії."))
 			return

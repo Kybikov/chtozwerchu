@@ -310,9 +310,11 @@ func TestRedisStudioWordsAndOwnerFailoverIntegration(t *testing.T) {
 	_ = clusterStudioState(t, station, func(s studioState) bool { return s.Phase == "ready" })
 	host := studioDial(t, b.http.URL, access.Code, "host", access.HostToken)
 	state := clusterStudioState(t, host, func(s studioState) bool { return s.Phase == "ready" })
+	_ = station.WriteJSON(studioEnvelope{Type: "library", Library: []studioPrepared{{ID: 2, Title: "Private future prepared fixture", Duration: 30, Local: true}}})
+	state = clusterStudioState(t, host, func(s studioState) bool { return len(s.Library) == 1 })
 	audience := studioDial(t, b.http.URL, access.Code, "audience", "")
 	scene := studioRead(t, audience, "scene")
-	if bytes.Contains(scene["state"], []byte("Hidden answer")) || bytes.Contains(scene["state"], []byte("Synthetic")) {
+	if bytes.Contains(scene["state"], []byte("Hidden answer")) || bytes.Contains(scene["state"], []byte("Synthetic")) || bytes.Contains(scene["state"], []byte("Private future prepared")) {
 		t.Fatal("private track leaked to another node's audience")
 	}
 	_ = audience.WriteJSON(studioEnvelope{Type: "action", Action: studioAction{Type: "new_game", ID: "remote-viewer-forgery", Version: state.Version}})
@@ -358,6 +360,9 @@ func TestRedisStudioWordsAndOwnerFailoverIntegration(t *testing.T) {
 	restored := clusterStudioState(t, reconnected, func(s studioState) bool { return s.Phase == "answer" })
 	if restored.Session.MatchID != matchID || !restored.Timer.Paused || restored.Timer.Deadline != 0 || restored.Timer.LeftMS < 7000 || restored.Timer.LeftMS > 8500 || restored.Audio.Ready || restored.Audio.Playing {
 		t.Fatal("studio failover lost match or remaining paused clock")
+	}
+	if len(restored.Library) != 1 || restored.Library[0].ID != 2 {
+		t.Fatal("shared Redis lost the prepared catalogue")
 	}
 	if b.app.studio.get(access.Code) == nil {
 		t.Fatal("second node did not restore from shared Redis")

@@ -45,16 +45,17 @@ type studioTimer struct {
 	Paused   bool  `json:"paused"`
 }
 type studioState struct {
-	Session    studioSession `json:"session"`
-	Track      musicTrack    `json:"track"`
-	Audio      studioAudio   `json:"audio"`
-	Phase      string        `json:"phase"`
-	Awarded    *string       `json:"awarded"`
-	Timer      studioTimer   `json:"timer"`
-	Version    uint64        `json:"version"`
-	Effects    bool          `json:"effects"`
-	NeedsTrack bool          `json:"needsTrack"`
-	Notice     string        `json:"notice"`
+	Library    []studioPrepared `json:"library,omitempty"`
+	Session    studioSession    `json:"session"`
+	Track      musicTrack       `json:"track"`
+	Audio      studioAudio      `json:"audio"`
+	Phase      string           `json:"phase"`
+	Awarded    *string          `json:"awarded"`
+	Timer      studioTimer      `json:"timer"`
+	Version    uint64           `json:"version"`
+	Effects    bool             `json:"effects"`
+	NeedsTrack bool             `json:"needsTrack"`
+	Notice     string           `json:"notice"`
 }
 type studioAction struct {
 	Type     string        `json:"type"`
@@ -73,10 +74,34 @@ type studioConfig struct {
 	Effects       bool              `json:"effects"`
 }
 type studioInstruction struct {
+	Prepared bool    `json:"prepared,omitempty"`
 	Type     string  `json:"type"`
 	ID       string  `json:"id"`
 	Position float64 `json:"position"`
 	TrackID  int64   `json:"trackId,omitempty"`
+}
+
+type studioPrepared struct {
+	ID       int64   `json:"id"`
+	Title    string  `json:"title"`
+	Artist   string  `json:"artist"`
+	Cover    string  `json:"cover"`
+	Duration float64 `json:"duration"`
+	Local    bool    `json:"local"`
+}
+
+func validStudioLibrary(library []studioPrepared) bool {
+	if len(library) > 40 {
+		return false
+	}
+	seen := map[int64]bool{}
+	for _, song := range library {
+		if song.ID <= 0 || song.ID > 999999999999999 || seen[song.ID] || len([]rune(strings.TrimSpace(song.Title))) < 1 || len([]rune(song.Title)) > 240 || len([]rune(song.Artist)) > 240 || len(song.Cover) > 2048 || song.Cover != "" && !strings.HasPrefix(song.Cover, "https://") || math.IsNaN(song.Duration) || math.IsInf(song.Duration, 0) || song.Duration < 1 || song.Duration > 86400 {
+			return false
+		}
+		seen[song.ID] = true
+	}
+	return true
 }
 
 func studioTeam(t string) bool { return t == "girls" || t == "boys" }
@@ -300,7 +325,7 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 		s.NeedsTrack = false
 		s.Audio.Playing = false
 		ins.Type = "pause"
-	case "target", "align", "original_timeline", "seek", "load_track", "config":
+	case "target", "align", "original_timeline", "seek", "load_track", "load_prepared", "config":
 		if s.Phase != "ready" {
 			return bad("Підготовка доступна перед початком раунду.")
 		}
@@ -329,9 +354,22 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 			ins.Type = "seek"
 			ins.Position = a.Position
 			s.Audio.Position = a.Position
-		case "load_track":
+		case "load_track", "load_prepared":
 			if a.TrackID <= 0 || a.TrackID > 999999999999999 {
 				return bad("Некоректний трек.")
+			}
+			if a.Type == "load_prepared" {
+				found := false
+				for _, song := range s.Library {
+					if song.ID == a.TrackID {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return bad("Цієї підготовки вже немає на пристрої сцени.")
+				}
+				ins.Prepared = true
 			}
 			s.Session.Aligned = false
 			s.Audio.Ready = false

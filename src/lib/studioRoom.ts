@@ -8,6 +8,7 @@ import {
 } from "./music";
 import type { ShowState } from "./show";
 import { RoomClock } from "./roomClock";
+import type { PreparedSummary } from "./preparedSongs";
 
 export type RoomAccess = {
   code: string;
@@ -25,6 +26,7 @@ export type RoomAudio = {
 };
 export type RoomTimer = { leftMs: number; deadline: number; paused: boolean };
 export type RoomState = {
+  library?: PreparedSummary[];
   session: Session;
   track: Track;
   audio: RoomAudio;
@@ -38,6 +40,7 @@ export type RoomState = {
 };
 export type Presence = { host: boolean; station: boolean; audience: number };
 export type Instruction = {
+  prepared?: boolean;
   type: string;
   id: string;
   position?: number;

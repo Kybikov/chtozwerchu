@@ -23,6 +23,7 @@ import {
 } from "../lib/studioRoom";
 import type { Session, Track } from "../lib/music";
 import type { usePlayer } from "../lib/usePlayer";
+import type { PreparedSummary } from "../lib/preparedSongs";
 
 type Player = ReturnType<typeof usePlayer>;
 export default function NetworkStation({
@@ -32,6 +33,7 @@ export default function NetworkStation({
   localAudio,
   session,
   loadTrack,
+  library,
   onExit,
 }: {
   access: RoomAccess;
@@ -39,7 +41,8 @@ export default function NetworkStation({
   track: Track | null;
   localAudio: boolean;
   session: Session;
-  loadTrack: (id: number) => Promise<boolean | undefined>;
+  loadTrack: (id: number, prepared?: boolean) => Promise<boolean | undefined>;
+  library: PreparedSummary[] | null;
   onExit: (state: RoomState | null) => void;
 }) {
   const [pairing, setPairing] = useState(true),
@@ -94,7 +97,7 @@ export default function NetworkStation({
       case "load_track":
         if (i.trackId) {
           prepared.current = i.trackId;
-          void refs.current.loadTrack(i.trackId).then((ok) => {
+          void refs.current.loadTrack(i.trackId, i.prepared).then((ok) => {
             if (ok === false) {
               prepared.current = null;
               room.send({ type: "prepare_error" });
@@ -108,6 +111,10 @@ export default function NetworkStation({
     { code: access.code, token: access.stationToken, role: "station" },
     instruction,
   );
+  useEffect(() => {
+    if (room.connected && library !== null)
+      room.send({ type: "library", library });
+  }, [room.connected, room.send, library]);
   useEffect(() => {
     if (player.failed && room.connected) room.send({ type: "media_error" });
   }, [player.failed, room.connected, room.send]);

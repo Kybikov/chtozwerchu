@@ -106,6 +106,9 @@ func (h *Hub) suspendClusterRoom(b roomBinding) {
 }
 
 func resetRestoredStudio(room *studioRoom) {
+	if !validStudioLibrary(room.State.Library) {
+		room.State.Library = nil
+	}
 	room.clients = map[*studioPeer]bool{}
 	room.seen = map[string]bool{}
 	room.State.Audio.Playing = false

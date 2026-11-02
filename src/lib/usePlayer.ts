@@ -9,6 +9,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
   const [volume, setVolume] = useState(65);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [loadedSource, setLoadedSource] = useState("");
   const errors = useRef(onError);
   errors.current = onError;
   useEffect(() => {
@@ -29,6 +30,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
       audio.load();
     }
     const metadata = () => {
+      setLoadedSource(src);
       setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
       setReady(true);
       setLoading(false);
@@ -112,13 +114,13 @@ export function usePlayer(src: string, onError: (message: string) => void) {
   };
   return {
     ref,
-    position,
-    duration,
-    playing,
+    position: loadedSource === src ? position : 0,
+    duration: loadedSource === src ? duration : 0,
+    playing: loadedSource === src && playing,
     loading,
     volume,
     setVolume,
-    ready,
+    ready: loadedSource === src && ready,
     failed,
     play,
     pause,
