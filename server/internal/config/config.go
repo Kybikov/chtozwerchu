@@ -4,6 +4,7 @@ import "os"
 
 // Config holds runtime configuration read from the environment.
 type Config struct {
+	Host        string
 	Port        string
 	DatabaseURL string
 	RedisURL    string
@@ -18,6 +19,7 @@ type Config struct {
 // default.
 func Load() Config {
 	return Config{
+		Host:        env("HOST", ""),
 		Port:        env("PORT", "3000"),
 		DatabaseURL: envSet("DATABASE_URL", "postgres://khz:khz@localhost:5432/khz?sslmode=disable"),
 		RedisURL:    envSet("REDIS_URL", "redis://localhost:6379/0"),

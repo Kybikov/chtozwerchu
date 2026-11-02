@@ -66,7 +66,7 @@ func main() {
 	srv := server.New(cfg, hub, catalog, db)
 
 	httpSrv := &http.Server{
-		Addr:              ":" + cfg.Port,
+		Addr:              cfg.Host + ":" + cfg.Port,
 		Handler:           srv.Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}

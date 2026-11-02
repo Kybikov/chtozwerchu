@@ -34,6 +34,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/meta", s.meta)
 	mux.HandleFunc("/api/presets", s.presets)
 	s.registerAuthRoutes(mux)
+	s.registerMusicRoutes(mux)
+	legacy := os.Getenv("LEGACY_WEB_DIR")
+	if legacy == "" {
+		legacy = "../web"
+	}
+	mux.Handle("/classic/", http.StripPrefix("/classic/", http.FileServer(http.Dir(legacy))))
 	mux.HandleFunc("/", s.static)
 	return mux
 }

@@ -1,3 +1,13 @@
+# ---- React studio ----
+FROM node:24-alpine AS frontend
+WORKDIR /src
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY index.html tsconfig.json vite.config.mts ./
+COPY src ./src
+COPY public ./public
+RUN npm run build
+
 # ---- build stage ----
 FROM golang:1.24-alpine AS build
 WORKDIR /src/server
@@ -14,9 +24,10 @@ RUN adduser -D -H app && apk add --no-cache wget
 WORKDIR /app
 
 COPY --from=build /out/server /app/server
-COPY web /app/web
+COPY --from=frontend /src/dist /app/web
+COPY web /app/classic
 
-ENV PORT=3000 WEB_DIR=/app/web
+ENV PORT=3000 WEB_DIR=/app/web LEGACY_WEB_DIR=/app/classic
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \

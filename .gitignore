@@ -6,3 +6,7 @@ tunnel.log
 public-url.txt
 .idea/
 tools/.cache/
+dist/
+.vite/
+output/
+*.exe
