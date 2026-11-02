@@ -106,6 +106,10 @@
   .stage-only .ready-copy .stage-caption {
     font-size: clamp(20px, 2.6vmin, 58px);
   }
+  .stage-only .stage-event {
+    font-size: clamp(15px, 2vmin, 44px);
+    max-width: 55%;
+  }
   .stage-only .stage-content .lyric-live {
     font-size: clamp(52px, 7vmin, 160px);
     line-height: 1.2;

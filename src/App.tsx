@@ -22,6 +22,7 @@ import {
   FileText,
   Headphones,
   LoaderCircle,
+  ListMusic,
   Minus,
   Monitor,
   Pause,
@@ -70,17 +71,30 @@ import WordTimingEditor from "./components/WordTimingEditor";
 import { serializeLyrics, timingCount } from "./lib/wordTiming";
 import type { WordCue } from "./lib/music";
 import PreparedSongs from "./components/PreparedSongs";
+import ProgrammeEditor from "./components/ProgrammeEditor";
+import ProgrammeOrder from "./components/ProgrammeOrder";
+import {
+  emptyProgramme,
+  readProgramme,
+  saveProgramme,
+  validProgramme,
+  type Programme,
+} from "./lib/programme";
+import "./programme.css";
 import {
   listPrepared,
   readPrepared,
   savePrepared,
   removePrepared,
   validPrepared,
+  refreshPreparedPreview,
   type PreparedSummary,
 } from "./lib/preparedSongs";
 
 type Sheet =
   | "library"
+  | "programme"
+  | "programme_order"
   | "settings"
   | "help"
   | "cues"
@@ -118,6 +132,8 @@ export default function App() {
   const [preparedSongs, setPreparedSongs] = useState<PreparedSummary[]>([]);
   const [preparedBusy, setPreparedBusy] = useState(false);
   const [preparedLoaded, setPreparedLoaded] = useState(false);
+  const [programmeDraft, setProgrammeDraft] =
+    useState<Programme>(emptyProgramme);
   const [awarded, setAwarded] = useState<Team | null>(
     () =>
       session.history.find((r) => r.round === session.round)?.awarded ?? null,
@@ -135,15 +151,25 @@ export default function App() {
     lrcFile = useRef<HTMLInputElement>(null);
   const interactionUntil = useRef(0);
   const requestVersion = useRef(0),
+    advancing = useRef(false),
     scoreLock = useRef(false),
     targetLock = useRef(false);
   const tell = useCallback((message: string) => setToast(message), []);
   useEffect(() => {
     let live = true;
-    void listPrepared()
-      .then((songs) => {
+    void Promise.all([
+      listPrepared(),
+      readProgramme().catch(() => {
+        tell(
+          "Чернетку програми не вдалося прочитати. Підготовлені пісні залишаються у бібліотеці.",
+        );
+        return emptyProgramme();
+      }),
+    ])
+      .then(([songs, draft]) => {
         if (live) {
           setPreparedSongs(songs);
+          setProgrammeDraft(draft);
           setPreparedLoaded(true);
         }
       })
@@ -169,6 +195,7 @@ export default function App() {
   const answerClock = useAnswerClock(phase === "answer", session.answerSeconds);
   const recorded = session.history.find((r) => r.round === session.round);
   const scene: ShowState = {
+    eventName: session.programme?.title,
     scores: session.scores,
     names: session.names,
     team: session.team,
@@ -277,26 +304,32 @@ export default function App() {
       const completed = latestSession.current.history.find(
         (r) => r.round === latestSession.current.round,
       );
-      setPhase(
-        latestSession.current.finished
-          ? "final"
-          : completed
-            ? "result"
-            : "ready",
-      );
-      setAwarded(completed?.awarded ?? null);
-      scoreLock.current = !!completed;
-      targetLock.current = false;
-      setTrack(null);
-      setAudioURL("");
-      setLocalAudio(null);
       try {
-        if (prepared) {
-          const saved = await readPrepared(id);
-          if (!saved)
-            throw new Error(
-              "Підготовку не знайдено на цьому пристрої. Обери іншу пісню.",
-            );
+        let preparation = prepared ? await readPrepared(id) : null;
+        if (prepared && !preparation)
+          throw new Error(
+            "Підготовку не знайдено на цьому пристрої. Обери іншу пісню.",
+          );
+        if (preparation)
+          preparation = await refreshPreparedPreview(preparation, (id) =>
+            api<Track>(`/api/music/track?id=${id}`),
+          );
+        if (version !== requestVersion.current) return false;
+        setPhase(
+          latestSession.current.finished
+            ? "final"
+            : completed
+              ? "result"
+              : "ready",
+        );
+        setAwarded(completed?.awarded ?? null);
+        scoreLock.current = !!completed;
+        targetLock.current = false;
+        setTrack(null);
+        setAudioURL("");
+        setLocalAudio(null);
+        if (preparation) {
+          const saved = preparation;
           if (version !== requestVersion.current) return false;
           const audio = saved.file ? { trackId: id, file: saved.file } : null;
           try {
@@ -319,6 +352,7 @@ export default function App() {
           );
           setSession((s) => ({
             ...s,
+            programme: preserve ? s.programme : undefined,
             trackId: id,
             offset: saved.offset,
             target: saved.target,
@@ -356,6 +390,7 @@ export default function App() {
         } else setAudioURL(value.preview);
         setSession((s) => ({
           ...s,
+          programme: preserve ? s.programme : undefined,
           trackId: id,
           ...(preserve
             ? { target: Math.min(s.target, Math.max(0, value.cues.length - 1)) }
@@ -381,7 +416,7 @@ export default function App() {
     [tell],
   );
   useEffect(() => {
-    void loadTrack(session.trackId, true);
+    void loadTrack(session.trackId, true, !!session.programme);
     return () => {
       requestVersion.current++;
     };
@@ -486,6 +521,66 @@ export default function App() {
       setPreparedBusy(false);
     }
   };
+  const saveProgrammeDraft = async (value: Programme) => {
+    setPreparedBusy(true);
+    try {
+      await saveProgramme(value);
+      setProgrammeDraft({
+        title: value.title.trim(),
+        trackIds: [...value.trackIds],
+      });
+    } finally {
+      setPreparedBusy(false);
+    }
+  };
+  const startProgramme = async (value: Programme) => {
+    if (
+      !validProgramme(value) ||
+      preparedBusy ||
+      trackBusy ||
+      !["ready", "result", "final"].includes(phase)
+    )
+      return;
+    setPreparedBusy(true);
+    try {
+      for (const id of value.trackIds) {
+        if (!(await readPrepared(id)))
+          throw new Error(
+            "Не всі пісні підготовлені на цьому пристрої. Віднови їх або зміни програму.",
+          );
+      }
+      await saveProgramme(value);
+      const programme = {
+        title: value.title.trim(),
+        trackIds: [...value.trackIds],
+      };
+      setProgrammeDraft(programme);
+      if (!(await loadTrack(value.trackIds[0], false, true)))
+        throw new Error(
+          "Не вдалося відкрити першу підготовку. Поточна гра збережена.",
+        );
+      player.pause();
+      setSession((s) => ({
+        ...freshSession(),
+        names: s.names,
+        answerSeconds: s.answerSeconds,
+        trackId: s.trackId,
+        offset: s.offset,
+        target: s.target,
+        aligned: s.aligned,
+        rounds: value.trackIds.length,
+        programme,
+      }));
+      scoreLock.current = false;
+      targetLock.current = false;
+      setPhase("ready");
+      setAwarded(null);
+      setSheet(null);
+      tell("Програму підготовлено. Починай перший раунд, коли команди готові.");
+    } finally {
+      setPreparedBusy(false);
+    }
+  };
   const startRound = () => {
     if (session.history.some((r) => r.round === session.round)) {
       setPhase("result");
@@ -536,8 +631,8 @@ export default function App() {
       }),
     );
   };
-  const nextRound = (event?: { detail: number }) => {
-    if (trackBusy || !player.ready) return;
+  const nextRound = async (event?: { detail: number }) => {
+    if (trackBusy || !player.ready || advancing.current) return;
     if (
       phase !== "result" ||
       (event && event.detail > 1) ||
@@ -548,6 +643,27 @@ export default function App() {
       player.pause();
       setPhase("final");
       setSession((s) => ({ ...s, finished: true }));
+      return;
+    }
+    if (session.programme) {
+      const nextId = session.programme.trackIds[session.round];
+      if (!nextId) return;
+      advancing.current = true;
+      try {
+        player.pause();
+        if (!(await loadTrack(nextId, true, true))) return;
+        setSession((s) => ({
+          ...s,
+          round: s.round + 1,
+          team: s.team === "girls" ? "boys" : "girls",
+        }));
+        setPhase("ready");
+        setAwarded(null);
+        scoreLock.current = false;
+        targetLock.current = false;
+      } finally {
+        advancing.current = false;
+      }
       return;
     }
     resetRound();
@@ -838,6 +954,9 @@ export default function App() {
               <Button variant="ghost" onClick={() => setSheet("library")}>
                 Бібліотека треків
               </Button>
+              <Button variant="ghost" onClick={() => setSheet("programme")}>
+                <ListMusic size={17} /> Програма вечора
+              </Button>
               <Button variant="ghost" onClick={() => setSheet("help")}>
                 Як грати
                 <CircleHelp size={15} />
@@ -864,6 +983,34 @@ export default function App() {
           </header>
 
           <main>
+            {session.programme && (
+              <section
+                className="programme-summary"
+                aria-label="Поточна програма вечора"
+              >
+                <ListMusic size={24} />
+                <div>
+                  <strong>{session.programme.title}</strong>
+                  <p>
+                    {session.finished
+                      ? `Програму завершено · ${session.rounds} раундів зіграно.`
+                      : `Пісня ${session.round} з ${session.rounds} · Порядок записів підготовлено до гри.`}
+                  </p>
+                </div>
+                <Button onClick={() => setSheet("programme_order")}>
+                  Порядок вечора
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={trackBusy || !["ready", "result"].includes(phase)}
+                  onClick={() =>
+                    setSession((s) => ({ ...s, programme: undefined }))
+                  }
+                >
+                  Обирати пісні вручну
+                </Button>
+              </section>
+            )}
             <section className="page-intro">
               <div>
                 <p className="eyebrow">
@@ -1397,12 +1544,60 @@ export default function App() {
           )}
 
           <Modal
+            open={sheet === "programme_order"}
+            onOpenChange={(v) => !v && setSheet(null)}
+            title={session.programme?.title ?? "Програма вечора"}
+            description="Наступний запис підготується після оцінки раунду. Його відповіді залишаться прихованими для глядачів."
+            wide
+          >
+            {session.programme && (
+              <ProgrammeOrder
+                programme={session.programme}
+                songs={preparedSongs}
+                round={session.finished ? session.round + 1 : session.round}
+              />
+            )}
+          </Modal>
+          <Modal
+            open={sheet === "programme"}
+            onOpenChange={(v) => !v && !preparedBusy && setSheet(null)}
+            title="Програма вечора"
+            description="Підготуй порядок пісень до приходу гостей. Кожна команда отримає свій хіт."
+            wide
+          >
+            {sheet === "programme" && (
+              <ProgrammeEditor
+                initial={programmeDraft}
+                songs={preparedSongs}
+                busy={
+                  preparedBusy ||
+                  trackBusy ||
+                  !["ready", "result", "final"].includes(phase)
+                }
+                replacing={
+                  session.history.length > 0 ||
+                  session.scores.girls > 0 ||
+                  session.scores.boys > 0
+                }
+                onSave={saveProgrammeDraft}
+                onStart={startProgramme}
+              />
+            )}
+          </Modal>
+          <Modal
             open={sheet === "library"}
             onOpenChange={(v) => !v && setSheet(null)}
             title="Що сьогодні співаємо?"
             description="Знайди трек або обери знайомий хіт. Конкретну версію запису перевіряємо перед грою."
             wide
           >
+            <Button
+              className="programme-open"
+              onClick={() => setSheet("programme")}
+            >
+              <ListMusic size={18} /> Зібрати програму вечора{" "}
+              <ArrowRight size={18} />
+            </Button>
             <PreparedSongs
               songs={preparedSongs}
               busy={trackBusy || preparedBusy || phase !== "ready"}
@@ -1847,7 +2042,7 @@ export default function App() {
                 {[4, 8, 12, 16].map((n) => (
                   <Button
                     key={n}
-                    disabled={session.history.length > 0}
+                    disabled={session.history.length > 0 || !!session.programme}
                     className={session.rounds === n ? "selected" : ""}
                     onClick={() => setSession((s) => ({ ...s, rounds: n }))}
                   >
@@ -1961,7 +2156,7 @@ export default function App() {
             open={sheet === "reset"}
             onOpenChange={(v) => !v && setSheet(null)}
             title="Новий вечір — нова гра?"
-            description="Обидві команди почнуть із нуля. Обраний трек залишиться."
+            description="Обидві команди почнуть із нуля. Обраний трек залишиться, програму вечора буде вимкнено."
           >
             <div className="action-pair">
               <Button onClick={() => setSheet("settings")}>Зберегти гру</Button>

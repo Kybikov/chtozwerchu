@@ -102,7 +102,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 			transport = "redis"
 		}
 	}
-	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.11.1", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.12.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
 }
 
 // roundTypeName maps round types to Ukrainian display names.

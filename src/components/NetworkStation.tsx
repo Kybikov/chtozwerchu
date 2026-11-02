@@ -55,6 +55,8 @@ export default function NetworkStation({
   refs.current = { player, loadTrack };
   const prepared = useRef<number | null>(null),
     seen = useRef(new Set<string>());
+  const recovery = useRef("");
+  const loadGeneration = useRef(0);
   const instruction = (i: Instruction) => {
     if (seen.current.has(i.id)) return;
     seen.current.add(i.id);
@@ -96,8 +98,11 @@ export default function NetworkStation({
         break;
       case "load_track":
         if (i.trackId) {
+          const generation = ++loadGeneration.current;
+          recovery.current = `${room.state?.session.round}:${i.trackId}`;
           prepared.current = i.trackId;
           void refs.current.loadTrack(i.trackId, i.prepared).then((ok) => {
+            if (generation !== loadGeneration.current) return;
             if (ok === false) {
               prepared.current = null;
               room.send({ type: "prepare_error" });
@@ -115,6 +120,33 @@ export default function NetworkStation({
     if (room.connected && library !== null)
       room.send({ type: "library", library });
   }, [room.connected, room.send, library]);
+  useEffect(() => {
+    if (!room.connected) {
+      recovery.current = "";
+      return;
+    }
+    const s = room.state;
+    const id = s?.session.programme?.trackIds[s.session.round - 1];
+    const key = `${s?.session.round}:${id}`;
+    if (
+      s?.phase !== "ready" ||
+      !s.needsTrack ||
+      !id ||
+      prepared.current !== null ||
+      recovery.current === key
+    )
+      return;
+    recovery.current = key;
+    prepared.current = id;
+    const generation = ++loadGeneration.current;
+    void refs.current.loadTrack(id, true).then((ok) => {
+      if (generation !== loadGeneration.current) return;
+      if (ok === false) {
+        prepared.current = null;
+        room.send({ type: "prepare_error" });
+      }
+    });
+  }, [room.connected, room.state, room.send]);
   useEffect(() => {
     if (player.failed && room.connected) room.send({ type: "media_error" });
   }, [player.failed, room.connected, room.send]);

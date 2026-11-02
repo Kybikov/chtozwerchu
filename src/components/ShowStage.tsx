@@ -55,6 +55,9 @@ export default function ShowStage({
           <Music2 size={18} />
           {state.phase === "final" ? "ФІНАЛ ШОУ" : "ПРОДОВЖ ПІСНЮ"}
         </span>
+        {state.eventName && (
+          <span className="stage-event">{state.eventName}</span>
+        )}
         {onExpand && (
           <Button
             variant="ghost"

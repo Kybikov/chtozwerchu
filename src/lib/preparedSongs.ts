@@ -20,6 +20,19 @@ export type PreparedSong = {
 };
 export const preparedLimit = 40;
 
+export async function refreshPreparedPreview(
+  song: PreparedSong,
+  lookup: (id: number) => Promise<Track>,
+): Promise<PreparedSong> {
+  if (song.file) return song;
+  const current = await lookup(song.track.id);
+  if (current.id !== song.track.id || !/^https:\/\//.test(current.preview))
+    throw new Error(
+      "Прев’ю цього запису більше недоступне. Додай власний аудіофайл або підготуй інший запис.",
+    );
+  return { ...song, track: { ...song.track, preview: current.preview } };
+}
+
 export function validPrepared(song: PreparedSong): boolean {
   const t = song?.track;
   if (

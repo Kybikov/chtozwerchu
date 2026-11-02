@@ -292,6 +292,7 @@ func clusterStudioState(t *testing.T, c *websocket.Conn, predicate func(studioSt
 func TestRedisStudioWordsAndOwnerFailoverIntegration(t *testing.T) {
 	a, b := clusterTestNodes(t)
 	s := studioFixture()
+	s.Session.Programme = &studioProgramme{Title: "Redis programme fixture", TrackIDs: []int64{1, 2, 4, 3}}
 	s.Track.Cues[0].Text = "Лови цей ритм"
 	s.Track.Cues[0].Words = []musicWord{{StartMS: 53, EndMS: 350, Text: "Лови "}, {StartMS: 700, EndMS: 1020, Text: "цей "}, {StartMS: 1100, EndMS: 1350, Text: "ритм"}}
 	body, _ := json.Marshal(map[string]any{"session": s.Session, "track": s.Track, "audio": s.Audio})
@@ -363,6 +364,9 @@ func TestRedisStudioWordsAndOwnerFailoverIntegration(t *testing.T) {
 	}
 	if len(restored.Library) != 1 || restored.Library[0].ID != 2 {
 		t.Fatal("shared Redis lost the prepared catalogue")
+	}
+	if restored.Session.Programme == nil || restored.Session.Programme.Title != "Redis programme fixture" || restored.Session.Programme.TrackIDs[2] != 4 {
+		t.Fatal("shared Redis lost the programme or changed its order")
 	}
 	if b.app.studio.get(access.Code) == nil {
 		t.Fatal("second node did not restore from shared Redis")

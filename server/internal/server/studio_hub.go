@@ -216,6 +216,10 @@ func (h *studioHub) create(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 400, map[string]string{"error": err.Error()})
 		return
 	}
+	if p := input.Session.Programme; p != nil && input.Track.ID != p.TrackIDs[input.Session.Round-1] {
+		writeJSON(w, 400, map[string]string{"error": "Спочатку завантаж пісню поточного раунду програми."})
+		return
+	}
 	if len(input.Track.Cues) == 0 {
 		writeJSON(w, 400, map[string]string{"error": "Перед підключенням телефону додай текст із часовими мітками."})
 		return
@@ -624,6 +628,12 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 			return
 		}
 		e.Audio.Local = room.State.Audio.Local
+		if room.State.NeedsTrack && room.State.Session.Programme != nil {
+			// Telemetry may still describe the old element while the next file opens.
+			// Only an accepted prepare response can arm this programme round.
+			e.Audio.Ready = false
+			e.Audio.Playing = false
+		}
 		room.State.Audio = e.Audio
 		room.dirty = true
 		room.lastAudio = now
@@ -648,6 +658,10 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 		}
 		if err := validateStudioTrack(e.Track); err != nil {
 			fail(err)
+			return
+		}
+		if p := room.State.Session.Programme; p != nil && e.Track.ID != p.TrackIDs[room.State.Session.Round-1] {
+			fail(errors.New("Ця підготовка не відповідає поточному раунду програми."))
 			return
 		}
 		if !validStudioAudio(e.Audio) || e.Target < 0 || len(e.Track.Cues) > 0 && e.Target >= len(e.Track.Cues) || (e.Offset < -24*3600000 || e.Offset > 24*3600000) {
@@ -842,6 +856,9 @@ func (r *studioRoom) public(now time.Time) map[string]any {
 	session := s.Session
 	clock := s.Audio.Position*1000 + float64(session.Offset)
 	view := map[string]any{"scores": session.Scores, "names": session.Names, "team": session.Team, "round": session.Round, "rounds": session.Rounds, "phase": s.Phase, "playing": s.Audio.Playing, "nowMS": clock, "lyric": "", "awarded": s.Awarded, "remaining": int64(mathCeilStudio(s.left(now), 1000)), "timerPaused": s.Timer.Paused, "effects": s.Effects}
+	if session.Programme != nil {
+		view["eventName"] = session.Programme.Title
+	}
 	if s.Phase == "playing" && session.Aligned {
 		for i, c := range s.Track.Cues {
 			if i < session.Target && clock >= float64(c.StartMS) && clock < float64(c.EndMS) {

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   preparedSummary,
   validPrepared,
+  refreshPreparedPreview,
   type PreparedSong,
 } from "./preparedSongs";
 
@@ -37,6 +38,34 @@ const song = (): PreparedSong => ({
   },
 });
 describe("prepared songs", () => {
+  it("refreshes an expiring preview without replacing the calibrated lyrics, and never calls the provider for a local file", async () => {
+    const local = song();
+    const lookup = async () => {
+      throw new Error("Provider unavailable");
+    };
+    expect(await refreshPreparedPreview(local, lookup)).toBe(local);
+    const preview = {
+      ...local,
+      file: undefined,
+      track: { ...local.track, preview: "https://example.invalid/expired.mp3" },
+    };
+    const refreshed = await refreshPreparedPreview(preview, async () => ({
+      ...local.track,
+      preview: "https://example.invalid/fresh.mp3",
+      cues: [],
+    }));
+    expect(refreshed.track.preview).toContain("fresh.mp3");
+    expect(refreshed.track.cues).toBe(preview.track.cues);
+    expect(refreshed.offset).toBe(250);
+    expect(refreshed.target).toBe(1);
+    await expect(
+      refreshPreparedPreview(preview, async () => ({
+        ...local.track,
+        id: 2,
+        preview: "https://example.invalid/wrong.mp3",
+      })),
+    ).rejects.toThrow();
+  });
   it("keeps the exact offset, target and word gaps while sharing only a safe catalogue", () => {
     const s = song();
     expect(validPrepared(s)).toBe(true);

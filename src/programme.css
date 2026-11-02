@@ -1,0 +1,333 @@
+.programme-editor {
+  display: grid;
+  gap: 24px;
+}
+.programme-hero.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 30px;
+  align-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(ellipse at 95% 5%, #9e58bf30, transparent 65%), #ffffff04;
+}
+.programme-hero h3 {
+  font:
+    600 clamp(34px, 4vw, 52px)/1.12 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -0.02em;
+  margin: 20px 0 16px;
+}
+.programme-hero h3 span {
+  color: var(--pink);
+}
+.programme-hero p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: #d0bfdc;
+  max-width: 520px;
+}
+.programme-counter {
+  text-align: center;
+  padding: 20px;
+  border: 1px solid #d5a2ee38;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #d99aff18, #9b9bff0a);
+  transform: rotate(4deg);
+}
+.programme-counter strong {
+  display: block;
+  font:
+    600 88px/1 "Oswald Variable",
+    sans-serif;
+  color: #eac5ff;
+  font-variant-numeric: tabular-nums;
+}
+.programme-counter span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-top: 12px;
+  color: #cfbddc;
+}
+.programme-title {
+  display: grid;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.programme-title input {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: #f7f4ff;
+  background: #100c19;
+  font-size: 18px;
+}
+.programme-section-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 20px;
+}
+.programme-section-title strong {
+  font-size: 20px;
+}
+.programme-section-title > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.programme-order {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.programme-order li {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #ffffff03;
+}
+.programme-number {
+  font:
+    500 34px/1 "Oswald Variable",
+    sans-serif;
+  color: var(--team-color);
+}
+.programme-song-copy {
+  min-width: 0;
+  display: grid;
+  text-align: left;
+  gap: 5px;
+}
+.programme-song-copy strong {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.programme-song-copy span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.programme-order-actions {
+  display: flex;
+  gap: 4px;
+}
+.programme-order-actions .button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px;
+}
+.programme-empty {
+  padding: 28px;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  border: 1px dashed #cbb4e13b;
+  border-radius: 18px;
+  color: #c9afd9;
+}
+.programme-empty p {
+  font-size: 20px;
+  color: #e7daef;
+}
+.programme-empty span {
+  font-size: 15px;
+}
+.programme-available {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.programme-add.button {
+  width: 100%;
+  min-width: 0;
+  justify-content: initial;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 20px;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff03;
+}
+.programme-add.button:disabled {
+  opacity: 0.5;
+}
+.programme-cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #caa4ff12;
+  color: #cfafff;
+}
+.programme-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.programme-hint {
+  color: #c2b1d0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.programme-footer {
+  display: grid;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.programme-main-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.programme-main-actions .button {
+  min-height: 56px;
+  font-size: 16px;
+}
+.programme-replace {
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: #d8a6ff0b;
+  border: 1px solid #d8a6ff32;
+  border-radius: 18px;
+}
+.programme-replace strong {
+  width: 100%;
+  font-size: 20px;
+}
+.programme-replace p {
+  width: 100%;
+  color: #cbb7d7;
+  line-height: 1.6;
+}
+.programme-missing {
+  border-color: #ff9c9c66 !important;
+}
+.programme-current {
+  border-color: #dc9dff70 !important;
+  background: linear-gradient(100deg, #bc83d91a, transparent) !important;
+}
+.programme-played {
+  opacity: 0.65;
+}
+.programme-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #cbb5dd;
+}
+.programme-summary {
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #d8a6ff32;
+  border-radius: 18px;
+  background: linear-gradient(100deg, #d99aff12, transparent);
+}
+.programme-summary > div {
+  flex: 1;
+  min-width: 0;
+}
+.programme-summary strong {
+  display: block;
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+.programme-summary p {
+  font-size: 14px;
+  color: #c5b4d3;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+.programme-open.button {
+  min-height: 48px;
+  font-size: 15px;
+  margin: 12px 0;
+}
+.stage-event {
+  font-size: clamp(13px, 1.3vw, 22px);
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 60%;
+  overflow-wrap: anywhere;
+  color: #ddc5ed;
+  text-align: right;
+  margin-left: auto;
+}
+.stage-topline:has(.stage-event) {
+  gap: 16px;
+}
+.stage-only .programme-summary {
+  display: none;
+}
+@media (max-width: 560px) {
+  .programme-hero.panel {
+    grid-template-columns: 1fr;
+    padding: 22px;
+    gap: 20px;
+  }
+  .programme-hero-copy {
+    min-width: 0;
+  }
+  .programme-counter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    transform: none;
+    border-radius: 16px;
+  }
+  .programme-counter strong {
+    font-size: 56px;
+  }
+  .programme-counter span {
+    margin: 0;
+    font-size: 14px;
+  }
+  .programme-order li {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+  .programme-order-actions {
+    grid-column: 2;
+  }
+  .programme-progress {
+    grid-column: 2;
+  }
+  .programme-available,
+  .programme-main-actions {
+    grid-template-columns: 1fr;
+  }
+  .programme-summary {
+    padding: 16px;
+  }
+  .stage-event {
+    font-size: 12px;
+    max-width: 48%;
+  }
+}

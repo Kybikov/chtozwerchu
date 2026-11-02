@@ -1,3 +1,5 @@
+import { validProgramme, type Programme } from "./programme";
+
 export type WordCue = { startMs: number; endMs: number; text: string };
 export type Cue = {
   startMs: number;
@@ -175,6 +177,7 @@ export async function api<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export type Session = {
+  programme?: Programme;
   matchId: string;
   ownerAccountId?: string | null;
   scores: Record<Team, number>;
@@ -247,6 +250,10 @@ export function restoreSession(): Session {
       ownerAccountId:
         typeof s.ownerAccountId === "string" ? s.ownerAccountId : null,
       finished: s.finished === true,
+      programme:
+        validProgramme(s.programme) && s.programme.trackIds.length === s.rounds
+          ? s.programme
+          : undefined,
       rounds: [4, 8, 12, 16].includes(s.rounds) ? s.rounds : 8,
       answerSeconds: [15, 20, 30, 45].includes(s.answerSeconds)
         ? s.answerSeconds

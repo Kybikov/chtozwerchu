@@ -9,6 +9,7 @@ import {
   FileText,
   History,
   LoaderCircle,
+  ListMusic,
   Monitor,
   Pause,
   Play,
@@ -35,13 +36,21 @@ import {
 import { api, curated, formatTime, type Track, type Team } from "../lib/music";
 import { matchWinner } from "../lib/match";
 import PreparedSongs from "./PreparedSongs";
+import ProgrammeOrder from "./ProgrammeOrder";
+import "../programme.css";
 
 export default function RemotePanel() {
   const [connection] = useState(() => linkConnection("host"));
   const room = useStudioConnection(connection),
     s = room.state;
   const [sheet, setSheet] = useState<
-    "cues" | "library" | "settings" | "history" | "new_game" | null
+    | "cues"
+    | "library"
+    | "settings"
+    | "history"
+    | "new_game"
+    | "programme"
+    | null
   >(null);
   const [query, setQuery] = useState(""),
     [tracks, setTracks] = useState<Track[]>([]),
@@ -185,6 +194,32 @@ export default function RemotePanel() {
         ) : (
           <>
             {scene && <Scoreboard state={scene} />}
+            {s.session.programme && (
+              <section
+                className="programme-summary"
+                aria-label="Програма вечора"
+              >
+                <ListMusic size={24} />
+                <div>
+                  <strong>{s.session.programme.title}</strong>
+                  <p>
+                    {s.session.finished
+                      ? `Програму завершено · ${s.session.rounds} раундів зіграно.`
+                      : `Пісня ${s.session.round} з ${s.session.rounds} · Наступний запис завантажиться після оцінки раунду.`}
+                  </p>
+                </div>
+                <Button onClick={() => setSheet("programme")}>
+                  Порядок вечора
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={locked || !["ready", "result"].includes(s.phase)}
+                  onClick={() => room.action({ type: "manual_programme" })}
+                >
+                  Обирати пісні вручну
+                </Button>
+              </section>
+            )}
             {!room.presence.station && (
               <div className="notice">
                 <Monitor size={20} />
@@ -303,7 +338,7 @@ export default function RemotePanel() {
                     Почати раунд
                     <ArrowRight size={20} />
                   </Button>
-                  {!s.audio.ready && (
+                  {!s.audio.ready && !s.needsTrack && (
                     <p className="remote-hint">
                       Спочатку натисни «Увімкнути звук» на екрані гри.
                     </p>
@@ -648,6 +683,21 @@ export default function RemotePanel() {
         )}
       </Modal>
       <Modal
+        open={sheet === "programme"}
+        onOpenChange={(v) => !v && setSheet(null)}
+        title={s?.session.programme?.title ?? "Програма вечора"}
+        description="Пісні у заздалегідь підготовленому порядку. Керуй грою з цього пульта."
+        wide
+      >
+        {s?.session.programme && (
+          <ProgrammeOrder
+            programme={s.session.programme}
+            songs={s.library ?? []}
+            round={s.session.finished ? s.session.round + 1 : s.session.round}
+          />
+        )}
+      </Modal>
+      <Modal
         open={sheet === "library"}
         onOpenChange={(v) => !v && setSheet(null)}
         title="Що сьогодні співаємо?"
@@ -744,7 +794,7 @@ export default function RemotePanel() {
                   <Button
                     key={n}
                     className={rounds === n ? "selected" : ""}
-                    disabled={n < s.session.round}
+                    disabled={n < s.session.round || !!s.session.programme}
                     onClick={() => setRounds(n)}
                   >
                     {n}
@@ -869,7 +919,7 @@ export default function RemotePanel() {
         open={sheet === "new_game"}
         onOpenChange={(v) => !v && setSheet(null)}
         title="Новий вечір — нова гра?"
-        description="Рахунок та історія цієї партії обнуляться. Назви команд, музика й підключені екрани залишаться."
+        description="Рахунок та історія цієї партії обнуляться, програму вечора буде вимкнено. Назви команд, поточна музика й підключені екрани залишаться."
       >
         <div className="action-pair">
           <Button onClick={() => setSheet(null)}>Зберегти фінал</Button>

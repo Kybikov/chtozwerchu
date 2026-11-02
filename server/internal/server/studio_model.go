@@ -17,6 +17,7 @@ type studioHistory struct {
 	Target  int     `json:"target"`
 }
 type studioSession struct {
+	Programme     *studioProgramme  `json:"programme,omitempty"`
 	MatchID       string            `json:"matchId"`
 	Scores        map[string]int    `json:"scores"`
 	Names         map[string]string `json:"names"`
@@ -31,6 +32,28 @@ type studioSession struct {
 	History       []studioHistory   `json:"history"`
 	Finished      bool              `json:"finished"`
 }
+type studioProgramme struct {
+	Title    string  `json:"title"`
+	TrackIDs []int64 `json:"trackIds"`
+}
+
+func validStudioProgramme(p *studioProgramme, rounds int) bool {
+	if p == nil {
+		return true
+	}
+	if len([]rune(strings.TrimSpace(p.Title))) < 1 || len([]rune(p.Title)) > 80 || !oneOf(len(p.TrackIDs), 4, 8, 12, 16) || len(p.TrackIDs) != rounds {
+		return false
+	}
+	seen := map[int64]bool{}
+	for _, id := range p.TrackIDs {
+		if id <= 0 || id > 999999999999999 || seen[id] {
+			return false
+		}
+		seen[id] = true
+	}
+	return true
+}
+
 type studioAudio struct {
 	Volume   int     `json:"volume"`
 	Position float64 `json:"position"`
@@ -114,7 +137,7 @@ func oneOf(n int, list ...int) bool {
 	return false
 }
 func validateStudio(s studioSession, t musicTrack, a studioAudio) error {
-	if !studioTeam(s.Team) || !oneOf(s.Rounds, 4, 8, 12, 16) || s.Round < 1 || s.Round > s.Rounds || !oneOf(s.AnswerSeconds, 15, 20, 30, 45) || math.Abs(float64(s.Offset)) > 24*3600000 || len(s.History) > s.Round {
+	if !studioTeam(s.Team) || !oneOf(s.Rounds, 4, 8, 12, 16) || !validStudioProgramme(s.Programme, s.Rounds) || s.Round < 1 || s.Round > s.Rounds || !oneOf(s.AnswerSeconds, 15, 20, 30, 45) || math.Abs(float64(s.Offset)) > 24*3600000 || len(s.History) > s.Round {
 		return errors.New("Некоректні налаштування партії.")
 	}
 	for _, team := range []string{"girls", "boys"} {
@@ -276,6 +299,26 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 			s.Session.Finished = true
 			break
 		}
+		var nextPrepared int64
+		if p := s.Session.Programme; p != nil {
+			if !validStudioProgramme(p, s.Session.Rounds) {
+				return bad("Перевір програму вечора.")
+			}
+			if !stationReady {
+				return bad("Поверни екран гри в мережу та увімкни звук перед наступною піснею.")
+			}
+			nextPrepared = p.TrackIDs[s.Session.Round]
+			found := false
+			for _, song := range s.Library {
+				if song.ID == nextPrepared {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return bad("Наступної підготовки немає на пристрої сцени. Віднови її або вимкни програму.")
+			}
+		}
 		s.Session.Round++
 		if s.Session.Team == "girls" {
 			s.Session.Team = "boys"
@@ -285,6 +328,16 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 		s.Phase = "ready"
 		s.Awarded = nil
 		s.Audio.Playing = false
+		if nextPrepared > 0 {
+			s.Audio.Ready = false
+			s.Session.Aligned = false
+			s.NeedsTrack = true
+			s.Notice = "Готуємо наступну пісню програми…"
+			ins.Type = "load_track"
+			ins.TrackID = nextPrepared
+			ins.Prepared = true
+			break
+		}
 		index := -1
 		for step := 1; step <= len(s.Track.Cues); step++ {
 			i := (s.Session.Target + step) % len(s.Track.Cues)
@@ -314,6 +367,7 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 			return bad("Заверши поточний фрагмент перед новою грою.")
 		}
 		s.Session.MatchID = studioSecret()
+		s.Session.Programme = nil
 		s.Session.Scores = map[string]int{"girls": 0, "boys": 0}
 		s.Session.History = []studioHistory{}
 		s.Session.Round = 1
@@ -325,6 +379,12 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 		s.NeedsTrack = false
 		s.Audio.Playing = false
 		ins.Type = "pause"
+	case "manual_programme":
+		if s.Phase != "ready" && s.Phase != "result" {
+			return bad("Заверши поточний раунд перед зміною програми.")
+		}
+		s.Session.Programme = nil
+		s.Notice = "Ведучий обирає наступні пісні вручну."
 	case "target", "align", "original_timeline", "seek", "load_track", "load_prepared", "config":
 		if s.Phase != "ready" {
 			return bad("Підготовка доступна перед початком раунду.")
@@ -371,6 +431,9 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 				}
 				ins.Prepared = true
 			}
+			if p := s.Session.Programme; p != nil && (a.Type != "load_prepared" || p.TrackIDs[s.Session.Round-1] != a.TrackID) {
+				s.Session.Programme = nil
+			}
 			s.Session.Aligned = false
 			s.Audio.Ready = false
 			s.Audio.Playing = false
@@ -381,6 +444,9 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 			c := a.Config
 			if c == nil || !oneOf(c.Rounds, 4, 8, 12, 16) || c.Rounds < s.Session.Round || !oneOf(c.AnswerSeconds, 15, 20, 30, 45) {
 				return bad("Перевір налаштування партії.")
+			}
+			if s.Session.Programme != nil && c.Rounds != s.Session.Rounds {
+				return bad("Довжину цієї гри визначає програма вечора.")
 			}
 			for _, t := range []string{"girls", "boys"} {
 				if len([]rune(strings.TrimSpace(c.Names[t]))) < 1 || len([]rune(c.Names[t])) > 32 {

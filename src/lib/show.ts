@@ -6,6 +6,7 @@ export type ShowState = Pick<
   Session,
   "scores" | "names" | "team" | "round" | "rounds"
 > & {
+  eventName?: string;
   phase: Phase;
   playing: boolean;
   lyric: string;

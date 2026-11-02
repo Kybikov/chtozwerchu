@@ -131,6 +131,7 @@ export function roomScene(
     visible = state.phase === "playing" && current >= 0 && current < s.target;
   const result = s.history.find((r) => r.round === s.round);
   return {
+    eventName: s.programme?.title,
     scores: s.scores,
     names: s.names,
     team: s.team,
