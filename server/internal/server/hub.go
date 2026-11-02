@@ -45,6 +45,7 @@ type RoomSession struct {
 	saving         bool
 	timer          *time.Timer // countdown for timed rounds
 	timerKey       int         // round index the timer is armed for
+	timerDeadline  time.Time   // deadlines can change within a buzzer round
 	previewKey     int         // round index a melody preview lookup was started for
 	chatLog        []chatOut   // recent chat, capped
 }
@@ -374,9 +375,10 @@ func (h *Hub) armTimer(s *RoomSession) {
 			s.timer = nil
 		}
 		s.timerKey = 0
+		s.timerDeadline = time.Time{}
 		return
 	}
-	if s.timer != nil && s.timerKey == r.RoundIndex {
+	if s.timer != nil && s.timerKey == r.RoundIndex && s.timerDeadline.Equal(r.Current.Deadline) {
 		return // already armed for this round
 	}
 	if s.timer != nil {
@@ -389,6 +391,7 @@ func (h *Hub) armTimer(s *RoomSession) {
 		d = 0
 	}
 	deadline := r.Current.Deadline
+	s.timerDeadline = deadline
 	s.timer = time.AfterFunc(d, func() { h.fireTimeout(s, key, deadline) })
 }
 
@@ -399,7 +402,12 @@ func (h *Hub) fireTimeout(s *RoomSession, key int, deadline time.Time) {
 		s.mu.Unlock()
 		return
 	}
+	s.timer = nil
+	s.timerKey = 0
+	s.timerDeadline = time.Time{}
 	h.engine.Timeout(s.room)
+	h.armTimer(s)
+	h.armMediaWatchdog(s)
 	msgs := s.renderAll()
 	s.mu.Unlock()
 	for _, m := range msgs {

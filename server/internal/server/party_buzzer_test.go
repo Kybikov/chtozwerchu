@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,54 @@ import (
 	"chtozverchu/internal/game"
 	"github.com/gorilla/websocket"
 )
+
+func TestBuzzerAnswerDeadlineReplacesListeningTimer(t *testing.T) {
+	e := game.NewEngine(mediaCatalog{})
+	h := NewHub(e, nil, nil, "")
+	h.dir = ""
+	r, host := e.CreateRoom(game.CreateParams{Rounds: 1, RoundTypes: []game.RoundType{game.RoundMelody}, MelodyMode: "buzzer"})
+	if err := e.StartGame(r); err != nil {
+		t.Fatal(err)
+	}
+	_ = e.Apply(r, game.Action{Name: "resume", IsHost: true})
+	c := &Client{player: host, send: make(chan []byte, 8)}
+	s := &RoomSession{room: r, clients: map[*Client]bool{c: true}}
+	s.mu.Lock()
+	h.armTimer(s)
+	listeningDeadline := r.Current.Deadline
+	if err := e.Apply(r, game.Action{Name: "buzz", IsHost: true, Payload: map[string]any{"team": "girls"}}); err != nil {
+		t.Fatal(err)
+	}
+	// Shorten only this fixture's answer window; the real window is tested by
+	// the engine and browser. Waiting on a broadcast proves the Hub timer ran.
+	r.Current.Deadline = time.Now().Add(50 * time.Millisecond)
+	h.armTimer(s)
+	s.mu.Unlock()
+	defer func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if s.timer != nil {
+			s.timer.Stop()
+		}
+		if s.mediaTimer != nil {
+			s.mediaTimer.Stop()
+		}
+	}()
+	h.fireTimeout(s, r.RoundIndex, listeningDeadline)
+	select {
+	case raw := <-c.send:
+		var m mediaWire
+		if err := json.Unmarshal(raw, &m); err != nil {
+			t.Fatal(err)
+		}
+		round := m.Round.(map[string]any)
+		if !m.Paused || round["buzzer"].(map[string]any)["phase"] != "handoff" || m.RemainingMs < 35000 {
+			t.Fatal("answer timeout lost the other team's listening window")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the old listening timer prevented the answer deadline from firing")
+	}
+}
 
 func TestBuzzerConcurrentSocketsAndAnswerResume(t *testing.T) {
 	h := NewHub(game.NewEngine(mediaCatalog{}), nil, nil, "")
