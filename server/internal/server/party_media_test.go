@@ -146,4 +146,17 @@ func TestPartyTVCapabilityAndAcknowledgedPlayback(t *testing.T) {
 	if ready.Media.Output != "tv" {
 		t.Fatal("selected output changed")
 	}
+	reconnected := dial()
+	send(reconnected, "watch", map[string]any{"code": code, "tv": true, "tvToken": identity.TVToken})
+	restored := read(reconnected, func(m mediaWire) bool { return m.Type == "state" })
+	send(reconnected, "media_status", mediaStatus{Revision: restored.Media.Revision, Round: 1, Enabled: true, Ready: true, Duration: 30, Position: 0})
+	resumable := read(host, func(m mediaWire) bool { return m.Type == "state" && m.Media.Ready })
+	if resumable.Media.Position != .1 {
+		t.Fatal("newly loaded TV reset the saved playback position")
+	}
+	send(host, "action", map[string]any{"name": "resume", "round": 1})
+	resumeCommand := read(reconnected, func(m mediaWire) bool { return m.Type == "state" && m.Media.Pending })
+	if resumeCommand.Media.Position != .1 || !resumeCommand.Paused {
+		t.Fatal("reconnected TV did not receive a paused seek command")
+	}
 }

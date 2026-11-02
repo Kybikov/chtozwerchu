@@ -131,10 +131,14 @@ func (h *Hub) receiveMedia(c *Client, payload json.RawMessage) {
 	m.Enabled = status.Enabled
 	m.Ready = status.Enabled && status.Ready
 	s.mediaLast = time.Now()
-	if math.Abs(m.Position-status.Position) > .015 || (!m.Playing && status.Playing) {
-		s.mediaProgress = time.Now()
+	// A newly connected/loaded element reports zero before it has sought to
+	// the saved position. Only acknowledged playback can replace that clock.
+	if m.Wanted && (!m.Pending || status.Playing) {
+		if math.Abs(m.Position-status.Position) > .015 || (!m.Playing && status.Playing) {
+			s.mediaProgress = time.Now()
+		}
+		m.Position = status.Position
 	}
-	m.Position = status.Position
 	m.Duration = status.Duration
 	if status.Failed || !m.Ready && (m.Wanted || m.Pending) {
 		h.engine.Pause(r)
