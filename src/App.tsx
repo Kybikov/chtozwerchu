@@ -7,7 +7,7 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { usePWA } from "./lib/pwa";
-import { get, set, del } from "idb-keyval";
+import { get, set, setMany, del } from "idb-keyval";
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -65,12 +65,16 @@ import NetworkStation from "./components/NetworkStation";
 import { savedRoom, rememberRoom, type RoomAccess } from "./lib/studioRoom";
 import { AccountButton, useIdentity } from "./lib/identity";
 import LocalArchive from "./components/LocalArchive";
+import WordTimingEditor from "./components/WordTimingEditor";
+import { serializeLyrics, timingCount } from "./lib/wordTiming";
+import type { WordCue } from "./lib/music";
 
 type Sheet =
   | "library"
   | "settings"
   | "help"
   | "cues"
+  | "words"
   | "reset"
   | "history"
   | "connect"
@@ -110,6 +114,7 @@ export default function App() {
   const [searchBusy, setSearchBusy] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [cueQuery, setCueQuery] = useState("");
+  const [wordLine, setWordLine] = useState(0);
   const [lyricsConfigured, setLyricsConfigured] = useState<boolean | null>(
     null,
   );
@@ -387,7 +392,11 @@ export default function App() {
       return;
     }
     player.seek(Math.max(0, start));
-    if (session.round === 1 && session.history.length === 0 && session.ownerAccountId === null) {
+    if (
+      session.round === 1 &&
+      session.history.length === 0 &&
+      session.ownerAccountId === null
+    ) {
       setSession((s) => ({ ...s, ownerAccountId: identity.user?.id ?? null }));
     }
     scoreLock.current = false;
@@ -549,6 +558,48 @@ export default function App() {
     } catch {
       tell("Цей браузер не підтримує повноекранний режим.");
     }
+  };
+  const saveWordTiming = async (words: WordCue[] | undefined) => {
+    if (!track || !track.cues[wordLine]) return false;
+    const updated: Track = {
+      ...track,
+      lyricsStatus: "imported",
+      cues: track.cues.map((cue, index) =>
+        index === wordLine ? { ...cue, words } : cue,
+      ),
+    };
+    try {
+      await setMany([
+        [`khz:lrc:${track.id}`, updated.cues],
+        [`khz:track:${track.id}`, updated],
+      ]);
+    } catch {
+      return false;
+    }
+    setTrack(updated);
+    setSheet("cues");
+    tell(
+      words?.length
+        ? "Мітки слів збережено. Перевір підсвічування й починай гру."
+        : "Збережено синхронізацію рядка без міток слів.",
+    );
+    return true;
+  };
+  const exportLyrics = () => {
+    if (!track?.cues.length) return;
+    const url = URL.createObjectURL(
+      new Blob([serializeLyrics(track.cues)], {
+        type: "text/plain;charset=utf-8",
+      }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${track.artist} - ${track.title}.lrc`.replace(
+      /[<>:"/\\|?*\u0000-\u001f]/g,
+      "_",
+    );
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const liveActions = useRef({
     network: !!network,
@@ -1162,7 +1213,12 @@ export default function App() {
                       >
                         Граємо ще
                       </Button>
-                      <LocalArchive session={session} onClaim={(id) => setSession((s) => ({ ...s, ownerAccountId: id }))} />
+                      <LocalArchive
+                        session={session}
+                        onClaim={(id) =>
+                          setSession((s) => ({ ...s, ownerAccountId: id }))
+                        }
+                      />
                     </div>
                   )}
                   <p className="local-save">
@@ -1358,6 +1414,13 @@ export default function App() {
                 <Upload size={15} />
                 Свій LRC
               </Button>
+              <Button
+                variant="ghost"
+                disabled={!cues.length}
+                onClick={exportLyrics}
+              >
+                <ArrowDownToLine size={15} /> Зберегти LRC
+              </Button>
             </div>
             <div className="offset-row">
               <span>
@@ -1418,7 +1481,27 @@ export default function App() {
                     className={`cue-row ${current === index ? "cue-current" : ""} ${session.target === index ? "cue-target" : ""}`}
                   >
                     <time>{formatTime(cue.startMs / 1000)}</time>
-                    <span>{cue.text}</span>
+                    <span>
+                      {cue.text}
+                      {cue.words?.length ? (
+                        <small className="cue-word-badge">
+                          <Check size={12} /> {timingCount(cue.words.length)}
+                        </small>
+                      ) : null}
+                    </span>
+                    <Button
+                      className="cue-word-button"
+                      aria-label={`Розмітити слова рядка ${index + 1}`}
+                      title="Мітки слів"
+                      onClick={() => {
+                        resetRound();
+                        setWordLine(index);
+                        setSheet("words");
+                      }}
+                    >
+                      <AudioLines size={17} />
+                      <span className="cue-word-label">Слова</span>
+                    </Button>
                     <Button onClick={() => align(index)}>Прив’язати</Button>
                     <Button
                       variant={session.target === index ? "primary" : "soft"}
@@ -1442,9 +1525,22 @@ export default function App() {
             <p className="modal-footnote">
               «Прив’язати» — рядок, що звучить зараз. «Загадати» — рядок, який
               команда має продовжити. На сцені він залишається прихованим до
-              результату.
+              результату. Кнопка з хвилею відкриває запис міток окремих слів.
             </p>
           </Modal>
+
+          {sheet === "words" && cues[wordLine] && (
+            <WordTimingEditor
+              key={`${track?.id}:${wordLine}`}
+              cue={cues[wordLine]}
+              line={wordLine}
+              offset={session.offset}
+              aligned={session.aligned}
+              player={player}
+              onSave={saveWordTiming}
+              onClose={() => setSheet("cues")}
+            />
+          )}
 
           <Modal
             open={sheet === "connect"}
@@ -1816,14 +1912,17 @@ export default function App() {
               <Monitor size={18} />
               <span>
                 «Окреме вікно для TV» відкриє сцену в цьому браузері. Перенеси
-                його на телевізор, а пульт залиш на ноутбуці. Керування з
-                телефону з’явиться окремо.
+                його на телевізор, а пульт залиш на ноутбуці. Для іншого
+                пристрою обери «Пульт на телефоні» — він створить мережеву
+                кімнату.
               </span>
             </div>
             <p className="modal-footnote">
-              Підсвічуємо цілі рядки з точними мітками джерела. Повний захищений
-              потік Deezer ще не інтегрований. Власні файли обробляються лише на
-              твоєму пристрої.
+              Текст Deezer має мітки рядків. Для підсвічування слів натисни
+              іконку хвилі біля рядка та запиши мітки під музику. Їх можна
+              поправити, зберегти на пристрої й експортувати у LRC. Повний
+              захищений потік Deezer ще не інтегрований. Власні файли
+              обробляються лише на твоєму пристрої.
             </p>
           </Modal>
           <AnimatePresence>

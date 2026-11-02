@@ -77,10 +77,10 @@ export function parseLRC(raw: string): Cue[] {
           Number((match[3] ?? "").padEnd(3, "0")) +
           globalOffset,
       );
-      const words = [
+      const tags = [
         ...content.matchAll(/<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>([^<]*)/g),
       ]
-        .filter((w) => +w[2] < 60 && w[4].trim())
+        .filter((w) => +w[2] < 60)
         .map((w) => ({
           startMs: Math.max(
             0,
@@ -92,14 +92,28 @@ export function parseLRC(raw: string): Cue[] {
           endMs: 0,
           text: w[4],
         }));
+      const words = tags
+        .map((word, index) => ({
+          ...word,
+          endMs: tags[index + 1]?.startMs ?? 0,
+        }))
+        .filter((word) => word.text.trim());
       // Enhanced LRC word timestamps are absolute. Repeated line tags cannot
       // safely share a word timeline, so those lines keep exact line sync.
       const validWords =
         times.length === 1 &&
         words.length > 0 &&
+        words
+          .map((w) => w.text)
+          .join("")
+          .trim()
+          .replace(/\s+/g, " ") === text.replace(/\s+/g, " ") &&
         words.every(
           (w, i) =>
-            w.startMs >= startMs && (!i || w.startMs > words[i - 1].startMs),
+            w.startMs >= startMs &&
+            (!w.endMs || w.endMs > w.startMs) &&
+            (!i ||
+              w.startMs >= (words[i - 1].endMs || words[i - 1].startMs + 1)),
         );
       cues.push({
         startMs,
@@ -115,11 +129,17 @@ export function parseLRC(raw: string): Cue[] {
     .map((cue, i, list) => {
       const endMs =
         list[i + 1]?.startMs ??
-        Math.max(cue.startMs + 6000, (cue.words?.at(-1)?.startMs ?? 0) + 1500);
-      const words = cue.words?.every((w) => w.startMs < endMs)
+        Math.max(
+          cue.startMs + 6000,
+          (cue.words?.at(-1)?.startMs ?? 0) + 1500,
+          cue.words?.at(-1)?.endMs ?? 0,
+        );
+      const words = cue.words?.every(
+        (w) => w.startMs < endMs && w.endMs <= endMs,
+      )
         ? cue.words.map((w, wi, ws) => ({
             ...w,
-            endMs: ws[wi + 1]?.startMs ?? endMs,
+            endMs: w.endMs || ws[wi + 1]?.startMs || endMs,
           }))
         : undefined;
       return {
@@ -219,8 +239,13 @@ export function restoreSession(): Session {
     return {
       ...freshSession(),
       ...s,
-      matchId: typeof s.matchId === "string" && /^[A-Za-z0-9_-]{20,80}$/.test(s.matchId) ? s.matchId : crypto.randomUUID(),
-      ownerAccountId: typeof s.ownerAccountId === "string" ? s.ownerAccountId : null,
+      matchId:
+        typeof s.matchId === "string" &&
+        /^[A-Za-z0-9_-]{20,80}$/.test(s.matchId)
+          ? s.matchId
+          : crypto.randomUUID(),
+      ownerAccountId:
+        typeof s.ownerAccountId === "string" ? s.ownerAccountId : null,
       finished: s.finished === true,
       rounds: [4, 8, 12, 16].includes(s.rounds) ? s.rounds : 8,
       answerSeconds: [15, 20, 30, 45].includes(s.answerSeconds)

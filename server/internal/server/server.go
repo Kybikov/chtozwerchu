@@ -66,7 +66,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusServiceUnavailable
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.7.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil})
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.8.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil})
 }
 
 // roundTypeName maps round types to Ukrainian display names.
