@@ -26,6 +26,24 @@ describe("audio timeline", () => {
   });
   it("rejects untimed text rather than inventing synchronization", () =>
     expect(parseLRC("[ar:artist]\nЗвичайний текст")).toEqual([]));
+  it("keeps exact enhanced LRC word timestamps and clean display text", () => {
+    const cues = parseLRC(
+      "[offset:-100]\n[00:01.00]<00:01.00>Лови <00:01.50>цей <00:02.20>ритм\n[00:04.00]Наступний",
+    );
+    expect(cues[0].text).toBe("Лови цей ритм");
+    expect(cues[0].words).toEqual([
+      { startMs: 900, endMs: 1400, text: "Лови " },
+      { startMs: 1400, endMs: 2100, text: "цей " },
+      { startMs: 2100, endMs: 3900, text: "ритм" },
+    ]);
+    expect(cues[1].words).toBeUndefined();
+  });
+  it("falls back to line sync for malformed or repeated word timelines", () => {
+    expect(parseLRC("[00:01]<00:01>раз <00:00.5>два")[0].words).toBeUndefined();
+    expect(
+      parseLRC("[00:01][00:05]<00:01>раз <00:02>два").every((c) => !c.words),
+    ).toBe(true);
+  });
   it("formats non-finite media duration safely", () => {
     expect(formatTime(Infinity)).toBe("0:00");
     expect(formatTime(95.9)).toBe("1:35");

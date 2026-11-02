@@ -1,6 +1,6 @@
 {
   "name": "khto-zverkhu-studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -14,7 +14,8 @@
     "node": ">=22.12"
   },
   "dependencies": {
-    "@fontsource-variable/manrope": "^5.3.0",
+    "@fontsource-variable/onest": "^5.3.1",
+    "@fontsource-variable/oswald": "^5.3.0",
     "@radix-ui/react-dialog": "^1.3.1",
     "idb-keyval": "^6.3.0",
     "lucide-react": "^1.66.0",

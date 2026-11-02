@@ -5,7 +5,7 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { get, set, del } from "idb-keyval";
 import {
@@ -21,10 +21,8 @@ import {
   FileText,
   Headphones,
   LoaderCircle,
-  Maximize2,
   Minus,
   Monitor,
-  Music2,
   Pause,
   Play,
   Plus,
@@ -45,8 +43,10 @@ import { Button, Modal, Panel } from "./components/ui";
 import Backdrop from "./components/Backdrop";
 import WakeSlider from "./components/react-bits/WakeSlider";
 import SquishSwitch from "./components/react-bits/SquishSwitch";
-import CountUp from "./components/react-bits/CountUp/CountUp";
-import BlurText from "./components/react-bits/BlurText/BlurText";
+import ShowStage, { Scoreboard } from "./components/ShowStage";
+import { useShowBroadcast, type ShowState } from "./lib/show";
+import { useAnswerClock } from "./lib/useAnswerClock";
+import { scoreRound, undoRound, nextPlayableTarget } from "./lib/match";
 import {
   activeCue,
   api,
@@ -61,13 +61,22 @@ import {
 } from "./lib/music";
 import { usePlayer } from "./lib/usePlayer";
 
-type Sheet = "library" | "settings" | "help" | "cues" | "reset" | null;
+type Sheet =
+  "library" | "settings" | "help" | "cues" | "reset" | "history" | null;
 type LocalAudio = { file: File; trackId: number };
 export default function App() {
   const [session, setSession] = useState(restoreSession);
+  const latestSession = useRef(session);
+  latestSession.current = session;
   const [track, setTrack] = useState<Track | null>(null);
   const [trackBusy, setTrackBusy] = useState(false);
-  const [phase, setPhase] = useState<Phase>("ready");
+  const [phase, setPhase] = useState<Phase>(() =>
+    session.finished
+      ? "final"
+      : session.history.some((r) => r.round === session.round)
+        ? "result"
+        : "ready",
+  );
   const [sheet, setSheet] = useState<Sheet>(null);
   const [toast, setToast] = useState("");
   const [effects, setEffects] = useState(
@@ -76,7 +85,10 @@ export default function App() {
   const [stageOnly, setStageOnly] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const [localAudio, setLocalAudio] = useState<LocalAudio | null>(null);
-  const [awarded, setAwarded] = useState<Team | null>(null);
+  const [awarded, setAwarded] = useState<Team | null>(
+    () =>
+      session.history.find((r) => r.round === session.round)?.awarded ?? null,
+  );
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Track[]>([]);
   const [searchBusy, setSearchBusy] = useState(false);
@@ -91,7 +103,6 @@ export default function App() {
   const requestVersion = useRef(0),
     scoreLock = useRef(false),
     targetLock = useRef(false);
-  const reduced = useReducedMotion();
   const tell = useCallback((message: string) => setToast(message), []);
   const player = usePlayer(audioURL, tell);
   const {
@@ -105,7 +116,35 @@ export default function App() {
   const nowMS = player.position * 1000 + session.offset;
   const current = session.aligned ? activeCue(cues, nowMS) : -1;
   const target = cues[session.target];
-  const selectedName = session.names[session.team];
+  const answerClock = useAnswerClock(phase === "answer", session.answerSeconds);
+  const recorded = session.history.find((r) => r.round === session.round);
+  const scene: ShowState = {
+    scores: session.scores,
+    names: session.names,
+    team: session.team,
+    round: session.round,
+    rounds: session.rounds,
+    phase,
+    playing: player.playing,
+    nowMS,
+    lyric: current >= 0 && current < session.target ? cues[current].text : "",
+    words:
+      current >= 0 && current < session.target
+        ? cues[current].words
+        : undefined,
+    ...(phase === "result" || phase === "final"
+      ? {
+          answer: recorded?.line ?? target?.text,
+          track:
+            recorded?.track ?? `${track?.artist ?? ""} · ${track?.title ?? ""}`,
+        }
+      : {}),
+    awarded,
+    remaining: answerClock.remaining,
+    timerPaused: answerClock.paused,
+    effects,
+  };
+  const audienceURL = useShowBroadcast(scene);
 
   useEffect(() => {
     localStorage.setItem("khz:studio:v1", JSON.stringify(session));
@@ -140,9 +179,18 @@ export default function App() {
     async (id: number, preserve = false) => {
       const version = ++requestVersion.current;
       setTrackBusy(true);
-      setPhase("ready");
-      setAwarded(null);
-      scoreLock.current = false;
+      const completed = latestSession.current.history.find(
+        (r) => r.round === latestSession.current.round,
+      );
+      setPhase(
+        latestSession.current.finished
+          ? "final"
+          : completed
+            ? "result"
+            : "ready",
+      );
+      setAwarded(completed?.awarded ?? null);
+      scoreLock.current = !!completed;
       targetLock.current = false;
       setTrack(null);
       setAudioURL("");
@@ -257,12 +305,17 @@ export default function App() {
 
   const resetRound = () => {
     player.pause();
-    setPhase("ready");
-    setAwarded(null);
-    scoreLock.current = false;
+    const completed = session.history.find((r) => r.round === session.round);
+    setPhase(session.finished ? "final" : completed ? "result" : "ready");
+    setAwarded(completed?.awarded ?? null);
+    scoreLock.current = !!completed;
     targetLock.current = false;
   };
   const startRound = () => {
+    if (session.history.some((r) => r.round === session.round)) {
+      setPhase("result");
+      return;
+    }
     if (!session.aligned || !target || !player.ready) return;
     const start = (target.startMs - session.offset) / 1000 - 7;
     const stop = (target.startMs - session.offset) / 1000;
@@ -278,26 +331,73 @@ export default function App() {
     void player.play();
   };
   const award = (team: Team | null) => {
-    if (scoreLock.current) return;
-    interactionUntil.current = performance.now() + 400;
+    if (
+      scoreLock.current ||
+      phase !== "answer" ||
+      session.history.some((r) => r.round === session.round)
+    )
+      return;
+    interactionUntil.current = performance.now() + 1200;
     scoreLock.current = true;
     player.pause();
     setAwarded(team);
     setPhase("result");
-    if (team)
-      setSession((s) => ({
-        ...s,
-        scores: { ...s.scores, [team]: s.scores[team] + 3 },
-      }));
+    setSession((s) =>
+      scoreRound(s, {
+        round: s.round,
+        team: s.team,
+        awarded: team,
+        track: `${track?.artist ?? ""} · ${track?.title ?? ""}`,
+        line: target?.text ?? "",
+        trackId: s.trackId,
+        target: s.target,
+      }),
+    );
   };
-  const nextRound = () => {
+  const nextRound = (event?: { detail: number }) => {
+    if (trackBusy || !player.ready) return;
+    if (
+      phase !== "result" ||
+      (event && event.detail > 1) ||
+      performance.now() < interactionUntil.current
+    )
+      return;
+    if (session.round >= session.rounds) {
+      player.pause();
+      setPhase("final");
+      setSession((s) => ({ ...s, finished: true }));
+      return;
+    }
     resetRound();
+    setPhase("ready");
+    setAwarded(null);
+    scoreLock.current = false;
+    const next = nextPlayableTarget(
+      cues,
+      session.offset,
+      player.duration,
+      session.target,
+      cues.flatMap((cue, i) =>
+        session.history.some(
+          (r) => r.trackId === session.trackId && r.line === cue.text,
+        )
+          ? [i]
+          : [],
+      ),
+    );
     setSession((s) => ({
       ...s,
       round: s.round + 1,
       team: s.team === "girls" ? "boys" : "girls",
-      target: cues.length ? Math.min(s.target + 2, cues.length - 1) : 0,
+      target: next ?? 0,
+      aligned: next !== null && s.aligned,
     }));
+    if (next === null) {
+      setSheet("library");
+      tell(
+        "У цьому аудіо більше немає нових рядків для гри. Обери іншу пісню.",
+      );
+    }
   };
   const align = (index: number) => {
     const cue = cues[index];
@@ -386,6 +486,7 @@ export default function App() {
   };
   const liveActions = useRef({
     toggle: player.toggle,
+    answerToggle: answerClock.toggle,
     start: startRound,
     phase,
     sheet,
@@ -393,6 +494,7 @@ export default function App() {
   });
   liveActions.current = {
     toggle: player.toggle,
+    answerToggle: answerClock.toggle,
     start: startRound,
     phase,
     sheet,
@@ -412,7 +514,13 @@ export default function App() {
       if (liveActions.current.sheet) return;
       if (e.code === "Space") {
         e.preventDefault();
-        liveActions.current.toggle();
+        if (liveActions.current.phase === "answer")
+          liveActions.current.answerToggle();
+        else if (
+          liveActions.current.phase === "ready" ||
+          liveActions.current.phase === "playing"
+        )
+          liveActions.current.toggle();
       }
       if (e.key === "Escape") setStageOnly(false);
       if (e.key.toLowerCase() === "f") void fullscreen();
@@ -477,6 +585,9 @@ export default function App() {
             Як грати
             <CircleHelp size={15} />
           </Button>
+          <Button variant="ghost" onClick={() => setSheet("history")}>
+            Рахунок і раунди
+          </Button>
         </nav>
         <div className="header-actions">
           <span className="local-badge">
@@ -499,10 +610,10 @@ export default function App() {
           <div>
             <p className="eyebrow">
               <span />
-              КОМПАНІЯ Є. ТЕПЕР БУДЕ ШОУ.
+              ЗБИРАЙ СВОЇХ. ВМИКАЙ ШОУ.
             </p>
             <h1>
-              Музика <span>вирішує.</span>
+              МУЗИКА <span>ВИРІШУЄ.</span>
               <span className="title-star">✳</span>
             </h1>
             <p className="intro-copy">Знайомі пісні. Незнайомий переможець.</p>
@@ -510,7 +621,7 @@ export default function App() {
           <div className="intro-side">
             <span className="prototype-label">
               <Sparkles size={14} />
-              ПЕРШИЙ СЕЗОН · МУЗИЧНИЙ ПРОТОТИП
+              МУЗИЧНА БИТВА · СЕЗОН 01
             </span>
             <Button
               onClick={() => {
@@ -522,204 +633,24 @@ export default function App() {
               Екран шоу
               <ArrowRight size={16} />
             </Button>
+            <a
+              className="button specular-button button-ghost tv-open"
+              href={audienceURL}
+              target="_blank"
+              rel="noopener"
+            >
+              <span className="specular-button__label">
+                <Expand size={18} />
+                Окреме вікно для TV
+              </span>
+            </a>
           </div>
         </section>
 
         <div className="studio-layout">
           <section className="show-column" aria-label="Сцена гри">
-            <div className="scoreboard">
-              {(["girls", "boys"] as Team[]).map((team, i) => (
-                <div
-                  key={team}
-                  className={`team-score ${team} ${session.team === team ? "team-active" : ""}`}
-                >
-                  <div className="team-avatar">{i === 0 ? "↗" : "↖"}</div>
-                  <div className="team-meta">
-                    <span className="micro-label">
-                      КОМАНДА {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <strong>{session.names[team]}</strong>
-                  </div>
-                  <span className="score-number">
-                    <CountUp
-                      to={session.scores[team]}
-                      duration={0.55}
-                      trigger="load"
-                    />
-                  </span>
-                  {session.team === team && (
-                    <span className="team-turn">ваш хід</span>
-                  )}
-                </div>
-              ))}
-              <div className="versus">VS</div>
-            </div>
-
-            <Panel className={`show-stage phase-${phase}`}>
-              <div className="stage-topline">
-                <span className="round-tag">
-                  <Music2 size={15} />
-                  ПРОДОВЖ ПІСНЮ
-                </span>
-                <Button
-                  variant="ghost"
-                  className="icon-button"
-                  aria-label="Збільшити сцену"
-                  onClick={() => setStageOnly((v) => !v)}
-                >
-                  <Maximize2 size={17} />
-                </Button>
-              </div>
-              <div className="stage-orbits" aria-hidden="true">
-                <div />
-                <div />
-                <div />
-                <span className="orbit-star">✳</span>
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  className="stage-content"
-                  key={phase}
-                  initial={{ opacity: 0, y: reduced ? 0 : 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: reduced ? 0 : -10 }}
-                  transition={{ duration: reduced ? 0 : 0.35 }}
-                >
-                  {phase === "ready" && (
-                    <>
-                      <div className="stage-symbol">
-                        <AudioLines size={34} strokeWidth={1.3} />
-                      </div>
-                      <p className="stage-kicker">ВПІЗНАЄШ ІЗ ПЕРШИХ НОТ?</p>
-                      <h2>
-                        <BlurText
-                          text="Не зупиняй"
-                          delay={80}
-                          trigger="load"
-                          className="stage-blur"
-                        />
-                        <span className="gradient-type">цю пісню.</span>
-                      </h2>
-                      <p className="stage-caption">
-                        Музика стихне. Ваша команда продовжить.
-                      </p>
-                      <div className="stage-pills">
-                        <span>2 команди</span>
-                        <i />
-                        <span>1 знайома пісня</span>
-                        <i />
-                        <span>+3 бали</span>
-                      </div>
-                    </>
-                  )}
-                  {phase === "playing" && (
-                    <>
-                      <div
-                        className={`equalizer ${player.playing ? "is-playing" : ""}`}
-                        aria-hidden="true"
-                      >
-                        {Array.from({ length: 19 }, (_, i) => (
-                          <i
-                            key={i}
-                            style={{ "--bar": i } as React.CSSProperties}
-                          />
-                        ))}
-                      </div>
-                      <p className="stage-kicker">
-                        {player.playing ? "СЛУХАЙ УВАЖНО" : "МУЗИКА НА ПАУЗІ"}
-                      </p>
-                      <h2 className="lyric-live">
-                        {current >= 0 && current < session.target
-                          ? cues[current].text
-                          : "Лови знайомі ноти…"}
-                      </h2>
-                      <p className="stage-caption">
-                        {selectedName}, наступний рядок — за вами.
-                      </p>
-                    </>
-                  )}
-                  {phase === "answer" && (
-                    <>
-                      <div className="stage-symbol answer-symbol">
-                        <span>?</span>
-                      </div>
-                      <p className="stage-kicker">А ТЕПЕР — ВАШ ВИХІД</p>
-                      <h2 className="answer-title">
-                        Що було <span className="gradient-type">далі?</span>
-                      </h2>
-                      <p className="stage-caption">
-                        {selectedName}, продовжуйте пісню!
-                      </p>
-                      <div className="hidden-words" aria-hidden="true">
-                        {Array.from(
-                          {
-                            length: Math.min(
-                              6,
-                              target?.text.split(" ").length || 4,
-                            ),
-                          },
-                          (_, i) => (
-                            <span key={i} />
-                          ),
-                        )}
-                      </div>
-                    </>
-                  )}
-                  {phase === "result" && (
-                    <>
-                      <div
-                        className={`stage-symbol result-symbol ${awarded ? "won" : ""}`}
-                      >
-                        <Trophy size={36} />
-                      </div>
-                      <p className="stage-kicker">
-                        {awarded ? "ЦЕ БУЛО КРАСИВО" : "ЩЕ ПОБОРЕМОСЬ"}
-                      </p>
-                      <h2>
-                        {awarded ? (
-                          <>
-                            <span className="gradient-type">+3 бали</span>
-                            <span className="winner-name">
-                              {session.names[awarded]}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            Пісня{" "}
-                            <span className="gradient-type">з характером.</span>
-                          </>
-                        )}
-                      </h2>
-                      <p className="revealed-line">«{target?.text}»</p>
-                      <p className="result-track">
-                        {track?.artist} · {track?.title}
-                      </p>
-                    </>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-              <div className="stage-bottomline">
-                <span>
-                  РАУНД <b>{String(session.round).padStart(2, "0")}</b>
-                </span>
-                <span className={`stage-state state-${phase}`}>
-                  <span />
-                  {phase === "ready"
-                    ? "ГОТУЄМО СЦЕНУ"
-                    : phase === "playing"
-                      ? player.playing
-                        ? "ЗВУЧИТЬ ТРЕК"
-                        : "ПАУЗА"
-                      : phase === "answer"
-                        ? "ВІДПОВІДАЄ КОМАНДА"
-                        : "РЕЗУЛЬТАТ"}
-                </span>
-                <span className={`active-team ${session.team}`}>
-                  {selectedName}
-                  <span>↗</span>
-                </span>
-              </div>
-            </Panel>
+            <Scoreboard state={scene} />
+            <ShowStage state={scene} onExpand={() => setStageOnly((v) => !v)} />
             <div className="stage-under">
               <span>
                 <ShieldCheck size={15} />У режимі шоу пульт приховано
@@ -744,7 +675,10 @@ export default function App() {
             className="host-column"
             aria-label="Пульт ведучого"
             onClickCapture={(e) => {
-              if (performance.now() < interactionUntil.current) {
+              if (
+                e.detail > 1 ||
+                performance.now() < interactionUntil.current
+              ) {
                 e.preventDefault();
                 e.stopPropagation();
               }
@@ -816,7 +750,9 @@ export default function App() {
                 <Button
                   variant="ghost"
                   className="icon-button"
-                  disabled={!player.ready}
+                  disabled={
+                    !player.ready || phase === "answer" || phase === "final"
+                  }
                   onClick={() => player.seek(player.position - 5)}
                   aria-label="Назад на 5 секунд"
                 >
@@ -824,7 +760,12 @@ export default function App() {
                 </Button>
                 <Button
                   className="play-button"
-                  disabled={!player.ready || trackBusy}
+                  disabled={
+                    !player.ready ||
+                    trackBusy ||
+                    phase === "answer" ||
+                    phase === "final"
+                  }
                   aria-label={
                     player.playing ? "Призупинити музику" : "Відтворити музику"
                   }
@@ -841,7 +782,9 @@ export default function App() {
                 <Button
                   variant="ghost"
                   className="icon-button"
-                  disabled={!player.ready}
+                  disabled={
+                    !player.ready || phase === "answer" || phase === "final"
+                  }
                   aria-label="На початок треку"
                   onClick={() => player.seek(0)}
                 >
@@ -860,7 +803,9 @@ export default function App() {
                 fillColor="#c4b5ef"
                 crestColor="#f5dbfa"
                 trackColor="#37323f"
-                disabled={!player.ready}
+                disabled={
+                  !player.ready || phase === "answer" || phase === "final"
+                }
                 ariaLabel="Позиція аудіо"
               />
               <div className="time-labels">
@@ -998,6 +943,22 @@ export default function App() {
               )}
               {phase === "answer" && (
                 <div className="answer-controls">
+                  <div className="answer-timer-control">
+                    <strong>{answerClock.remaining} с</strong>
+                    <Button
+                      onClick={answerClock.toggle}
+                      disabled={answerClock.remaining === 0}
+                    >
+                      {answerClock.paused ? (
+                        <Play size={16} />
+                      ) : (
+                        <Pause size={16} />
+                      )}
+                      {answerClock.paused
+                        ? "Продовжити відлік"
+                        : "Пауза відліку"}
+                    </Button>
+                  </div>
                   <span>Хто продовжив пісню?</span>
                   <div className="action-pair">
                     <Button
@@ -1025,14 +986,53 @@ export default function App() {
                 </div>
               )}
               {phase === "result" && (
-                <Button
-                  variant="primary"
-                  className="full-width launch-button"
-                  onClick={nextRound}
-                >
-                  Наступний раунд
-                  <ArrowRight size={17} />
-                </Button>
+                <>
+                  <Button
+                    variant="primary"
+                    className="full-width launch-button"
+                    onClick={nextRound}
+                    disabled={trackBusy || !player.ready}
+                  >
+                    {session.round >= session.rounds
+                      ? "Показати фінал"
+                      : "Наступний раунд"}
+                    <ArrowRight size={17} />
+                  </Button>
+                  <Button
+                    className="full-width"
+                    variant="ghost"
+                    onClick={() => {
+                      setSession(undoRound);
+                      scoreLock.current = false;
+                      setAwarded(null);
+                      setPhase("answer");
+                    }}
+                  >
+                    Виправити оцінку
+                  </Button>
+                </>
+              )}
+              {phase === "final" && (
+                <div className="final-host">
+                  <Trophy size={32} />
+                  <h3>Це було шоу!</h3>
+                  <p>
+                    Зберегли всі {session.history.length} раундів цієї партії.
+                  </p>
+                  <Button
+                    className="full-width"
+                    onClick={() => setSheet("history")}
+                  >
+                    Підсумки гри
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="full-width"
+                    onClick={() => setSheet("reset")}
+                  >
+                    Граємо ще
+                  </Button>
+                </div>
               )}
               <p className="local-save">
                 <span />
@@ -1191,7 +1191,10 @@ export default function App() {
         wide
       >
         <div className="cue-transport">
-          <Button onClick={player.toggle} disabled={!player.ready}>
+          <Button
+            onClick={player.toggle}
+            disabled={!player.ready || phase === "answer" || phase === "final"}
+          >
             {player.playing ? <Pause size={17} /> : <Play size={17} />}{" "}
             {player.playing ? "Пауза" : "Слухати"}
           </Button>
@@ -1306,6 +1309,56 @@ export default function App() {
       </Modal>
 
       <Modal
+        open={sheet === "history"}
+        onOpenChange={(v) => !v && setSheet(null)}
+        title="Кожен хіт — у рахунок"
+        description={`${session.history.length} із ${session.rounds} раундів зіграно. За влучне продовження — 3 бали.`}
+        wide
+      >
+        <div className="history-score">
+          <span className="girls">
+            {session.names.girls}
+            <b>{session.scores.girls}</b>
+          </span>
+          <i>:</i>
+          <span className="boys">
+            <b>{session.scores.boys}</b>
+            {session.names.boys}
+          </span>
+        </div>
+        {!session.history.length ? (
+          <div className="empty-state">
+            <Trophy size={32} />
+            <p>Перший хіт ще попереду.</p>
+          </div>
+        ) : (
+          <ol className="round-history">
+            {session.history.map((r) => (
+              <li key={r.round}>
+                <span className="history-number">
+                  {String(r.round).padStart(2, "0")}
+                </span>
+                <div>
+                  <strong>{r.track}</strong>
+                  <p>«{r.line}»</p>
+                  <small>Грали: {session.names[r.team]}</small>
+                </div>
+                <span className={`history-award ${r.awarded ?? ""}`}>
+                  {r.awarded ? (
+                    <>
+                      <b>+3</b>
+                      {session.names[r.awarded]}
+                    </>
+                  ) : (
+                    "Без балів"
+                  )}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </Modal>
+      <Modal
         open={sheet === "settings"}
         onOpenChange={(v) => !v && setSheet(null)}
         title="Твоя гра — твій настрій"
@@ -1363,8 +1416,44 @@ export default function App() {
         </div>
         <div className="setting-row">
           <span>
+            <strong>Довжина партії</strong>
+            <small>Однакова кількість ходів для команд</small>
+          </span>
+          <div className="option-grid">
+            {[4, 8, 12, 16].map((n) => (
+              <Button
+                key={n}
+                disabled={session.history.length > 0}
+                className={session.rounds === n ? "selected" : ""}
+                onClick={() => setSession((s) => ({ ...s, rounds: n }))}
+              >
+                {n}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="setting-row">
+          <span>
+            <strong>Час на відповідь</strong>
+            <small>Ведучий може призупинити відлік</small>
+          </span>
+          <div className="option-grid">
+            {[15, 20, 30, 45].map((n) => (
+              <Button
+                key={n}
+                disabled={phase === "answer"}
+                className={session.answerSeconds === n ? "selected" : ""}
+                onClick={() => setSession((s) => ({ ...s, answerSeconds: n }))}
+              >
+                {n} с
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="setting-row">
+          <span>
             <strong>Атмосферні ефекти</strong>
-            <small>Живий фон React Bits. Вимкни для слабкого TV.</small>
+            <small>Живе світло й анімація сцени</small>
           </span>
           <SquishSwitch
             checked={effects}
@@ -1404,6 +1493,14 @@ export default function App() {
             Встановити застосунок
           </Button>
         )}
+        <Button className="full-width" onClick={() => setSheet("history")}>
+          <Trophy size={17} />
+          Рахунок і раунди
+        </Button>
+        <Button className="full-width" onClick={() => setSheet("help")}>
+          <CircleHelp size={17} />
+          Як грати
+        </Button>
         <Button className="full-width" onClick={() => void fullscreen()}>
           <Expand size={17} />
           Повний екран
@@ -1446,6 +1543,9 @@ export default function App() {
             variant="primary"
             onClick={() => {
               resetRound();
+              setPhase("ready");
+              setAwarded(null);
+              scoreLock.current = false;
               setSession((s) => ({
                 ...freshSession(),
                 trackId: s.trackId,
@@ -1453,6 +1553,8 @@ export default function App() {
                 offset: s.offset,
                 aligned: s.aligned,
                 target: s.target,
+                rounds: s.rounds,
+                answerSeconds: s.answerSeconds,
               }));
               setSheet(null);
             }}
@@ -1512,8 +1614,9 @@ export default function App() {
         <div className="notice">
           <Monitor size={18} />
           <span>
-            «Екран шоу» приховує пульт. Для локальної гри ведучий повертає його
-            після відповіді. Окремий пульт на телефоні — наступний етап.
+            «Окреме вікно для TV» відкриє сцену в цьому браузері. Перенеси його
+            на телевізор, а пульт залиш на ноутбуці. Керування з телефону
+            з’явиться окремо.
           </span>
         </div>
         <p className="modal-footnote">

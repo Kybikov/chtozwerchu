@@ -1,4 +1,10 @@
-export type Cue = { startMs: number; endMs: number; text: string };
+export type WordCue = { startMs: number; endMs: number; text: string };
+export type Cue = {
+  startMs: number;
+  endMs: number;
+  text: string;
+  words?: WordCue[];
+};
 export type Track = {
   id: number;
   title: string;
@@ -12,7 +18,7 @@ export type Track = {
   lyricsStatus: string;
 };
 export type Team = "girls" | "boys";
-export type Phase = "ready" | "playing" | "answer" | "result";
+export type Phase = "ready" | "playing" | "answer" | "result" | "final";
 export const curated = [
   {
     id: 2215207097,
@@ -59,7 +65,8 @@ export function parseLRC(raw: string): Cue[] {
   const globalOffset = Number(raw.match(/\[offset:([+-]?\d+)\]/i)?.[1] ?? 0);
   for (const row of raw.replace(/^\uFEFF/, "").split(/\r?\n/)) {
     const times = [...row.matchAll(/\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g)];
-    const text = row.replace(/\[[^\]]*\]/g, "").trim();
+    const content = row.replace(/\[[^\]]*\]/g, "");
+    const text = content.replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "").trim();
     if (!text) continue;
     for (const match of times) {
       if (+match[2] >= 60) continue;
@@ -70,21 +77,66 @@ export function parseLRC(raw: string): Cue[] {
           Number((match[3] ?? "").padEnd(3, "0")) +
           globalOffset,
       );
-      cues.push({ startMs, endMs: startMs + 4000, text });
+      const words = [
+        ...content.matchAll(/<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>([^<]*)/g),
+      ]
+        .filter((w) => +w[2] < 60 && w[4].trim())
+        .map((w) => ({
+          startMs: Math.max(
+            0,
+            +w[1] * 60000 +
+              +w[2] * 1000 +
+              Number((w[3] ?? "").padEnd(3, "0")) +
+              globalOffset,
+          ),
+          endMs: 0,
+          text: w[4],
+        }));
+      // Enhanced LRC word timestamps are absolute. Repeated line tags cannot
+      // safely share a word timeline, so those lines keep exact line sync.
+      const validWords =
+        times.length === 1 &&
+        words.length > 0 &&
+        words.every(
+          (w, i) =>
+            w.startMs >= startMs && (!i || w.startMs > words[i - 1].startMs),
+        );
+      cues.push({
+        startMs,
+        endMs: startMs + 4000,
+        text,
+        ...(validWords ? { words } : {}),
+      });
     }
   }
   cues.sort((a, b) => a.startMs - b.startMs);
   return cues
     .filter((c, i) => i === 0 || c.startMs !== cues[i - 1].startMs)
-    .map((cue, i, list) => ({
-      ...cue,
-      endMs: list[i + 1]?.startMs ?? cue.startMs + 6000,
-    }));
+    .map((cue, i, list) => {
+      const endMs =
+        list[i + 1]?.startMs ??
+        Math.max(cue.startMs + 6000, (cue.words?.at(-1)?.startMs ?? 0) + 1500);
+      const words = cue.words?.every((w) => w.startMs < endMs)
+        ? cue.words.map((w, wi, ws) => ({
+            ...w,
+            endMs: ws[wi + 1]?.startMs ?? endMs,
+          }))
+        : undefined;
+      return {
+        ...cue,
+        endMs,
+        ...(words?.length ? { words } : { words: undefined }),
+      };
+    });
 }
 export async function api<T>(path: string, signal?: AbortSignal): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(path, { signal });
+    res = await fetch(path, {
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+        : AbortSignal.timeout(15000),
+    });
   } catch (error) {
     if (signal?.aborted) throw error;
     throw new Error(
@@ -111,6 +163,19 @@ export type Session = {
   aligned: boolean;
   target: number;
   names: Record<Team, string>;
+  rounds: number;
+  answerSeconds: number;
+  history: RoundRecord[];
+  finished: boolean;
+};
+export type RoundRecord = {
+  round: number;
+  team: Team;
+  awarded: Team | null;
+  track: string;
+  line: string;
+  trackId: number;
+  target: number;
 };
 export const freshSession = (): Session => ({
   scores: { girls: 0, boys: 0 },
@@ -121,6 +186,10 @@ export const freshSession = (): Session => ({
   aligned: false,
   target: 3,
   names: { girls: "Дівчата", boys: "Хлопці" },
+  rounds: 8,
+  answerSeconds: 20,
+  history: [],
+  finished: false,
 });
 export function restoreSession(): Session {
   try {
@@ -146,6 +215,26 @@ export function restoreSession(): Session {
     return {
       ...freshSession(),
       ...s,
+      finished: s.finished === true,
+      rounds: [4, 8, 12, 16].includes(s.rounds) ? s.rounds : 8,
+      answerSeconds: [15, 20, 30, 45].includes(s.answerSeconds)
+        ? s.answerSeconds
+        : 20,
+      history: Array.isArray(s.history)
+        ? s.history
+            .filter(
+              (r: RoundRecord) =>
+                Number.isInteger(r.round) &&
+                r.round >= 1 &&
+                ["girls", "boys"].includes(r.team) &&
+                (r.awarded === null || ["girls", "boys"].includes(r.awarded)) &&
+                typeof r.track === "string" &&
+                typeof r.line === "string" &&
+                Number.isFinite(r.trackId) &&
+                Number.isInteger(r.target),
+            )
+            .slice(0, 16)
+        : [],
       names: {
         girls: String(s.names?.girls || "Дівчата").slice(0, 32),
         boys: String(s.names?.boys || "Хлопці").slice(0, 32),

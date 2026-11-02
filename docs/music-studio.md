@@ -1,13 +1,18 @@
-# Music Studio 1.1
+# Music Studio 1.2
 
 ## Direction
 
-A dim concert stage with rose and periwinkle team colours, Manrope typography,
-soft surfaces and restrained animated lighting. All visible buttons use the
-React Bits SpecularButton component; sliders use WakeSlider and settings use
-SquishSwitch. Dialog behaviour comes from Radix, with the studio's own visual
-system. Native audio controls, selects, range inputs and file controls are not
-shown. File import opens the operating system's file picker.
+A music-show stage with oversized Oswald display type, Onest interface text,
+rose and periwinkle teams, iridescent record artwork and restrained React Bits
+lighting. Typography and controls share one scale across the stage, host panel,
+library, calibration and dialogs. Operational text is larger than the first
+prototype; narrow screens reflow rather than shrinking the desktop dashboard.
+
+All buttons use the adapted React Bits SpecularButton. The TV link uses its CSS
+surface with native anchor semantics. WakeSlider, SquishSwitch, SpotlightCard,
+BlurText and CountUp supply the other visible controls and animated surfaces.
+Radix supplies dialog focus, dismissal and keyboard behaviour. Native audio,
+select, range and file controls are hidden; importing opens the OS file picker.
 
 ## Live-fetched React Bits sources, 2 November 2026
 
@@ -45,9 +50,44 @@ The prototype preview may run separately from production via an SSH tunnel to
 a loopback-bound process. It does not change WTAdmin source or its deployment.
 The app itself has no dependency on WTAdmin's database or stored secret format.
 
+## Local match
+
+- 4, 8, 12 or 16 alternating team turns; 15, 20, 30 or 45 seconds per answer.
+- A round records its track, answer, playing team and award, including no award.
+- Awards are idempotent; double-clicks cannot award twice or advance the phase.
+- The host may undo the current award. Prior history remains unchanged.
+- Only new answer lines inside the actual audio fragment are picked automatically.
+  Exhausted fragments open the library rather than silently repeating the last line.
+- Scores, names, settings, round history and final state survive reloads. Unfinished
+  rounds return to preparation; playback never starts automatically after reload.
+- Final standings correctly handle wins and ties. A new game clears history and
+  returns to preparation, while preserving team names, music and match settings.
+- Audio timelines use audio.currentTime; answer clocks use elapsed monotonic time.
+  Hiding the host pauses audio and the answer clock. Time expiry leaves adjudication
+  to the host instead of awarding or skipping automatically.
+- Enhanced LRC imports preserve exact word timestamps. Malformed word timing falls
+  back to line timing. Deezer line-only responses remain line-synchronized.
+
+## Separate audience window
+
+The host link opens /?screen=show&room=<ephemeral-id>. Move the tab or window to
+an extended display and make it fullscreen. The host remains on the laptop.
+BroadcastChannel synchronizes public scene data in the same browser and origin;
+the room id survives host reloads. The scene receives no target answer before the
+result and never renders the host panel. Audio still plays from the host device,
+which can output to the TV via HDMI. Keep the host window visible while playing.
+A stale host connection shows a reconnect notice. This is local multi-display
+support, not yet a phone remote or a network room.
+
+## Assets
+
+public/show-vinyl.webp is an original generated stage asset (about 206 kB), included
+in PWA precaching. Generation mode and the final prompt are in asset-provenance.md.
+The font files are local; the show does not fetch fonts from a third-party CDN.
+
 ## Follow-up scope
 
-- Validate the visual direction with the host before adding more competitions.
-- Separate host and audience devices with authoritative room state.
-- Add a supported full-track playback path, exact word alignment, and clip editing.
-- Integrate account/guest flows into the new shell.
+- Authoritative network rooms for a separate host phone and audience device.
+- Integrate account/guest entry and the other competition types into this shell.
+- Add a supported full-track playback path, word-aligned content and clip editing.
+- Scenario packs, sound design, session recovery and deployment hardening.
