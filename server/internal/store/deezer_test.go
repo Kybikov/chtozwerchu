@@ -2,6 +2,16 @@ package store
 
 import "testing"
 
+func TestPreviewMatchesTitleAndArtistBeforeUsingAudio(t *testing.T) {
+	body := []byte(`{"data":[{"title":"Місто весни (Remix)","artist":{"name":"Okean Elzy"},"preview":"remix"},{"title":"Місто весни","artist":{"name":"Clavier"},"preview":"cover"},{"title":"Місто весни","artist":{"name":"Okean Elzy"},"preview":"correct"}]}`)
+	if got := matchingDeezerPreview(body, "Місто весни", "Океан Ельзи & Один в каное"); got != "correct" {
+		t.Fatalf("selected %q", got)
+	}
+	if got := matchingDeezerPreview(body, "Another title", "Океан Ельзи"); got != "" {
+		t.Fatal("used unrelated audio")
+	}
+}
+
 func TestParseDeezerPreview(t *testing.T) {
 	cases := []struct {
 		name string

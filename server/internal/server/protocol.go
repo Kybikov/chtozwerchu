@@ -42,8 +42,10 @@ type configPayload struct {
 }
 
 type actionPayload struct {
-	Name    string         `json:"name"`
-	Payload map[string]any `json:"payload"`
+	Name      string         `json:"name"`
+	Payload   map[string]any `json:"payload"`
+	Round     int            `json:"round"`
+	CardIndex *int           `json:"cardIndex,omitempty"`
 }
 
 type chatPayload struct {

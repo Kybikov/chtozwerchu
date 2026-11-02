@@ -16,25 +16,32 @@ import (
 	"sync"
 	"time"
 
+	"chtozverchu/internal/store"
 	"github.com/gorilla/websocket"
 )
 
 type studioRoom struct {
-	mu          sync.Mutex
-	Code        string      `json:"code"`
-	StationHash [32]byte    `json:"stationHash"`
-	HostHash    [32]byte    `json:"hostHash"`
-	Expires     int64       `json:"expires"`
-	State       studioState `json:"state"`
-	clients     map[*studioPeer]bool
-	seen        map[string]bool
-	seenOrder   []string
-	lastAudio   time.Time
-	lastSaved   time.Time
-	lastBeat    time.Time
-	dirty       bool
+	OwnerID        string `json:"ownerId,omitempty"`
+	ArchivedKey    string `json:"archivedKey,omitempty"`
+	historySaving  bool
+	historyAttempt time.Time
+	mu             sync.Mutex
+	Code           string      `json:"code"`
+	StationHash    [32]byte    `json:"stationHash"`
+	HostHash       [32]byte    `json:"hostHash"`
+	Expires        int64       `json:"expires"`
+	State          studioState `json:"state"`
+	clients        map[*studioPeer]bool
+	seen           map[string]bool
+	seenOrder      []string
+	lastAudio      time.Time
+	lastSaved      time.Time
+	lastBeat       time.Time
+	dirty          bool
 }
 type studioHub struct {
+	db    *store.DB
+	owner func(*http.Request) *store.User
 	mu    sync.Mutex
 	rooms map[string]*studioRoom
 	dir   string
@@ -62,8 +69,11 @@ type studioEnvelope struct {
 	Target  int          `json:"target"`
 }
 
-func newStudioHub(dir string) *studioHub {
+func newStudioHub(dir string, databases ...*store.DB) *studioHub {
 	h := &studioHub{rooms: map[string]*studioRoom{}, dir: dir, stop: make(chan struct{})}
+	if len(databases) > 0 {
+		h.db = databases[0]
+	}
 	if dir != "" {
 		if err := os.MkdirAll(dir, 0700); err == nil {
 			entries, _ := os.ReadDir(dir)
@@ -85,6 +95,9 @@ func newStudioHub(dir string) *studioHub {
 				room.clients = map[*studioPeer]bool{}
 				room.seen = map[string]bool{}
 				room.State.pause(time.Now())
+				if room.State.Session.MatchID == "" {
+					room.State.Session.MatchID = studioSecret()
+				}
 				room.State.Audio.Ready = false
 				room.State.Notice = "Сервер відновив гру. Увімкни звук на екрані й продовжуй."
 				room.State.Version++
@@ -151,7 +164,8 @@ func studioOrigin(r *http.Request) bool {
 	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && strings.EqualFold(u.Host, r.Host)
 }
 func (s *Server) registerStudioRoutes(mux *http.ServeMux) {
-	h := newStudioHub(os.Getenv("STUDIO_STATE_DIR"))
+	h := newStudioHub(os.Getenv("STUDIO_STATE_DIR"), s.db)
+	h.owner = s.userFromRequest
 	mux.HandleFunc("POST /api/studio/rooms", h.create)
 	mux.HandleFunc("DELETE /api/studio/rooms/{code}", h.end)
 	mux.HandleFunc("GET /api/studio/ws", h.connect)
@@ -183,6 +197,14 @@ func (h *studioHub) create(w http.ResponseWriter, r *http.Request) {
 	station, host := studioSecret(), studioSecret()
 	room := &studioRoom{StationHash: sha256.Sum256([]byte(station)), HostHash: sha256.Sum256([]byte(host)), Expires: time.Now().Add(12 * time.Hour).UnixMilli(), clients: map[*studioPeer]bool{}, seen: map[string]bool{}}
 	room.State = studioState{Session: input.Session, Track: input.Track, Audio: input.Audio, Phase: "ready", Version: 1, Effects: input.Effects, Timer: studioTimer{LeftMS: int64(input.Session.AnswerSeconds) * 1000, Paused: true}}
+	if room.State.Session.MatchID == "" {
+		room.State.Session.MatchID = studioSecret()
+	}
+	if h.owner != nil {
+		if u := h.owner(r); u != nil {
+			room.OwnerID = u.ID
+		}
+	}
 	if room.State.Session.History == nil {
 		room.State.Session.History = []studioHistory{}
 	}
@@ -212,6 +234,7 @@ func (h *studioHub) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.rooms[room.Code] = room
+	h.archive(room)
 	writeJSON(w, 201, map[string]any{"code": room.Code, "stationToken": station, "hostToken": host, "expiresAt": room.Expires})
 }
 func (h *studioHub) get(code string) *studioRoom {
@@ -569,6 +592,7 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 			room.seenOrder = room.seenOrder[1:]
 		}
 		h.instruct(room, ins)
+		h.archive(room)
 		h.broadcast(room, true)
 	default:
 		fail(errors.New("Невідоме повідомлення."))
@@ -653,6 +677,7 @@ func (h *studioHub) tick() {
 				if r.dirty && now.Sub(r.lastSaved) > 2*time.Second {
 					_ = h.save(r)
 				}
+				h.archive(r)
 				r.mu.Unlock()
 			}
 		}

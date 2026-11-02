@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	ErrNoRound     = errors.New("немає активного раунду")
-	ErrNotHost     = errors.New("тільки ведучий може це робити")
-	ErrBadStage    = errors.New("дія недоступна на цьому етапі")
-	ErrEmptyDeck   = errors.New("немає контенту для обраних раундів")
-	ErrRoomClosed  = errors.New("кімната недоступна")
+	ErrNoRound    = errors.New("немає активного раунду")
+	ErrNotHost    = errors.New("тільки ведучий може це робити")
+	ErrBadStage   = errors.New("дія недоступна на цьому етапі")
+	ErrEmptyDeck  = errors.New("немає контенту для обраних раундів")
+	ErrRoomClosed = errors.New("кімната недоступна")
 )
 
 // Engine applies rules to rooms. It is stateless apart from the content
@@ -43,10 +43,11 @@ func (e *Engine) CreateRoom(p CreateParams) (*Room, *Player) {
 	if !p.HostTeam.Valid() {
 		p.HostTeam = TeamGirls
 	}
-	rounds := clamp(p.Rounds, 1, 60)
-	if rounds == 0 {
+	rounds := p.Rounds
+	if rounds <= 0 {
 		rounds = 12
 	}
+	rounds = clamp(rounds, 1, 60)
 	types := sanitizeTypes(p.RoundTypes)
 	now := time.Now()
 	host := &Player{
@@ -60,6 +61,7 @@ func (e *Engine) CreateRoom(p CreateParams) (*Room, *Player) {
 		JoinedAt:  now,
 	}
 	room := &Room{
+		MatchID:   longID(),
 		Code:      newCode(),
 		HostToken: longID(),
 		Stage:     StageLobby,
@@ -94,6 +96,10 @@ func (e *Engine) Join(room *Room, name string, team Team, token string) (*Player
 			room.touch()
 			return p, nil
 		}
+		return nil, errors.New("Ключ цієї участі вже недійсний. Приєднайся до кімнати заново.")
+	}
+	if len(room.Players) >= 64 {
+		return nil, errors.New("У цій кімнаті вже достатньо гравців.")
 	}
 	if !team.Valid() {
 		team = TeamGirls
@@ -221,13 +227,16 @@ func (e *Engine) startRound(room *Room) error {
 		room.Current.Deadline = time.Now().Add(timed.Duration())
 	}
 	room.Stage = StagePlaying
+	if spec.Type == RoundMelody {
+		e.Pause(room)
+	}
 	room.touch()
 	return nil
 }
 
 // Timeout resolves the current round when its deadline passes.
 func (e *Engine) Timeout(room *Room) {
-	if room.Current == nil || room.Stage != StagePlaying {
+	if room.Current == nil || room.Stage != StagePlaying || room.Paused {
 		return
 	}
 	h, err := Handler(room.Current.Type)
@@ -242,6 +251,30 @@ func (e *Engine) Timeout(room *Room) {
 
 // Apply routes an action to engine-level handlers or the current round.
 func (e *Engine) Apply(room *Room, act Action) error {
+	if act.Name == "pause" || act.Name == "resume" {
+		if !act.IsHost {
+			return ErrNotHost
+		}
+		if room.Stage != StagePlaying || room.Current == nil {
+			return ErrBadStage
+		}
+		if act.Name == "pause" {
+			e.Pause(room)
+		} else if room.Paused {
+			if room.Current.PausedRemaining > 0 {
+				room.Current.Deadline = time.Now().Add(room.Current.PausedRemaining)
+			}
+			room.Paused = false
+			if d, ok := room.Current.Data.(*melodyData); ok {
+				d.AwaitingAudio = false
+			}
+			room.touch()
+		}
+		return nil
+	}
+	if room.Paused && act.Name != "finish" && act.Name != "lobby" {
+		return errors.New("гра на паузі — ведучий має продовжити")
+	}
 	switch act.Name {
 	case "next":
 		if !act.IsHost {
@@ -252,6 +285,8 @@ func (e *Engine) Apply(room *Room, act Action) error {
 		if !act.IsHost {
 			return ErrNotHost
 		}
+		e.recordRound(room)
+		room.Paused = false
 		room.Stage = StageFinal
 		room.Current = nil
 		room.touch()
@@ -279,9 +314,10 @@ func (e *Engine) Apply(room *Room, act Action) error {
 
 // Next flips the active team and starts the next round.
 func (e *Engine) Next(room *Room) error {
-	if room.Stage != StageResult && room.Stage != StagePlaying {
+	if room.Stage != StageResult {
 		return ErrBadStage
 	}
+	e.recordRound(room)
 	room.ActiveTeam = room.ActiveTeam.Opposite()
 	return e.startRound(room)
 }
@@ -292,11 +328,34 @@ func (e *Engine) ToLobby(room *Room) error {
 	room.Current = nil
 	room.Deck = nil
 	room.RoundIndex = 0
+	room.Paused = false
+	room.History = nil
+	room.MatchID = longID()
 	for _, t := range room.Teams {
 		t.Score = 0
 	}
 	room.touch()
 	return nil
+}
+
+func (e *Engine) recordRound(room *Room) {
+	if room.Current == nil || room.Current.Result == nil || len(room.History) >= room.RoundIndex {
+		return
+	}
+	room.History = append(room.History, RoundSummary{Round: room.RoundIndex, Type: room.Current.Type, Result: *room.Current.Result})
+}
+
+// Pause stops the server deadline. Reconnecting a host never resumes by itself.
+func (e *Engine) Pause(room *Room) {
+	if room.Paused || room.Stage != StagePlaying || room.Current == nil {
+		return
+	}
+	room.Paused = true
+	if !room.Current.Deadline.IsZero() {
+		room.Current.PausedRemaining = max(time.Until(room.Current.Deadline), time.Millisecond)
+		room.Current.Deadline = time.Time{}
+	}
+	room.touch()
 }
 
 func (r *Room) touch() { r.UpdatedAt = time.Now() }
@@ -348,7 +407,7 @@ func newCode() string {
 }
 
 func shortID() string { return randHex(6) }
-func longID() string  { return randHex(20) }
+func longID() string  { return randHex(64) }
 
 func randHex(n int) string {
 	const hex = "0123456789abcdef"

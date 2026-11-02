@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         registerType: "prompt",
         includeAssets: ["icon.svg", "icon-192.png", "icon-512.png"],
         manifest: {
-          name: "Хто зверху — музична студія",
+          name: "Хто зверху — ваше домашнє шоу",
           short_name: "Хто зверху",
           lang: "uk",
           description: "Музичне шоу для твоєї компанії",
@@ -42,8 +42,9 @@ export default defineConfig(({ mode }) => {
             env.STUDIO_API_URL || env.MUSIC_API_URL || "http://127.0.0.1:5599",
           ws: true,
         },
-        "/api": { target: env.MUSIC_API_URL || "http://127.0.0.1:5599" },
-        "/ws": { target: "ws://127.0.0.1:5599", ws: true },
+        "/api/music": { target: env.MUSIC_API_URL || "http://127.0.0.1:5599" },
+        "/api": { target: env.STUDIO_API_URL || env.MUSIC_API_URL || "http://127.0.0.1:5599" },
+        "/ws": { target: env.STUDIO_API_URL || env.MUSIC_API_URL || "http://127.0.0.1:5599", ws: true },
       },
     },
     build: {

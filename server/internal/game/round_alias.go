@@ -101,6 +101,9 @@ func (alias) Action(room *Room, act Action) error {
 		}
 		if matchesAny(act.Str("text"), d.Cards[d.Index].Word) {
 			aliasScore(d)
+			if d.Index >= len(d.Cards) {
+				resolveAlias(room, d)
+			}
 		}
 		return nil
 	case "correct":
@@ -109,6 +112,9 @@ func (alias) Action(room *Room, act Action) error {
 			return errors.New("підтверджує лише той, хто пояснює")
 		}
 		aliasScore(d)
+		if d.Index >= len(d.Cards) {
+			resolveAlias(room, d)
+		}
 		return nil
 	case "skip":
 		if !act.IsHost && (act.Actor == nil || act.Actor.ID != d.ExplainerID) {

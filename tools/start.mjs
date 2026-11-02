@@ -13,6 +13,7 @@ const child = spawn("go", ["run", "./cmd/server"], {
     HOST: process.env.HOST ?? "127.0.0.1",
     STUDIO_STATE_DIR:
       process.env.STUDIO_STATE_DIR ?? `${root}/output/studio-state`,
+    PARTY_STATE_DIR: process.env.PARTY_STATE_DIR ?? `${root}/output/party-state`,
   },
 });
 child.on("error", () => {

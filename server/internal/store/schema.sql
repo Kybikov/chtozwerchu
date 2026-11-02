@@ -60,3 +60,22 @@ CREATE TABLE IF NOT EXISTS match_players (
 
 CREATE INDEX IF NOT EXISTS idx_match_players_user ON match_players(user_id);
 CREATE INDEX IF NOT EXISTS idx_matches_code ON matches(code);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    digest TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry ON auth_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS studio_matches (
+    id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code TEXT NOT NULL DEFAULT '',
+    mode TEXT NOT NULL DEFAULT 'local',
+    snapshot JSONB NOT NULL,
+    ended_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_studio_matches_owner ON studio_matches(owner_id,ended_at DESC);

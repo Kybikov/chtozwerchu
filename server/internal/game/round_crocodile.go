@@ -102,6 +102,9 @@ func (crocodile) View(room *Room, viewer *Player) any {
 		"emoji":     d.Puzzle.Emoji,
 		"potential": crocodilePoints(d),
 	}
+	if viewer != nil && viewer.IsHost {
+		out["hostAnswer"] = d.Puzzle.Answer
+	}
 	if d.HintShown || done {
 		out["hint"] = d.Puzzle.Hint
 	}

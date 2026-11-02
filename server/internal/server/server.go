@@ -1,11 +1,13 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"chtozverchu/internal/config"
 	"chtozverchu/internal/game"
@@ -46,7 +48,25 @@ func (s *Server) Handler() http.Handler {
 }
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+	ok := true
+	if s.cfg.DatabaseURL != "" {
+		if s.db == nil {
+			ok = false
+		} else {
+			ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+			ok = s.db.Pool().Ping(ctx) == nil
+			cancel()
+		}
+	}
+	if s.cfg.RedisURL != "" && s.hub.cache == nil {
+		ok = false
+	}
+	status := http.StatusOK
+	if !ok {
+		status = http.StatusServiceUnavailable
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.4.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil})
 }
 
 // roundTypeName maps round types to Ukrainian display names.

@@ -47,7 +47,7 @@ type Player struct {
 	Name      string    `json:"name"`
 	Team      Team      `json:"team"`
 	IsHost    bool      `json:"host"`
-	UserID    *string   `json:"userId,omitempty"` // set when registered
+	UserID    *string   `json:"-"` // account identity stays private
 	Connected bool      `json:"connected"`
 	JoinedAt  time.Time `json:"joinedAt"`
 }
@@ -66,12 +66,13 @@ type RoundSpec struct {
 // RoundState is the live state of the current round. The concrete shape lives
 // in the round-specific Data payload; the engine only tracks common fields.
 type RoundState struct {
-	Type       RoundType    `json:"type"`
-	ActiveTeam Team         `json:"activeTeam"`
-	Data       RoundData    `json:"-"` // in-memory typed state, never serialized directly
-	Result     *RoundResult `json:"result,omitempty"`
-	StartedAt  time.Time    `json:"startedAt"`
-	Deadline   time.Time    `json:"-"` // zero when the round is untimed
+	Type            RoundType     `json:"type"`
+	ActiveTeam      Team          `json:"activeTeam"`
+	Data            RoundData     `json:"-"` // in-memory typed state, never serialized directly
+	Result          *RoundResult  `json:"result,omitempty"`
+	StartedAt       time.Time     `json:"startedAt"`
+	Deadline        time.Time     `json:"-"` // zero when the round is untimed
+	PausedRemaining time.Duration `json:"-"`
 }
 
 // RoundResult is the outcome of a resolved round.
@@ -97,18 +98,27 @@ type RoomConfig struct {
 
 // Room is the authoritative game state for a single lobby/match.
 type Room struct {
-	Code       string             `json:"code"`
-	HostToken  string             `json:"-"`
-	Stage      Stage              `json:"stage"`
-	Config     RoomConfig         `json:"config"`
+	MatchID    string              `json:"-"`
+	Code       string              `json:"code"`
+	HostToken  string              `json:"-"`
+	Stage      Stage               `json:"stage"`
+	Config     RoomConfig          `json:"config"`
 	Teams      map[Team]*TeamState `json:"teams"`
-	Players    []*Player          `json:"players"`
-	ActiveTeam Team               `json:"activeTeam"`
-	RoundIndex int                `json:"roundIndex"` // 1-based number of the current round
-	Deck       []RoundSpec        `json:"-"`
-	Current    *RoundState        `json:"-"`
-	CreatedAt  time.Time          `json:"createdAt"`
-	UpdatedAt  time.Time          `json:"updatedAt"`
+	Players    []*Player           `json:"players"`
+	ActiveTeam Team                `json:"activeTeam"`
+	RoundIndex int                 `json:"roundIndex"` // 1-based number of the current round
+	Deck       []RoundSpec         `json:"-"`
+	Current    *RoundState         `json:"-"`
+	CreatedAt  time.Time           `json:"createdAt"`
+	UpdatedAt  time.Time           `json:"updatedAt"`
+	Paused     bool                `json:"paused"`
+	History    []RoundSummary      `json:"history"`
+}
+
+type RoundSummary struct {
+	Round  int         `json:"round"`
+	Type   RoundType   `json:"type"`
+	Result RoundResult `json:"result"`
 }
 
 func (r *Room) playerByID(id string) *Player {

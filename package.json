@@ -1,6 +1,6 @@
 {
   "name": "khto-zverkhu-studio",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "dev": "vite --host 127.0.0.1",

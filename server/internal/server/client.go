@@ -18,11 +18,13 @@ const (
 
 // Client is a single WebSocket connection.
 type Client struct {
-	hub     *Hub
-	conn    *websocket.Conn
-	send    chan []byte
-	session *RoomSession
-	player  *game.Player
+	hub         *Hub
+	conn        *websocket.Conn
+	send        chan []byte
+	session     *RoomSession
+	player      *game.Player
+	userID      *string
+	displayName string
 }
 
 func (c *Client) readPump() {
@@ -35,10 +37,21 @@ func (c *Client) readPump() {
 	c.conn.SetPongHandler(func(string) error {
 		return c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	})
+	window := time.Now()
+	count := 0
 	for {
 		_, data, err := c.conn.ReadMessage()
 		if err != nil {
 			return
+		}
+		if time.Since(window) > time.Second {
+			window = time.Now()
+			count = 0
+		}
+		count++
+		if count > 30 {
+			c.enqueue(errorMsg("Забагато дій. Спробуй за мить."))
+			continue
 		}
 		c.hub.handleMessage(c, data)
 	}

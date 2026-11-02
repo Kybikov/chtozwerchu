@@ -1,6 +1,75 @@
 package game
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+func TestPausePreservesDeadlineAndRequiresHost(t *testing.T) {
+	e, r := newTestRoom(t, RoundMelody)
+	_ = e.Apply(r, Action{Name: "resume", IsHost: true})
+	if e.Apply(r, Action{Name: "pause"}) != ErrNotHost {
+		t.Fatal("guest paused game")
+	}
+	e.Pause(r)
+	left := r.Current.PausedRemaining
+	if !r.Paused || !r.Current.Deadline.IsZero() || left < 35*time.Second {
+		t.Fatal("deadline was not frozen")
+	}
+	e.Timeout(r)
+	if r.Stage != StagePlaying {
+		t.Fatal("paused game timed out")
+	}
+	if err := e.Apply(r, Action{Name: "hint", IsHost: true}); err == nil {
+		t.Fatal("paused game accepted action")
+	}
+	if err := e.Apply(r, Action{Name: "resume", IsHost: true}); err != nil {
+		t.Fatal(err)
+	}
+	if r.Paused || time.Until(r.Current.Deadline) < left-time.Second {
+		t.Fatal("resume lost remaining time")
+	}
+}
+func TestPrivateAnswersAndResultHistory(t *testing.T) {
+	for _, kind := range []RoundType{RoundFiveWords, RoundMelody, RoundCrocodile} {
+		e, r := newTestRoom(t, kind)
+		if r.Paused {
+			_ = e.Apply(r, Action{Name: "resume", IsHost: true})
+		}
+		private := BuildView(r, r.Players[0]).Round.(map[string]any)
+		public := BuildView(r, nil).Round.(map[string]any)
+		if private["hostAnswer"] == nil || public["hostAnswer"] != nil {
+			t.Fatalf("answer visibility for %s", kind)
+		}
+		if err := e.Apply(r, Action{Name: "force", IsHost: true, Payload: map[string]any{"won": false}}); err != nil {
+			t.Fatal(err)
+		}
+		if BuildView(r, nil).Result == nil {
+			t.Fatal("result missing from public scene")
+		}
+		if err := e.Next(r); err != nil {
+			t.Fatal(err)
+		}
+		if r.Stage != StageFinal || len(r.History) != 1 || r.History[0].Result.Answer == "" {
+			t.Fatal("final lost round result")
+		}
+	}
+}
+func TestAliasResolvesLastCorrectCardOnce(t *testing.T) {
+	e, r := newTestRoom(t, RoundAlias)
+	for i := 0; i < 2; i++ {
+		if err := e.Apply(r, Action{Name: "correct", IsHost: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if r.Stage != StageResult || r.Teams[TeamGirls].Score != 2 {
+		t.Fatal("last card did not resolve")
+	}
+	_ = e.Apply(r, Action{Name: "correct", IsHost: true})
+	if r.Teams[TeamGirls].Score != 2 {
+		t.Fatal("duplicate correct awarded twice")
+	}
+}
 
 // fakeCatalog provides minimal deterministic content for tests.
 type fakeCatalog struct{}

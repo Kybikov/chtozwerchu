@@ -155,6 +155,8 @@ export async function api<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export type Session = {
+  matchId: string;
+  ownerAccountId?: string | null;
   scores: Record<Team, number>;
   team: Team;
   round: number;
@@ -178,6 +180,8 @@ export type RoundRecord = {
   target: number;
 };
 export const freshSession = (): Session => ({
+  matchId: crypto.randomUUID(),
+  ownerAccountId: null,
   scores: { girls: 0, boys: 0 },
   team: "girls",
   round: 1,
@@ -215,6 +219,8 @@ export function restoreSession(): Session {
     return {
       ...freshSession(),
       ...s,
+      matchId: typeof s.matchId === "string" && /^[A-Za-z0-9_-]{20,80}$/.test(s.matchId) ? s.matchId : crypto.randomUUID(),
+      ownerAccountId: typeof s.ownerAccountId === "string" ? s.ownerAccountId : null,
       finished: s.finished === true,
       rounds: [4, 8, 12, 16].includes(s.rounds) ? s.rounds : 8,
       answerSeconds: [15, 20, 30, 45].includes(s.answerSeconds)

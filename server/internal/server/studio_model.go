@@ -17,6 +17,7 @@ type studioHistory struct {
 	Target  int     `json:"target"`
 }
 type studioSession struct {
+	MatchID       string            `json:"matchId"`
 	Scores        map[string]int    `json:"scores"`
 	Names         map[string]string `json:"names"`
 	Team          string            `json:"team"`
@@ -287,6 +288,7 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 		if s.Phase != "final" && s.Phase != "result" && s.Phase != "ready" {
 			return bad("Заверши поточний фрагмент перед новою грою.")
 		}
+		s.Session.MatchID = studioSecret()
 		s.Session.Scores = map[string]int{"girls": 0, "boys": 0}
 		s.Session.History = []studioHistory{}
 		s.Session.Round = 1

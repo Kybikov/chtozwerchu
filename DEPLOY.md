@@ -1,88 +1,59 @@
-# Деплой «Хто зверху? online»
+# Деплой «Хто зверху»
 
-Грі потрібні три контейнери: **app** (Go), **postgres**, **redis**.
-Найпростіше — підняти весь `docker-compose.yml` одним стеком.
+Сайт: https://chtozwerchu.wtmelon.store. Coolify збирає Dockerfile з
+`Kybikov/chtozwerchu`, гілка `master`, порт 3000. Реліз закріплюється за
+перевіреним SHA. Автодеплой вимкнений, щоб проміжні push не переривали гру.
 
-Гілка з кодом: `claude/king-of-hill-online-game-4hb9i0`.
+## Послідовність релізу
 
----
+1. Оновити версію package.json, lock-файлу й /api/health.
+2. Виконати npm test, npm run build, у server — go test ./... і go vet ./....
+3. Перевірити змінені сценарії у браузері, телефон і TV-сцену.
+4. Commit і push у master без force push.
+5. У Coolify задати точний SHA та запустити deploy.
+6. Дочекатися завершення, звірити образ, SOURCE_COMMIT, /api/health та оболонку.
+7. Перевірити через HTTPS акаунти, Deezer, кімнати, пульт/сцену й аудіо.
+8. Перевірити CI, включно з go test -race на Linux.
 
-## Варіант A — Coolify через Docker Compose (рекомендовано)
+Для відкату вибрати попередній SHA у Coolify та повторити deploy. Бази й
+постійні томи не видаляти. Міграції 1.4 додають таблиці, зберігаючи старі дані.
 
-1. Coolify → **+ New** → **Resource** → **Docker Compose** (Empty / from Git).
-2. Source: цей GitHub-репозиторій, **Branch:** `claude/king-of-hill-online-game-4hb9i0`.
-3. Compose file: `docker-compose.yml` (у корені).
-4. У сервісі `app` Coolify сам візьме `build: .` (Dockerfile у корені).
-5. Домен: признач домен на сервіс **app**, внутрішній порт **3000**.
-6. (Опційно) Env для `app`:
-   - `PUBLIC_URL=https://твій-домен` (для інвайт-лінків; без нього береться домен із браузера).
-7. **Deploy.** Postgres мігрує й засівається автоматично при першому старті.
+## Дані та середовище
 
-Health-чек: `GET /health` та `/api/health` → `{"ok":true}`.
+PostgreSQL khz-game-postgres і Redis khz-game-redis керуються Coolify.
+Їхні порти не публікуються; вони живуть у приватній мережі застосунку.
+Прототип має окрему базу, без доступу до цих даних та бази WTAdmin.
 
-> Якщо Coolify вимагає прибрати `ports:` (він сам проксує) — можна видалити
-> блок `ports:` у сервісі `app`; решта лишається як є.
+Runtime-секрети Coolify: DATABASE_URL, REDIS_URL, JWT_SECRET, DEEZER_ARL
+або DEEZER_ACCESS_TOKEN. Без префікса VITE_ та без build-time передачі.
+ARL дозволяє поновлювати короткочасний JWT. Акаунт і плейлисти не змінюються.
 
----
+| Змінна | Значення |
+|---|---|
+| PORT | 3000 |
+| HOST | 0.0.0.0 |
+| WEB_DIR | /app/web |
+| LEGACY_WEB_DIR | /app/classic |
+| STUDIO_STATE_DIR | /app/state/studio |
+| PARTY_STATE_DIR | /app/state/party |
+| PUBLIC_URL | https://chtozwerchu.wtmelon.store |
 
-## Варіант B — SSH вручну (docker compose)
+До /app/state підключено приватний постійний том. Він містить ключі учасників
+і приховані відповіді; його не можна роздавати як статику. Кімнати після
+перезапуску відновлюються на паузі, без автоматичного запуску звуку.
 
-На сервері (де є Docker + Compose):
+Health-check: /api/health → HTTP 200, ok:true, очікувані version і commit,
+accounts:true. Налаштована, але недоступна база дає HTTP 503.
 
-```bash
-git clone -b claude/king-of-hill-online-game-4hb9i0 <URL_репозиторію> khz
-cd khz
-docker compose up -d --build
-```
+## Локальний запуск
 
-Відкрити: `http://СЕРВЕР:3000` (або постав nginx/Caddy як reverse-proxy на 80/443).
+npm ci, npm run build, npm start. Сайт слухає 127.0.0.1:5599.
+Без PostgreSQL гостьова гра працює, акаунти недоступні. npm run dev запускає
+Vite на 5173. STUDIO_API_URL окремо визначає сервер акаунтів і кімнат,
+MUSIC_API_URL — музичний API.
 
-Перевірка:
+docker compose up --build піднімає локальний стек. Його тестові паролі слід
+замінити для публічного використання. Coolify використовує окремі випадкові
+runtime-секрети.
 
-```bash
-docker compose ps
-docker compose logs -f app       # має бути "listening on :3000"
-curl -s localhost:3000/api/health
-```
-
-Оновлення після нового пушу:
-
-```bash
-git pull
-docker compose up -d --build
-```
-
----
-
-## Змінні середовища (app)
-
-| Змінна | Значення у compose | Нащо |
-|---|---|---|
-| `PORT` | `3000` | порт HTTP |
-| `DATABASE_URL` | `postgres://khz:khz@postgres:5432/khz?sslmode=disable` | Postgres |
-| `REDIS_URL` | `redis://redis:6379/0` | Redis |
-| `WEB_DIR` | `/app/web` | статика |
-| `PUBLIC_URL` | (порожньо) | базовий URL для інвайтів |
-| `JWT_SECRET` | *(задай свій!)* | підпис токенів акаунтів |
-
-> **Важливо для проду:** признач власний `JWT_SECRET` (довгий випадковий рядок)
-> у сервісі `app`, інакше використовується дефолт `dev-secret-change-me`.
-
----
-
-## Постійні дані
-
-- Postgres тримає дані у volume `pgdata` (акаунти, історія матчів, каталог).
-- Кімнати живуть у пам’яті app; після рестарту активні кімнати очищаються
-  (нормально для пати-гри). Акаунти й історія — у Postgres, зберігаються.
-
----
-
-## Типові проблеми
-
-- **app рестартиться / «postgres connect»** — БД ще піднімається; app робить
-  ретраї ~30с. Якщо довше — перевір `docker compose logs postgres`.
-- **Реєстрація віддає 503** — `DATABASE_URL` порожній/недоступний, гра працює в
-  embedded-режимі без акаунтів. Перевір env і мережу до postgres.
-- **Мелодія без аудіо** — сервер не має вихід у `api.deezer.com`. Раунд усе одно
-  грається (ведучий наспівує). Відкрий вихідний трафік до Deezer, щоб було аудіо.
+Функції та обмеження: [реліз 1.4](docs/release-1.4.md).

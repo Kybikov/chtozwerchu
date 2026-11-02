@@ -20,8 +20,10 @@ func (melody) OnTimeout(room *Room) {
 }
 
 type melodyData struct {
-	Song  Song
-	Hints int // 0..2
+	PreviewStatus string
+	AwaitingAudio bool
+	Song          Song
+	Hints         int // 0..2
 }
 
 func (*melodyData) Kind() RoundType { return RoundMelody }
@@ -35,11 +37,21 @@ func (melody) Start(room *Room, cat Catalog) (RoundData, error) {
 	if len(pool) == 0 {
 		return nil, ErrEmptyDeck
 	}
-	return &melodyData{Song: pool[pickRandom(len(pool))]}, nil
+	return &melodyData{Song: pool[pickRandom(len(pool))], AwaitingAudio: true}, nil
 }
 
-func melodyPoints(d *melodyData) int {
+func melodyPoints(room *Room, d *melodyData) int {
 	p := melodyMaxPoints - d.Hints
+	left := time.Until(room.Current.Deadline)
+	if room.Paused {
+		left = room.Current.PausedRemaining
+	}
+	if left <= 25*time.Second {
+		p--
+	}
+	if left <= 10*time.Second {
+		p--
+	}
 	if p < 1 {
 		return 1
 	}
@@ -84,7 +96,7 @@ func (melody) Action(room *Room, act Action) error {
 func resolveMelody(room *Room, d *melodyData, won bool, guess string) {
 	pts := 0
 	if won {
-		pts = melodyPoints(d)
+		pts = melodyPoints(room, d)
 		room.Teams[room.ActiveTeam].Score += pts
 	}
 	room.Current.Result = &RoundResult{
@@ -104,9 +116,14 @@ func (melody) View(room *Room, viewer *Player) any {
 	}
 	done := room.Stage == StageResult
 	out := map[string]any{
-		"previewUrl": d.Song.PreviewURL,
-		"potential":  melodyPoints(d),
-		"hints":      melodyHints(d),
+		"previewUrl":    d.Song.PreviewURL,
+		"potential":     melodyPoints(room, d),
+		"hints":         melodyHints(d),
+		"previewStatus": d.PreviewStatus,
+		"awaitingAudio": d.AwaitingAudio,
+	}
+	if viewer != nil && viewer.IsHost {
+		out["hostAnswer"] = d.Song.Title + " — " + d.Song.Artist
 	}
 	if done {
 		out["song"] = map[string]any{
@@ -152,6 +169,11 @@ func SetMelodyPreview(room *Room, url string) bool {
 		return false
 	}
 	d.Song.PreviewURL = url
+	if url == "" {
+		d.PreviewStatus = "unavailable"
+	} else {
+		d.PreviewStatus = "ready"
+	}
 	return true
 }
 

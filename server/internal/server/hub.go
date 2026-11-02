@@ -3,8 +3,9 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,7 @@ type Hub struct {
 	cache  *store.Cache // optional (nil disables snapshots)
 	db     *store.DB    // optional (nil disables accounts/history)
 	secret string       // token secret for resolving authenticated players
+	dir    string
 
 	mu    sync.Mutex
 	rooms map[string]*RoomSession
@@ -30,10 +32,11 @@ type Hub struct {
 
 // RoomSession binds a game room to the clients watching it.
 type RoomSession struct {
-	mu       sync.Mutex
-	room     *game.Room
-	clients  map[*Client]bool
-	saved      bool        // whether the finished match has been persisted
+	mu         sync.Mutex
+	room       *game.Room
+	clients    map[*Client]bool
+	saved      bool // whether the finished match has been persisted
+	saving     bool
 	timer      *time.Timer // countdown for timed rounds
 	timerKey   int         // round index the timer is armed for
 	previewKey int         // round index a melody preview lookup was started for
@@ -49,18 +52,21 @@ type clientMsg struct {
 
 // NewHub builds a hub.
 func NewHub(engine *game.Engine, cache *store.Cache, db *store.DB, secret string) *Hub {
-	return &Hub{
+	h := &Hub{
 		engine: engine,
 		cache:  cache,
 		db:     db,
 		secret: secret,
+		dir:    os.Getenv("PARTY_STATE_DIR"),
 		rooms:  map[string]*RoomSession{},
 		up: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
-			CheckOrigin:     func(*http.Request) bool { return true },
+			CheckOrigin:     studioOrigin,
 		},
 	}
+	h.restoreParty()
+	return h
 }
 
 // ServeWS upgrades an HTTP request to a WebSocket connection.
@@ -70,6 +76,9 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := &Client{hub: h, conn: conn, send: make(chan []byte, sendBuffer)}
+	if cookie, err := r.Cookie(sessionCookie); err == nil {
+		c.userID, c.displayName = h.resolveUser(cookie.Value)
+	}
 	go c.writePump()
 	go c.readPump()
 }
@@ -81,10 +90,14 @@ func (h *Hub) handleMessage(c *Client, data []byte) {
 		return
 	}
 	switch m.Type {
+	case "ping":
+		c.enqueue([]byte(`{"type":"pong"}`))
 	case "create_room":
 		h.createRoom(c, m.Payload)
 	case "join":
 		h.joinRoom(c, m.Payload)
+	case "watch":
+		h.watchRoom(c, m.Payload)
 	case "start_game":
 		h.hostAction(c, func(s *RoomSession) error { return h.engine.StartGame(s.room) })
 	case "set_config":
@@ -103,9 +116,19 @@ func (h *Hub) handleMessage(c *Client, data []byte) {
 }
 
 func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
+	if c.session != nil {
+		h.disconnect(c)
+	}
 	var p createPayload
 	_ = json.Unmarshal(payload, &p)
 	userID, displayName := h.resolveUser(p.AuthToken)
+	if userID == nil && p.AuthToken == "" {
+		userID, displayName = c.userID, c.displayName
+	}
+	if len([]rune(p.HostName)) > 32 || len([]rune(p.GirlsName)) > 32 || len([]rune(p.BoysName)) > 32 {
+		c.enqueue(errorMsg("Назви мають містити не більше 32 символів."))
+		return
+	}
 	if p.HostName == "" && displayName != "" {
 		p.HostName = displayName
 	}
@@ -121,12 +144,20 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 	})
 	s := &RoomSession{room: room, clients: map[*Client]bool{}}
 	h.mu.Lock()
+	if len(h.rooms) >= 200 || h.rooms[room.Code] != nil {
+		h.mu.Unlock()
+		c.enqueue(errorMsg("Зараз багато ігор. Спробуй створити кімнату трохи пізніше."))
+		return
+	}
 	h.rooms[room.Code] = s
 	h.mu.Unlock()
 	h.attach(c, s, host)
 }
 
 func (h *Hub) joinRoom(c *Client, payload json.RawMessage) {
+	if c.session != nil {
+		h.disconnect(c)
+	}
 	var p joinPayload
 	_ = json.Unmarshal(payload, &p)
 	code := strings.ToUpper(strings.TrimSpace(p.Code))
@@ -136,11 +167,23 @@ func (h *Hub) joinRoom(c *Client, payload json.RawMessage) {
 		return
 	}
 	userID, displayName := h.resolveUser(p.AuthToken)
+	if userID == nil && p.AuthToken == "" {
+		userID, displayName = c.userID, c.displayName
+	}
+	if len([]rune(p.Name)) > 32 {
+		c.enqueue(errorMsg("Ім’я має містити не більше 32 символів."))
+		return
+	}
 	name := p.Name
 	if name == "" && displayName != "" {
 		name = displayName
 	}
 	s.mu.Lock()
+	if len(s.clients) >= 64 {
+		s.mu.Unlock()
+		c.enqueue(errorMsg("У кімнаті забагато підключень."))
+		return
+	}
 	player, err := h.engine.Join(s.room, name, p.Team, p.Token)
 	if err == nil && userID != nil {
 		player.UserID = userID
@@ -217,7 +260,17 @@ func (h *Hub) doAction(c *Client, payload json.RawMessage) {
 	var p actionPayload
 	_ = json.Unmarshal(payload, &p)
 	h.mutate(c, func(s *RoomSession) error {
+		if p.Round != 0 && p.Round != s.room.RoundIndex {
+			return errors.New("Раунд уже змінився. Перевір екран.")
+		}
+		if p.CardIndex != nil && s.room.Current != nil && s.room.Current.Type == game.RoundAlias {
+			view := game.BuildView(s.room, c.player)
+			if round, ok := view.Round.(map[string]any); ok && round["index"] != *p.CardIndex {
+				return errors.New("Цю картку вже завершено.")
+			}
+		}
 		return h.engine.Apply(s.room, game.Action{
+			// The React client includes the round and card to reject delayed clicks.
 			Name:    p.Name,
 			Actor:   c.player,
 			IsHost:  c.player.IsHost,
@@ -244,15 +297,12 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 	s.mu.Lock()
 	err := fn(s)
 	var msgs []clientMsg
-	var toSave *game.Room
 	if err == nil {
 		msgs = s.renderAll()
-		if s.room.Stage == game.StageFinal && !s.saved {
-			s.saved = true
-			toSave = s.room
-		} else if s.room.Stage != game.StageFinal {
+		if s.room.Stage != game.StageFinal {
 			s.saved = false
 		}
+		h.archiveParty(s)
 		h.armTimer(s)
 	}
 	pNeed, pKey, pTitle, pArtist := false, 0, "", ""
@@ -267,9 +317,6 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 	for _, m := range msgs {
 		m.c.enqueue(m.b)
 	}
-	if toSave != nil {
-		h.persistMatch(toSave)
-	}
 	if pNeed {
 		go h.resolvePreview(s, pKey, pTitle, pArtist)
 	}
@@ -279,7 +326,7 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 // armTimer schedules (or clears) the round countdown. Caller holds s.mu.
 func (h *Hub) armTimer(s *RoomSession) {
 	r := s.room
-	timed := r.Stage == game.StagePlaying && r.Current != nil && !r.Current.Deadline.IsZero()
+	timed := r.Stage == game.StagePlaying && !r.Paused && r.Current != nil && !r.Current.Deadline.IsZero()
 	if !timed {
 		if s.timer != nil {
 			s.timer.Stop()
@@ -306,7 +353,7 @@ func (h *Hub) armTimer(s *RoomSession) {
 // fireTimeout resolves a timed round when its deadline passes.
 func (h *Hub) fireTimeout(s *RoomSession, key int) {
 	s.mu.Lock()
-	if s.room.RoundIndex != key || s.room.Stage != game.StagePlaying {
+	if s.room.RoundIndex != key || s.room.Stage != game.StagePlaying || s.room.Paused {
 		s.mu.Unlock()
 		return
 	}
@@ -335,8 +382,8 @@ func (h *Hub) resolvePreview(s *RoomSession, key int, title, artist string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
 	previewURL, err := store.DeezerPreview(ctx, title, artist)
-	if err != nil || previewURL == "" {
-		return
+	if err != nil {
+		previewURL = ""
 	}
 	s.mu.Lock()
 	var msgs []clientMsg
@@ -354,12 +401,15 @@ func (h *Hub) resolveUser(token string) (*string, string) {
 	if token == "" || h.db == nil {
 		return nil, ""
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if u, err := h.db.SessionUser(ctx, token); err == nil {
+		return &u.ID, u.DisplayName
+	}
 	id, err := auth.Verify(h.secret, token)
 	if err != nil {
 		return nil, ""
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 	u, err := h.db.UserByID(ctx, id)
 	if err != nil {
 		return nil, ""
@@ -367,30 +417,36 @@ func (h *Hub) resolveUser(token string) (*string, string) {
 	return &u.ID, u.DisplayName
 }
 
-// persistMatch writes a finished match and its players to Postgres.
-func (h *Hub) persistMatch(room *game.Room) {
-	if h.db == nil {
+func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
+	var p struct {
+		Code string `json:"code"`
+	}
+	if json.Unmarshal(payload, &p) != nil {
+		c.enqueue(errorMsg("Перевір код кімнати."))
 		return
 	}
-	players := make([]store.MatchPlayer, 0, len(room.Players))
-	for _, p := range room.Players {
-		players = append(players, store.MatchPlayer{
-			UserID: p.UserID,
-			Name:   p.Name,
-			Team:   string(p.Team),
-			Score:  room.Teams[p.Team].Score,
-		})
+	s := h.session(strings.ToUpper(strings.TrimSpace(p.Code)))
+	if s == nil {
+		c.enqueue(errorMsg("Кімнату не знайдено."))
+		return
 	}
-	winner := string(game.Winner(room))
-	code := room.Code
-	cfg := room.Config
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := h.db.SaveMatch(ctx, code, cfg, winner, players); err != nil {
-			log.Printf("save match %s: %v", code, err)
-		}
-	}()
+	if c.session != nil {
+		h.disconnect(c)
+	}
+	c.session = s
+	c.player = nil
+	s.mu.Lock()
+	if len(s.clients) >= 64 {
+		s.mu.Unlock()
+		c.session = nil
+		c.enqueue(errorMsg("У кімнаті забагато підключень."))
+		return
+	}
+	s.clients[c] = true
+	view := game.BuildView(s.room, nil)
+	s.mu.Unlock()
+	c.enqueue([]byte(`{"type":"watching"}`))
+	c.enqueue(stateMsg(view))
 }
 
 func (h *Hub) attach(c *Client, s *RoomSession, p *game.Player) {
@@ -441,6 +497,10 @@ func (h *Hub) disconnect(c *Client) {
 		}
 		if !stillHere {
 			c.player.Connected = false
+			if c.player.IsHost {
+				h.engine.Pause(s.room)
+				h.armTimer(s)
+			}
 		}
 	}
 	msgs := s.renderAll()
@@ -453,6 +513,7 @@ func (h *Hub) disconnect(c *Client) {
 	if empty {
 		h.scheduleCleanup(code)
 	}
+	h.persist(s)
 }
 
 // renderAll builds a per-viewer state message for every client. Caller holds s.mu.
@@ -492,18 +553,6 @@ func (h *Hub) scheduleCleanup(code string) {
 			h.cache.DeleteRoom(context.Background(), code)
 		}
 	})
-}
-
-func (h *Hub) persist(s *RoomSession) {
-	if h.cache == nil {
-		return
-	}
-	s.mu.Lock()
-	view := game.BuildView(s.room, nil)
-	code := s.room.Code
-	s.mu.Unlock()
-	b, _ := json.Marshal(view)
-	go h.cache.SaveRoomSnapshot(context.Background(), code, b, 3*time.Hour)
 }
 
 func youAre(p *game.Player, code string) []byte {

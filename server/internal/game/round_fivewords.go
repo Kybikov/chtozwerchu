@@ -152,6 +152,9 @@ func (fiveWords) View(room *Room, viewer *Player) any {
 		"slots":     slots,
 		"potential": fiveWordsPoints(d),
 	}
+	if viewer != nil && viewer.IsHost {
+		out["hostAnswer"] = d.Song.Title + " — " + d.Song.Artist
+	}
 	if done {
 		out["song"] = map[string]any{
 			"title":      d.Song.Title,

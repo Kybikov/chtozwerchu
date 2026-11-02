@@ -1,0 +1,1679 @@
+.route-loading {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  color: var(--blue);
+}
+.party-header nav > a,
+.party-nav-active {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  padding: 14px;
+  color: var(--muted);
+}
+.party-nav-active {
+  color: var(--pink);
+  background: #ff83c50a;
+  border-radius: 12px;
+}
+.party-setup {
+  max-width: 1390px;
+  margin: auto;
+  padding: 66px 50px 85px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 85px;
+  align-items: start;
+}
+.party-setup-title {
+  position: sticky;
+  top: 40px;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 43px;
+}
+.party-setup-title > .section-label {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+}
+.party-setup-title h1 {
+  font:
+    560 clamp(64px, 6.9vw, 104px) / 1.12 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -2.3px;
+  margin: 23px 0 25px;
+}
+.party-setup-title h1 > span {
+  color: var(--blue);
+}
+.party-setup-title > p {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.setup-decor {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 35px;
+}
+.setup-decor > span,
+.setup-decor > svg {
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  border-radius: 23px;
+  border: 1px solid #b395db38;
+  background: #3a284f75;
+  font:
+    500 48px "Oswald Variable",
+    sans-serif;
+  transform: rotate(-8deg);
+  color: var(--pink);
+}
+.setup-decor > svg {
+  padding: 20px;
+  transform: rotate(8deg);
+  color: var(--blue);
+}
+.setup-decor > span:last-child {
+  transform: rotate(-4deg);
+  color: var(--lime);
+}
+.panel.party-setup-panel {
+  padding: 30px;
+  background: #181220dc;
+}
+.setup-team-names {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 13px;
+}
+.field-girls {
+  color: var(--pink);
+}
+.field-boys {
+  color: var(--blue);
+}
+.choice-row {
+  display: flex;
+  gap: 8px;
+}
+.choice-row .button {
+  flex: 1;
+  min-height: 45px;
+  font-size: 18px;
+}
+.choice-row .selected {
+  border-color: #b8a0dd88;
+  background: #5b417b66;
+  color: #f0e4ff;
+}
+.contest-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.contest-options .button {
+  font-size: 12px;
+  padding: 11px 13px;
+  min-height: 42px;
+  gap: 8px;
+  border-radius: 11px;
+}
+.contest-options .selected {
+  color: #f0e6ff;
+  background: #44305270;
+  border-color: #ba8be355;
+}
+.custom-check {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #9c81bb80;
+  border-radius: 5px;
+  color: #2a1a35;
+}
+.selected .custom-check {
+  background: var(--pink);
+  border-color: var(--pink);
+}
+.team-choice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 9px;
+}
+.team-choice .button {
+  min-height: 48px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.team-choice .girls.selected {
+  color: var(--pink);
+  border-color: #f391c666;
+  background: #d867a122;
+}
+.team-choice .boys.selected {
+  color: var(--blue);
+  border-color: #a5b4ff66;
+  background: #8595e822;
+}
+.party-main {
+  max-width: 1560px;
+  margin: auto;
+  padding: 25px 48px 60px;
+}
+.party-room-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.party-room-bar > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  font-size: 12px;
+  color: var(--muted);
+}
+.party-room-bar .button {
+  font-size: 12px;
+  min-height: 39px;
+  padding: 10px 13px;
+}
+.party-room-bar .button b {
+  color: #f2e8ff;
+  letter-spacing: 2px;
+}
+.connection-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 100%;
+  background: #897694;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.connection-dot.online {
+  background: #c5e98a;
+  box-shadow: 0 0 10px #c5e98a35;
+}
+.party-scoreboard {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  margin-bottom: 24px;
+}
+.party-team-score {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 23px 30px;
+  background: linear-gradient(120deg, #201323, #181320);
+  border: 1px solid #ffffff12;
+  border-radius: 20px;
+  position: relative;
+  min-width: 0;
+}
+.party-team-score.active.girls {
+  border-color: #ff83c55c;
+  background: linear-gradient(120deg, #43243d70, #1c1428);
+}
+.party-team-score.active.boys {
+  border-color: #a5b4ff5c;
+  background: linear-gradient(120deg, #30345870, #1c1428);
+}
+.party-team-symbol {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #ff83c515;
+  color: var(--pink);
+}
+.boys .party-team-symbol {
+  background: #a5b4ff15;
+  color: var(--blue);
+}
+.party-team-score > div {
+  min-width: 0;
+  flex: 1;
+}
+.party-team-score .section-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #a392b4;
+}
+.party-team-score h2 {
+  font:
+    520 30px/1.25 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -0.4px;
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.party-team-caption {
+  font-size: 11px;
+  color: #9f8caf;
+}
+.party-team-score.active .party-team-caption {
+  color: var(--pink);
+}
+.party-team-score.active.boys .party-team-caption {
+  color: var(--blue);
+}
+.party-team-score > strong {
+  font:
+    500 62px/1 "Oswald Variable",
+    sans-serif;
+  color: var(--pink);
+}
+.party-team-score.boys > strong {
+  color: var(--blue);
+}
+.party-versus {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  background: #191022;
+  border: 1px solid #483254;
+  border-radius: 13px;
+  font:
+    550 18px "Oswald Variable",
+    sans-serif;
+  color: #d4c3e8;
+}
+.party-error {
+  margin-bottom: 20px;
+  padding: 12px 18px;
+  border: 1px solid #edabc540;
+  border-radius: 14px;
+  background: #6b2a431f;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.party-error p {
+  flex: 1;
+  font-size: 14px;
+  color: #ffd2e1;
+  line-height: 1.6;
+}
+.party-game-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+.panel.party-stage {
+  padding: 0;
+  background:
+    radial-gradient(ellipse at 75% 20%, #54376a26, transparent 75%), #14101ee8;
+  min-height: 615px;
+  overflow: hidden;
+  position: relative;
+}
+.party-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(#aa89d605 1px, transparent 1px),
+    linear-gradient(90deg, #aa89d605 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(transparent, #000);
+}
+.party-stage-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 27px;
+  border-bottom: 1px solid var(--line);
+  color: #b8a6ce;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 1.7px;
+  position: relative;
+  z-index: 1;
+}
+.party-stage-top > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.party-stage-top .live-dot {
+  background: var(--pink);
+}
+.party-lobby-stage,
+.party-final-stage,
+.party-result-stage {
+  padding: 40px;
+  min-height: 550px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+.party-lobby-orb {
+  display: grid;
+  place-items: center;
+  width: 102px;
+  height: 102px;
+  border-radius: 32px;
+  border: 1px solid #b39ddc50;
+  background: radial-gradient(circle at 30% 20%, #dd8abf55, #5b4d8930 65%);
+  box-shadow: 0 15px 60px #d384e418;
+  color: #e9c4ed;
+  transform: rotate(-8deg);
+  margin-bottom: 25px;
+}
+.party-lobby-stage > .section-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.party-lobby-stage h2 {
+  font:
+    550 clamp(62px, 7vw, 100px) / 1.3 "Oswald Variable",
+    sans-serif;
+  color: var(--lime);
+  letter-spacing: 12px;
+  margin-left: 12px;
+}
+.party-lobby-stage > p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.85;
+  margin-top: 7px;
+}
+.lobby-deck {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  margin: 25px 0 20px;
+  max-width: 540px;
+}
+.lobby-deck span {
+  font-size: 11px;
+  color: #c4b2d6;
+  background: #39244766;
+  border: 1px solid #a88ec52b;
+  padding: 8px 11px;
+  border-radius: 8px;
+}
+.lobby-rounds {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #8d7c9f;
+}
+.party-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+  min-width: 0;
+}
+.panel.party-control-panel {
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #1c1425d9;
+}
+.party-control-panel > .section-label {
+  font-size: 9px;
+  letter-spacing: 1.1px;
+  gap: 8px;
+  color: #ad92c6;
+}
+.party-control-panel > h3 {
+  font:
+    530 31px/1.25 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -0.4px;
+}
+.party-control-panel > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.party-control-panel > .button {
+  width: 100%;
+  font-size: 13px;
+  min-height: 46px;
+}
+.party-control-panel > .party-primary-action {
+  min-height: 55px;
+  font-size: 15px;
+}
+.party-control-panel > .finish-link {
+  font-size: 11px;
+  color: #a18bac;
+  padding: 6px;
+  min-height: 32px;
+}
+.party-control-panel .team-choice {
+  margin: 5px 0;
+}
+.party-control-panel .team-choice .button {
+  font-size: 12px;
+}
+.panel.party-players {
+  padding: 23px 25px;
+  background: #17101ee0;
+}
+.party-players .section-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.party-players .section-label > span {
+  margin-left: auto;
+  color: #e9ddf4;
+}
+.party-roster {
+  margin-top: 18px;
+}
+.party-roster h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pink);
+  margin: 0 0 10px;
+}
+.party-roster.boys h4 {
+  color: var(--blue);
+}
+.party-roster > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: #bcaccb;
+  margin-top: 8px;
+}
+.party-roster > div > span:nth-child(2) {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.party-roster > div > svg {
+  color: #bca0d6;
+}
+.party-live-stage {
+  padding: 30px;
+  position: relative;
+  min-height: 550px;
+}
+.party-round-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.party-round-heading h2 {
+  font:
+    540 clamp(31px, 3vw, 44px) / 1.2 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -0.7px;
+  margin-top: 13px;
+}
+.team-chip {
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--pink);
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: #ff83c513;
+  border: 1px solid #ff83c529;
+}
+.team-chip.boys {
+  color: var(--blue);
+  background: #a5b4ff13;
+  border-color: #a5b4ff29;
+}
+.points-chip {
+  font-size: 12px;
+  color: var(--lime);
+  border: 1px solid #e0ff8a25;
+  border-radius: 9px;
+  padding: 10px;
+  white-space: nowrap;
+}
+.party-clock {
+  text-align: center;
+  min-width: 80px;
+  padding: 9px 13px;
+  border: 1px solid #c4a5e330;
+  border-radius: 15px;
+  background: #0e09185c;
+}
+.party-clock strong {
+  display: block;
+  font:
+    500 42px/1.1 "Oswald Variable",
+    sans-serif;
+  color: var(--lime);
+}
+.party-clock span {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: #9a84ae;
+}
+.party-clock.urgent strong {
+  color: var(--pink);
+}
+.contest-instruction {
+  margin-top: 36px;
+  color: #b7a4ca;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.word-slots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 11px;
+  margin: 30px 0 25px;
+}
+.word-slots .button {
+  flex: 1 1 calc(33% - 11px);
+  min-height: 103px;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #3c29477a, #201629c0);
+  border-color: #bf9adb38;
+}
+.word-slots .word-hidden {
+  color: #a88abb;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.word-hidden > span {
+  font:
+    450 25px "Oswald Variable",
+    sans-serif;
+  color: #d5b8ed;
+}
+.word-slots .word-revealed {
+  color: #ffe0ef;
+  font:
+    500 clamp(20px, 2vw, 29px) "Oswald Variable",
+    sans-serif;
+  opacity: 1;
+}
+.potential-caption {
+  display: block;
+  text-align: center;
+  color: #9d85ae;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.melody-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 15px;
+  padding: 27px 0 5px;
+}
+.melody-disc {
+  width: 138px;
+  height: 138px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle,
+    #171020 0 3px,
+    #41324e 4px,
+    #21172c 5px 8px
+  );
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 0 0 1px #a97ec33b,
+    0 15px 35px #0004;
+}
+.melody-disc > span {
+  position: absolute;
+  inset: 35px;
+  border: 12px solid #ce9ec2;
+  background: #2b193b;
+  border-radius: 50%;
+}
+.melody-disc > i {
+  position: absolute;
+  inset: 10px;
+  border-top: 1px solid #ecbbfc80;
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+.melody-disc > svg {
+  position: relative;
+  color: #e8c7ed;
+  width: 25px;
+}
+.melody-stage h3,
+.emoji-stage h3 {
+  font-size: 22px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+.melody-stage p,
+.emoji-stage p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.melody-stage > .button {
+  margin-top: 6px;
+  min-height: 50px;
+}
+.public-hint {
+  border: 1px solid #bea2da33;
+  background: #47334e45;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.emoji-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  text-align: center;
+  padding: 48px 0 15px;
+}
+.emoji-stage > div {
+  font-size: clamp(45px, 5vw, 74px);
+  line-height: 1.7;
+  letter-spacing: 8px;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.truth-stage {
+  position: relative;
+  text-align: center;
+  padding: 30px 12px 10px;
+}
+.truth-quote {
+  display: block;
+  color: #b38acc;
+  font:
+    110px/0.8 Georgia,
+    serif;
+  height: 63px;
+}
+.truth-stage h3 {
+  font-size: clamp(22px, 2.4vw, 33px);
+  line-height: 1.55;
+  font-weight: 500;
+  letter-spacing: -0.6px;
+}
+.truth-stage > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+  margin-top: 20px;
+}
+.truth-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  margin: 30px auto 0;
+  max-width: 420px;
+}
+.truth-options .button {
+  min-height: 58px;
+  font-size: 17px;
+}
+.truth-options .button:first-child {
+  color: var(--lime);
+  background: #8cb95a17;
+  border-color: #d5ef912f;
+}
+.truth-options .button:last-child {
+  color: var(--pink);
+  background: #d774a11b;
+  border-color: #e995bd2f;
+}
+.alias-stage {
+  text-align: center;
+  padding: 46px 0 10px;
+}
+.alias-stage > .section-label {
+  justify-content: center;
+  font-size: 10px;
+}
+.alias-stage h3 {
+  font:
+    520 clamp(35px, 4vw, 57px) / 1.25 "Oswald Variable",
+    sans-serif;
+  margin: 21px 0;
+  letter-spacing: -0.8px;
+}
+.alias-stage h3 > span {
+  color: var(--blue);
+}
+.alias-stage > p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.alias-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 28px;
+}
+.alias-progress strong {
+  font:
+    450 45px/1.2 "Oswald Variable",
+    sans-serif;
+  color: var(--lime);
+}
+.alias-progress strong > span {
+  display: block;
+  font:
+    9px "Onest Variable",
+    sans-serif;
+  letter-spacing: 1px;
+  color: #a18bb4;
+  margin-top: 7px;
+}
+.alias-progress > i {
+  color: #6b537b;
+  font:
+    300 44px "Oswald Variable",
+    sans-serif;
+}
+.private-card {
+  background: #0f091b80;
+  border: 1px solid #bd9ed12b;
+  border-radius: 13px;
+  overflow: hidden;
+}
+.private-card > .button {
+  width: 100%;
+  font-size: 11px;
+  min-height: 45px;
+}
+.private-card > div {
+  padding: 17px;
+  border-top: 1px solid var(--line);
+}
+.private-card .section-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #a38cb4;
+}
+.private-card h4 {
+  font-size: 23px;
+  font-weight: 550;
+  line-height: 1.5;
+  color: #f2ddff;
+  margin: 10px 0 0;
+  overflow-wrap: anywhere;
+}
+.private-card p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #bb9dc8;
+  margin-top: 12px;
+}
+.private-card p b {
+  font-weight: 500;
+  color: var(--pink);
+}
+.verdict-buttons,
+.alias-host-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.verdict-buttons .button,
+.alias-host-controls .button {
+  width: 100%;
+  min-height: 48px;
+  font-size: 13px;
+}
+.party-guess {
+  position: relative;
+  display: flex;
+  gap: 7px;
+  align-items: end;
+}
+.party-guess > label {
+  min-width: 0;
+  flex: 1;
+  font-size: 11px;
+}
+.party-guess input {
+  min-height: 46px;
+  font-size: 13px;
+  padding: 13px;
+}
+.party-guess > .button {
+  width: 44px;
+  height: 46px;
+  min-width: 44px;
+  padding: 10px;
+}
+.party-pause-control {
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+}
+.party-pause-control .button {
+  width: 100%;
+  font-size: 13px;
+  min-height: 44px;
+}
+.party-volume {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #ad94bd;
+}
+.party-volume > :last-child {
+  min-width: 0;
+  flex: 1;
+}
+.party-pause-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 35px;
+  text-align: center;
+  background: #130d20e6;
+  backdrop-filter: blur(12px);
+  z-index: 2;
+}
+.party-pause-overlay > svg {
+  color: var(--blue);
+}
+.party-pause-overlay h3 {
+  font:
+    500 51px "Oswald Variable",
+    sans-serif;
+}
+.party-pause-overlay p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 340px;
+}
+.party-final-stage > svg {
+  color: var(--lime);
+  margin-bottom: 25px;
+}
+.party-final-stage h2 {
+  font:
+    540 clamp(43px, 4.4vw, 68px) / 1.2 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -1px;
+  margin: 20px 0;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.party-final-stage h2 span {
+  color: var(--blue);
+}
+.party-final-stage h2 span.girls {
+  color: var(--pink);
+}
+.party-final-stage > p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 450px;
+}
+.party-final-stage > strong {
+  font:
+    500 58px/1.3 "Oswald Variable",
+    sans-serif;
+  color: var(--pink);
+  margin-top: 20px;
+}
+.party-final-stage > strong > i {
+  color: #a39cb7;
+  font-style: normal;
+  margin: 0 14px;
+}
+.party-result-symbol {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  background: #7a83ba22;
+  border: 1px solid #a6b2ef40;
+  border-radius: 24px;
+  margin-bottom: 27px;
+  transform: rotate(-7deg);
+}
+.result-won .party-result-symbol {
+  color: var(--lime);
+  background: #a4c15e18;
+  border-color: #b8dd7950;
+}
+.party-result-stage h2 {
+  font:
+    520 clamp(33px, 3.3vw, 50px) / 1.3 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -0.7px;
+  margin: 24px 0 17px;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.party-result-stage > p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 590px;
+}
+.party-result-points {
+  font:
+    500 61px/1.1 "Oswald Variable",
+    sans-serif;
+  color: var(--lime);
+  margin-top: 30px;
+}
+.party-result-points > span {
+  font:
+    13px "Onest Variable",
+    sans-serif;
+  color: #bbacc9;
+  margin: 11px 0 0;
+  display: block;
+}
+.party-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.invite-qr {
+  background: #f3eaff;
+  border-radius: 18px;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+}
+.party-invite > strong {
+  font:
+    500 49px "Oswald Variable",
+    sans-serif;
+  letter-spacing: 7px;
+  margin-left: 7px;
+  color: var(--lime);
+}
+.party-invite > .button {
+  width: 100%;
+  font-size: 14px;
+}
+.party-invite > p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  text-align: center;
+}
+.panel.party-match-history {
+  margin-top: 25px;
+  padding: 32px;
+  background: #171020bd;
+}
+.party-match-history h3 {
+  font:
+    500 30px "Oswald Variable",
+    sans-serif;
+  margin-top: 11px;
+}
+.party-match-history ol {
+  list-style: none;
+  padding: 0;
+  margin: 25px 0 0;
+}
+.party-match-history li {
+  border-top: 1px solid var(--line);
+  padding: 17px 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.party-match-history li > b {
+  font:
+    450 26px "Oswald Variable",
+    sans-serif;
+  color: #8a6d9f;
+}
+.party-match-history li > div {
+  flex: 1;
+  min-width: 0;
+}
+.party-match-history li > div > span {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 7px;
+}
+.party-match-history li strong {
+  font-size: 16px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.party-match-history li > span {
+  font:
+    450 31px "Oswald Variable",
+    sans-serif;
+  color: var(--lime);
+}
+.party-stage-only .party-game-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.party-stage-only .party-controls,
+.party-stage-only .party-header {
+  display: none;
+}
+.party-stage-only .party-main {
+  max-width: 1680px;
+}
+.party-stage-only .party-stage {
+  min-height: 65svh;
+}
+.party-stage-only .party-live-stage,
+.party-stage-only .party-lobby-stage,
+.party-stage-only .party-final-stage,
+.party-stage-only .party-result-stage {
+  min-height: 65svh;
+}
+.party-stage-only .party-live-stage {
+  padding: 40px 65px;
+}
+.party-stage-only .word-slots {
+  flex-wrap: nowrap;
+  margin-top: 55px;
+}
+.party-stage-only .word-slots .button {
+  min-height: 145px;
+  font-size: 33px;
+}
+.party-stage-only .truth-stage h3 {
+  font-size: clamp(30px, 3vw, 47px);
+  max-width: 1050px;
+  margin: auto;
+}
+.party-stage-only .emoji-stage > div {
+  font-size: 100px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .melody-disc.spinning {
+    animation: record-spin 12s linear infinite;
+  }
+  @keyframes record-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+@media (max-width: 1200px) {
+  .party-setup {
+    gap: 45px;
+    padding: 55px 35px;
+  }
+  .party-setup-title h1 {
+    font-size: 80px;
+  }
+  .party-main {
+    padding: 25px 30px 50px;
+  }
+  .party-game-grid {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 20px;
+  }
+  .party-team-score {
+    padding: 23px;
+    gap: 15px;
+  }
+  .party-team-score h2 {
+    font-size: 27px;
+  }
+  .party-team-score > strong {
+    font-size: 56px;
+  }
+  .party-live-stage {
+    padding: 25px;
+  }
+  .party-round-heading h2 {
+    font-size: 33px;
+  }
+  .party-clock {
+    min-width: 68px;
+  }
+  .party-clock strong {
+    font-size: 38px;
+  }
+  .panel.party-control-panel {
+    padding: 23px;
+  }
+  .party-stage-only .word-slots {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 900px) {
+  .party-header nav {
+    display: none;
+  }
+  .party-setup {
+    padding: 40px 25px 60px;
+    gap: 30px;
+  }
+  .party-setup-title h1 {
+    font-size: 64px;
+  }
+  .party-setup-title > .section-label {
+    font-size: 9px;
+  }
+  .party-setup-title > p {
+    font-size: 15px;
+  }
+  .setup-decor > span,
+  .setup-decor > svg {
+    width: 65px;
+    height: 65px;
+    border-radius: 18px;
+    font-size: 36px;
+  }
+  .setup-decor > svg {
+    padding: 17px;
+  }
+  .panel.party-setup-panel {
+    padding: 23px;
+  }
+  .party-setup-panel .account-form {
+    gap: 19px;
+  }
+  .party-setup-panel .account-tabs .button {
+    font-size: 12px;
+  }
+  .party-main {
+    padding: 20px;
+  }
+  .party-game-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .party-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+  }
+  .party-team-symbol {
+    display: none;
+  }
+  .party-team-score {
+    padding: 20px 23px;
+  }
+  .party-team-score h2 {
+    font-size: 26px;
+  }
+  .party-scoreboard {
+    gap: 16px;
+  }
+  .party-versus {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+  .party-team-caption {
+    font-size: 10px;
+  }
+  .party-round-heading h2 {
+    font-size: 38px;
+  }
+  .panel.party-stage {
+    min-height: 535px;
+  }
+  .party-live-stage,
+  .party-lobby-stage,
+  .party-final-stage,
+  .party-result-stage {
+    min-height: 470px;
+  }
+  .word-slots {
+    flex-wrap: nowrap;
+    margin-top: 40px;
+  }
+  .word-slots .button {
+    min-height: 100px;
+    font-size: 23px;
+  }
+  .party-stage-only .party-live-stage {
+    padding: 30px;
+  }
+}
+@media (max-width: 640px) {
+  .party-setup {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 28px 20px 45px;
+    gap: 28px;
+  }
+  .party-setup-title {
+    position: static;
+  }
+  .party-setup-title .back-link {
+    margin-bottom: 25px;
+  }
+  .party-setup-title h1 {
+    font-size: 62px;
+    margin: 20px 0 19px;
+  }
+  .party-setup-title h1 > br {
+    display: none;
+  }
+  .party-setup-title h1 > span {
+    display: block;
+  }
+  .party-setup-title > p {
+    font-size: 15px;
+  }
+  .setup-decor {
+    display: none;
+  }
+  .party-header {
+    height: 80px;
+    padding: 0 20px;
+    gap: 13px;
+  }
+  .party-header .brand {
+    font-size: 21px;
+    gap: 10px;
+  }
+  .party-header .brand-icon {
+    width: 36px;
+    height: 41px;
+    border-radius: 11px;
+  }
+  .party-header .brand-icon svg {
+    width: 20px;
+  }
+  .party-header .header-actions {
+    gap: 3px;
+  }
+  .party-header .account-button {
+    max-width: 145px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .party-header .account-button span {
+    max-width: 86px;
+  }
+  .party-main {
+    padding: 15px 15px 35px;
+  }
+  .party-room-bar {
+    gap: 5px;
+    margin-bottom: 17px;
+    flex-wrap: wrap;
+  }
+  .party-room-bar > div:first-child {
+    font-size: 10px;
+    min-width: 145px;
+  }
+  .party-room-bar .button {
+    font-size: 10px;
+    padding: 8px;
+    min-height: 34px;
+    gap: 6px;
+  }
+  .party-room-bar .button:nth-child(3) {
+    margin-left: auto;
+  }
+  .party-scoreboard {
+    gap: 13px;
+    margin-bottom: 17px;
+  }
+  .party-team-score {
+    padding: 16px 16px 14px;
+    gap: 9px;
+    border-radius: 16px;
+  }
+  .party-team-score .section-label {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .party-team-score h2 {
+    font-size: 23px;
+    margin-top: 7px;
+  }
+  .party-team-score > strong {
+    font-size: 39px;
+  }
+  .party-team-caption {
+    font-size: 8px;
+  }
+  .party-versus {
+    width: 29px;
+    height: 29px;
+    font-size: 12px;
+    border-radius: 9px;
+  }
+  .party-game-grid {
+    gap: 17px;
+  }
+  .party-controls {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 17px;
+  }
+  .panel.party-stage {
+    border-radius: 18px;
+    min-height: 475px;
+  }
+  .party-stage-top {
+    padding: 17px 19px;
+    font-size: 8px;
+    letter-spacing: 1.1px;
+  }
+  .party-stage-top .live-dot {
+    width: 5px;
+    height: 5px;
+  }
+  .party-stage-top > span:first-child {
+    gap: 7px;
+  }
+  .party-live-stage {
+    padding: 22px 20px;
+    min-height: 425px;
+  }
+  .party-round-heading {
+    gap: 12px;
+  }
+  .party-round-heading h2 {
+    font-size: 31px;
+    margin-top: 12px;
+  }
+  .team-chip {
+    font-size: 9px;
+    padding: 6px 9px;
+  }
+  .party-clock {
+    min-width: 62px;
+    padding: 8px;
+    border-radius: 12px;
+  }
+  .party-clock strong {
+    font-size: 34px;
+  }
+  .party-clock span {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .points-chip {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .contest-instruction {
+    font-size: 13px;
+    margin-top: 28px;
+  }
+  .word-slots {
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: 25px 0 20px;
+  }
+  .word-slots .button {
+    flex-basis: calc(33% - 9px);
+    min-height: 93px;
+    font-size: 23px;
+  }
+  .word-hidden > span {
+    font-size: 23px;
+  }
+  .word-hidden > svg {
+    width: 19px;
+  }
+  .party-lobby-stage,
+  .party-final-stage,
+  .party-result-stage {
+    padding: 30px 22px;
+    min-height: 425px;
+  }
+  .party-lobby-orb {
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
+    margin-bottom: 23px;
+  }
+  .party-lobby-orb > svg {
+    width: 43px;
+  }
+  .party-lobby-stage h2 {
+    font-size: 63px;
+    letter-spacing: 8px;
+    margin-left: 8px;
+  }
+  .party-lobby-stage > p {
+    font-size: 12px;
+  }
+  .lobby-deck {
+    gap: 6px;
+    margin: 22px 0 18px;
+  }
+  .lobby-deck span {
+    font-size: 9px;
+    padding: 7px 9px;
+  }
+  .lobby-rounds {
+    font-size: 9px;
+  }
+  .party-lobby-stage > .section-label {
+    font-size: 8px;
+    letter-spacing: 1.7px;
+  }
+  .party-control-panel > .section-label {
+    font-size: 9px;
+  }
+  .party-control-panel > h3 {
+    font-size: 31px;
+  }
+  .party-control-panel > p {
+    font-size: 14px;
+  }
+  .panel.party-control-panel {
+    padding: 25px;
+  }
+  .party-control-panel > .button,
+  .verdict-buttons .button,
+  .alias-host-controls .button {
+    min-height: 50px;
+    font-size: 14px;
+  }
+  .private-card > .button {
+    font-size: 12px;
+    min-height: 47px;
+  }
+  .party-control-panel > .finish-link {
+    font-size: 11px;
+    min-height: 30px;
+  }
+  .melody-stage {
+    padding-top: 24px;
+    gap: 12px;
+  }
+  .melody-disc {
+    width: 115px;
+    height: 115px;
+  }
+  .melody-disc > span {
+    inset: 29px;
+    border-width: 10px;
+  }
+  .melody-stage h3,
+  .emoji-stage h3 {
+    font-size: 20px;
+  }
+  .melody-stage p {
+    font-size: 13px;
+  }
+  .melody-stage > .button {
+    font-size: 13px;
+    min-height: 47px;
+  }
+  .emoji-stage {
+    padding-top: 45px;
+    gap: 19px;
+  }
+  .emoji-stage > div {
+    font-size: 46px;
+    letter-spacing: 3px;
+    line-height: 1.6;
+  }
+  .truth-stage {
+    padding: 32px 0 10px;
+  }
+  .truth-quote {
+    font-size: 90px;
+    height: 47px;
+  }
+  .truth-stage h3 {
+    font-size: 23px;
+    line-height: 1.55;
+  }
+  .truth-stage > p {
+    font-size: 12px;
+  }
+  .truth-options {
+    gap: 11px;
+    margin-top: 25px;
+  }
+  .truth-options .button {
+    font-size: 15px;
+    min-height: 54px;
+  }
+  .alias-stage {
+    padding-top: 34px;
+  }
+  .alias-stage h3 {
+    font-size: 39px;
+  }
+  .alias-stage > p {
+    font-size: 12px;
+  }
+  .alias-stage > .section-label {
+    font-size: 8px;
+  }
+  .alias-progress {
+    margin-top: 23px;
+    gap: 25px;
+  }
+  .alias-progress strong {
+    font-size: 39px;
+  }
+  .alias-progress strong > span {
+    font-size: 8px;
+  }
+  .party-result-stage > .section-label {
+    font-size: 9px;
+    letter-spacing: 1.1px;
+  }
+  .party-result-stage h2 {
+    font-size: 34px;
+    margin-top: 22px;
+  }
+  .party-result-stage > p {
+    font-size: 13px;
+  }
+  .party-result-symbol {
+    width: 65px;
+    height: 65px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .party-result-points {
+    font-size: 53px;
+  }
+  .party-final-stage h2 {
+    font-size: 43px;
+  }
+  .party-final-stage > p {
+    font-size: 13px;
+  }
+  .party-final-stage > strong {
+    font-size: 49px;
+  }
+  .party-final-stage > svg {
+    width: 45px;
+    margin-bottom: 20px;
+  }
+  .party-final-stage > .section-label {
+    font-size: 9px;
+  }
+  .party-stage-only .party-live-stage {
+    padding: 24px 20px;
+  }
+  .party-stage-only .word-slots {
+    margin-top: 30px;
+  }
+  .party-stage-only .word-slots .button {
+    min-height: 100px;
+    font-size: 26px;
+  }
+  .party-stage-only .emoji-stage > div {
+    font-size: 48px;
+  }
+  .party-stage-only .truth-stage h3 {
+    font-size: 26px;
+  }
+  .party-pause-overlay h3 {
+    font-size: 44px;
+  }
+  .party-pause-overlay p {
+    font-size: 13px;
+  }
+  .panel.party-match-history {
+    padding: 25px;
+    margin-top: 20px;
+  }
+  .party-match-history h3 {
+    font-size: 25px;
+  }
+  .party-match-history li {
+    gap: 14px;
+  }
+  .party-match-history li strong {
+    font-size: 14px;
+  }
+  .party-match-history li > div > span {
+    font-size: 10px;
+  }
+  .party-match-history li > b {
+    font-size: 22px;
+  }
+  .party-match-history li > span {
+    font-size: 26px;
+  }
+}

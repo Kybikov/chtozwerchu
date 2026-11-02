@@ -33,6 +33,7 @@ services:
       WEB_DIR: "/app/web"
       PUBLIC_URL: "${PUBLIC_URL:-}"
       STUDIO_STATE_DIR: "/app/state/studio"
+      PARTY_STATE_DIR: "/app/state/party"
     volumes:
       - studio_state:/app/state
     depends_on:

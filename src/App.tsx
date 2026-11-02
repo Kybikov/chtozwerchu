@@ -6,7 +6,7 @@ import {
   type ChangeEvent,
 } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { useRegisterSW } from "virtual:pwa-register/react";
+import { usePWA } from "./lib/pwa";
 import { get, set, del } from "idb-keyval";
 import {
   ArrowDownToLine,
@@ -63,6 +63,8 @@ import {
 import { usePlayer } from "./lib/usePlayer";
 import NetworkStation from "./components/NetworkStation";
 import { savedRoom, rememberRoom, type RoomAccess } from "./lib/studioRoom";
+import { AccountButton, useIdentity } from "./lib/identity";
+import LocalArchive from "./components/LocalArchive";
 
 type Sheet =
   | "library"
@@ -75,6 +77,7 @@ type Sheet =
   | null;
 type LocalAudio = { file: File; trackId: number };
 export default function App() {
+  const identity = useIdentity();
   const [network, setNetwork] = useState<RoomAccess | null>(savedRoom);
   const [networkBusy, setNetworkBusy] = useState(false);
   const [networkError, setNetworkError] = useState("");
@@ -121,7 +124,7 @@ export default function App() {
   const {
     needRefresh: [needsUpdate],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = usePWA();
   const [installEvent, setInstallEvent] = useState<
     (Event & { prompt: () => Promise<void> }) | null
   >(null);
@@ -384,6 +387,9 @@ export default function App() {
       return;
     }
     player.seek(Math.max(0, start));
+    if (session.round === 1 && session.history.length === 0 && session.ownerAccountId === null) {
+      setSession((s) => ({ ...s, ownerAccountId: identity.user?.id ?? null }));
+    }
     scoreLock.current = false;
     targetLock.current = false;
     setAwarded(null);
@@ -682,6 +688,7 @@ export default function App() {
               </Button>
             </nav>
             <div className="header-actions">
+              <AccountButton />
               <span className="local-badge">
                 <span className="status-dot" />
                 Локальна гра
@@ -1155,6 +1162,7 @@ export default function App() {
                       >
                         Граємо ще
                       </Button>
+                      <LocalArchive session={session} onClaim={(id) => setSession((s) => ({ ...s, ownerAccountId: id }))} />
                     </div>
                   )}
                   <p className="local-save">

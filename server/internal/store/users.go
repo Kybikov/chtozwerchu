@@ -86,20 +86,27 @@ type MatchPlayer struct {
 }
 
 // SaveMatch persists a finished match and its players.
-func (db *DB) SaveMatch(ctx context.Context, code string, config any, winner string, players []MatchPlayer) error {
+func (db *DB) SaveMatch(ctx context.Context, code string, config any, winner string, players []MatchPlayer, keys ...string) error {
 	cfg, _ := json.Marshal(config)
 	id := newID("m-")
+	if len(keys) > 0 {
+		id = "m-" + keys[0]
+	}
 	now := time.Now()
 	tx, err := db.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	if _, err := tx.Exec(ctx,
+	inserted, err := tx.Exec(ctx,
 		`INSERT INTO matches (id, code, config, started_at, ended_at, winner)
-		 VALUES ($1,$2,$3,$4,$5,$6)`,
-		id, code, cfg, now, now, winner); err != nil {
+		 VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(id) DO NOTHING`,
+		id, code, cfg, now, now, winner)
+	if err != nil {
 		return err
+	}
+	if inserted.RowsAffected() == 0 {
+		return tx.Commit(ctx)
 	}
 	for _, p := range players {
 		if _, err := tx.Exec(ctx,
