@@ -93,6 +93,7 @@ func RestoreSnapshot(raw []byte) (*Room, error) {
 		r.Current.PausedRemaining = s.Remaining
 		if r.Stage == StagePlaying {
 			r.Paused = true
+			RefreshMelodyPreview(r)
 		}
 	}
 	return r, nil

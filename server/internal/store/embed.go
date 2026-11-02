@@ -5,6 +5,9 @@ import _ "embed"
 //go:embed seed/songs.json
 var seedSongs []byte
 
+//go:embed seed/melody-sources.json
+var seedMelodySources []byte
+
 //go:embed seed/statements.json
 var seedStatements []byte
 

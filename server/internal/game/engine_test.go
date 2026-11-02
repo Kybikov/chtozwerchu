@@ -177,8 +177,8 @@ func TestTruthLieScoring(t *testing.T) {
 
 func TestMelodyPreviewInjection(t *testing.T) {
 	_, room := newTestRoom(t, RoundMelody)
-	title, _, ok := MelodyPreviewNeeded(room)
-	if !ok || title == "" {
+	song, ok := MelodyPreviewNeeded(room)
+	if !ok || song.Title == "" {
 		t.Fatal("melody round should need a preview")
 	}
 	if !SetMelodyPreview(room, "https://cdn/x.mp3") {

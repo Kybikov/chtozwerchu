@@ -200,6 +200,9 @@ func (e *Engine) hasContent(room *Room, t RoundType) bool {
 		}
 		return false
 	case RoundMelody:
+		if audio, ok := e.cat.(interface{ MelodySongs(string) []Song }); ok {
+			return len(audio.MelodySongs(room.Config.Preset)) > 0
+		}
 		return len(e.cat.Songs(room.Config.Preset)) > 0
 	case RoundTruthLie:
 		return len(e.cat.Statements("")) > 0
@@ -286,7 +289,7 @@ func (e *Engine) Apply(room *Room, act Action) error {
 		}
 		return nil
 	}
-	if room.Paused && act.Name != "finish" && act.Name != "lobby" && act.Name != "end_melody" {
+	if room.Paused && act.Name != "finish" && act.Name != "lobby" && act.Name != "end_melody" && act.Name != "retry_melody" {
 		return errors.New("гра на паузі — ведучий має продовжити")
 	}
 	switch act.Name {

@@ -824,7 +824,7 @@ export default function PartyScreen() {
                           ? `${buzzer.notice} Ведучий продовжить фрагмент для суперників.`
                           : s.round?.awaitingAudio
                             ? s.round.previewStatus === "unavailable"
-                              ? "Цей фрагмент недоступний. Ведучий може наспівати пісню або завершити раунд без балів."
+                              ? "Фрагмент не завантажився. Ведучий може повторити спробу з пульта, наспівати пісню або пропустити її."
                               : "Ведучий увімкне фрагмент. Тоді почнеться відлік часу."
                             : "Ведучий продовжить гру, коли всі будуть готові."}
                       </p>
@@ -871,6 +871,21 @@ export default function PartyScreen() {
             </Panel>
             {!party.watching && (
               <aside className="party-controls">
+                {host &&
+                  s.stage === "playing" &&
+                  s.paused &&
+                  s.roundType === "melody" &&
+                  s.round?.previewStatus === "unavailable" &&
+                  buzzer?.phase !== "answer" && (
+                    <Button
+                      variant="primary"
+                      disabled={!online || party.pending}
+                      onClick={() => party.action("retry_melody")}
+                    >
+                      <RotateCcw size={18} />
+                      Завантажити фрагмент ще раз
+                    </Button>
+                  )}
                 {buzzer && s.stage === "playing" && (
                   <PartyBuzzer
                     state={s}

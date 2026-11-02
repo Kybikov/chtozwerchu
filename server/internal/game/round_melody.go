@@ -2,6 +2,8 @@ package game
 
 import (
 	"errors"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -39,8 +41,39 @@ const melodyMaxPoints = 3
 
 func (melody) Start(room *Room, cat Catalog) (RoundData, error) {
 	pool := cat.Songs(room.Config.Preset)
+	if audio, ok := cat.(interface{ MelodySongs(string) []Song }); ok {
+		pool = audio.MelodySongs(room.Config.Preset)
+	}
 	if len(pool) == 0 {
 		return nil, ErrEmptyDeck
+	}
+	// Exhaust the playlist before repeating. Results survive server restarts;
+	// legacy histories have the answer but not the content ID.
+	used := map[string]int{}
+	legacy := map[string]int{}
+	for _, round := range room.History {
+		if round.Type == RoundMelody {
+			if round.Result.ContentID != "" {
+				used[round.Result.ContentID]++
+			} else {
+				legacy[round.Result.Answer]++
+			}
+		}
+	}
+	fresh := make([]Song, 0, len(pool))
+	minimum := len(room.History) + 1
+	for _, song := range pool {
+		count := used[song.ID] + legacy[song.Title+" — "+song.Artist]
+		if count < minimum {
+			minimum = count
+			fresh = fresh[:0]
+		}
+		if count == minimum {
+			fresh = append(fresh, song)
+		}
+	}
+	if len(fresh) > 0 {
+		pool = fresh
 	}
 	d := &melodyData{Song: pool[pickRandom(len(pool))], AwaitingAudio: true}
 	if room.Config.MelodyMode == "buzzer" {
@@ -79,6 +112,15 @@ func (melody) Action(room *Room, act Action) error {
 		return ErrBadStage
 	}
 	switch act.Name {
+	case "retry_melody":
+		if !act.IsHost {
+			return ErrNotHost
+		}
+		if !room.Paused || d.PreviewStatus != "unavailable" || d.Buzzer != nil && d.Buzzer.Phase == "answer" {
+			return errors.New("Повторити завантаження можна перед початком мелодії.")
+		}
+		d.PreviewStatus = ""
+		return nil
 	case "end_melody":
 		if !act.IsHost {
 			return ErrNotHost
@@ -150,11 +192,12 @@ func resolveMelody(room *Room, d *melodyData, won bool, guess string) {
 		room.Teams[team].Score += pts
 	}
 	room.Current.Result = &RoundResult{
-		Won:    won,
-		Points: pts,
-		Team:   team,
-		Answer: d.Song.Title + " — " + d.Song.Artist,
-		Detail: guess,
+		ContentID: d.Song.ID,
+		Won:       won,
+		Points:    pts,
+		Team:      team,
+		Answer:    d.Song.Title + " — " + d.Song.Artist,
+		Detail:    guess,
 	}
 	room.Stage = StageResult
 	if d.Buzzer != nil {
@@ -204,15 +247,32 @@ func melodyHints(d *melodyData) []string {
 
 // MelodyPreviewNeeded returns the current melody round's track when it still
 // needs a preview URL resolved.
-func MelodyPreviewNeeded(room *Room) (title, artist string, ok bool) {
-	if room == nil || room.Current == nil || room.Current.Type != RoundMelody {
-		return "", "", false
+func MelodyPreviewNeeded(room *Room) (Song, bool) {
+	if room == nil || room.Stage != StagePlaying || room.Current == nil || room.Current.Type != RoundMelody {
+		return Song{}, false
 	}
 	d, is := room.Current.Data.(*melodyData)
-	if !is || d.Song.PreviewURL != "" {
-		return "", "", false
+	if !is || d.Song.PreviewURL != "" || d.PreviewStatus == "unavailable" {
+		return Song{}, false
 	}
-	return d.Song.Title, d.Song.Artist, true
+	return d.Song, true
+}
+
+// RefreshMelodyPreview discards expiring provider URLs after a server restart.
+// Playback remains paused and the saved listening/answer clocks are preserved.
+func RefreshMelodyPreview(room *Room) {
+	if room.Current == nil || room.Current.Type != RoundMelody || room.Stage != StagePlaying {
+		return
+	}
+	d, ok := room.Current.Data.(*melodyData)
+	if !ok {
+		return
+	}
+	u, err := url.Parse(d.Song.PreviewURL)
+	if err == nil && (strings.HasSuffix(u.Hostname(), ".dzcdn.net") || strings.HasSuffix(u.Hostname(), ".deezer.com")) {
+		d.Song.PreviewURL = ""
+		d.PreviewStatus = ""
+	}
 }
 
 // SetMelodyPreview sets the preview URL on the current melody round.

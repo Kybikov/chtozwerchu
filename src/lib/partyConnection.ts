@@ -134,8 +134,14 @@ export function useParty() {
         } catch {
           return;
         }
-        if (typeof data.serverTime === "number")
-          offset.current = Date.now() - data.serverTime;
+        if (
+          typeof data.serverTime === "number" &&
+          Number.isFinite(data.serverTime)
+        ) {
+          const received = Date.now();
+          offset.current = received - data.serverTime;
+          setNow(received);
+        }
         if (data.type === "you_are") {
           const p = reconnect.current?.payload;
           const a: Access = {
