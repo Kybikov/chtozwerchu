@@ -3813,3 +3813,707 @@ kbd {
 .team-score {
   min-width: 0;
 }
+/* Network show and the host's phone use the same studio surfaces. */
+.connected-dot,
+.waiting-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.connected-dot {
+  background: var(--lime);
+  box-shadow: 0 0 12px #d9ff8c30;
+}
+.waiting-dot {
+  background: #e3ad65;
+}
+.pair-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #d9c5e8;
+  padding: 0 0 20px;
+}
+.pair-status b {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-left: auto;
+  color: #f0dcff;
+}
+.pair-qr {
+  display: grid;
+  place-items: center;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 22px;
+  padding: 8px;
+  border-radius: 20px;
+  background: #fff7ff;
+  border: 1px solid #e7c9ff;
+  box-shadow: 0 12px 50px #0004;
+}
+.pair-qr svg {
+  display: block;
+  width: 212px;
+  height: 212px;
+  max-width: 100%;
+}
+.remote-open {
+  display: flex;
+  margin-top: 18px;
+  text-align: center;
+}
+.remote-open .specular-button__label {
+  display: flex;
+  align-items: center;
+}
+.pair-ready {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--lime);
+  margin-top: 20px;
+}
+.station-alert {
+  position: fixed;
+  bottom: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  padding: 22px;
+  border: 1px solid #d6a9f855;
+  border-radius: 20px;
+  background: #241331f5;
+  box-shadow: 0 20px 70px #0007;
+}
+.station-alert > svg {
+  color: var(--pink);
+}
+.station-alert strong {
+  font-size: 18px;
+}
+.station-alert p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #c3a7d9;
+  margin-top: 6px;
+}
+.station-alert > .button {
+  white-space: nowrap;
+}
+.station-tools {
+  opacity: 0.55;
+}
+.station-tools:hover,
+.station-tools:focus-within {
+  opacity: 1;
+}
+.network-notice {
+  border: 1px solid #f5a9cb44;
+  background: #f17bb610;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.network-notice strong {
+  font-size: 16px;
+  color: #ffc4e5;
+}
+.network-notice p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #d2b2e5;
+  margin-top: 6px;
+}
+.network-notice .button {
+  margin-top: 16px;
+  display: inline-flex;
+}
+.remote-header {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  min-height: 96px;
+}
+.remote-room {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #c3a6d5;
+  margin-left: auto;
+}
+.remote-room b {
+  display: block;
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: #f1dfff;
+  margin-top: 3px;
+}
+.remote-main {
+  max-width: 820px;
+  margin: auto;
+  padding: 0 32px 44px;
+}
+.remote-intro {
+  padding: 34px 0 28px;
+}
+.remote-intro h1 {
+  font-size: 66px;
+  line-height: 1.1;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  white-space: normal;
+}
+.remote-intro > p:last-child {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #bfa7cf;
+}
+.remote-intro .eyebrow {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #bba0d0;
+}
+.remote-game {
+  padding: 28px;
+  margin-top: 22px;
+}
+.remote-phase {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  color: #b9a1cb;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.remote-phase b {
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  color: var(--lime);
+  font-weight: 550;
+}
+.remote-track {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.remote-track > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+.remote-track h2 {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 36px;
+  font-weight: 550;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  letter-spacing: -0.3px;
+}
+.remote-track p {
+  font-size: 16px;
+  color: #c9b0da;
+  margin-top: 8px;
+}
+.remote-track small {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #a98ebf;
+  margin-top: 8px;
+  display: block;
+}
+.remote-track .track-art {
+  width: 80px;
+  height: 80px;
+}
+.remote-sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: #cfb8df;
+  flex-wrap: wrap;
+}
+.remote-sync > .button {
+  font-size: 12px;
+  padding: 6px 8px;
+  min-height: 36px;
+  margin-left: auto;
+}
+.remote-answer-card {
+  padding: 20px;
+  border: 1px solid #dcb2fa2b;
+  border-radius: 16px;
+  background: #c995f10c;
+  margin: 12px 0 24px;
+}
+.remote-answer-card small {
+  font-size: 10px;
+  letter-spacing: 1.1px;
+  color: #ad90c3;
+  font-weight: 550;
+}
+.remote-answer-card p {
+  font-size: 22px;
+  font-weight: 550;
+  line-height: 1.6;
+  color: #f0dbff;
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+}
+.remote-answer-card .button {
+  font-size: 12px;
+  padding: 6px 0;
+  min-height: 36px;
+  color: #c8a4e6;
+  margin-top: 8px;
+}
+.remote-launch.button {
+  font-size: 18px;
+  min-height: 62px;
+  padding: 16px 20px;
+}
+.remote-launch .specular-button__label > svg:last-child {
+  margin-left: auto;
+}
+.remote-hint {
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #c8a5df;
+  margin-top: 18px;
+}
+.remote-sound {
+  padding: 24px;
+  margin-top: 20px;
+}
+.remote-sound .section-label {
+  font-size: 11px;
+  margin-bottom: 18px;
+}
+.remote-sound .section-label > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.remote-sound .section-label > span:last-child {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.remote-volume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  color: #bd9ed5;
+}
+.remote-volume > .wake-slider {
+  flex: 1;
+  min-width: 0;
+}
+.remote-volume > span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  width: 36px;
+  text-align: right;
+}
+.remote-bottom-actions {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 0 0;
+}
+.remote-bottom-actions > .button {
+  font-size: 13px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.remote-bottom-actions a .specular-button__label {
+  display: flex;
+  align-items: center;
+}
+.remote-wait {
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  text-align: center;
+}
+.remote-wait h2 {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 38px;
+  font-weight: 550;
+}
+.remote-wait p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.remote-game .stage-kicker {
+  text-align: center;
+  margin: 8px 0 18px;
+}
+.remote-state-title {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.05;
+  text-align: center;
+  letter-spacing: -1px;
+  text-wrap: balance;
+  margin-bottom: 18px;
+}
+.remote-current-line {
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #c3a7d7;
+  margin: 0 0 24px;
+}
+.remote-clock {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 24px;
+  color: var(--pink);
+}
+.remote-clock strong {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 100px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.remote-clock span {
+  font-size: 11px;
+  letter-spacing: 1.3px;
+  color: #cbaada;
+}
+.remote-question {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 8px 0 18px;
+}
+.remote-awards {
+  margin-bottom: 10px;
+}
+.remote-awards > .button {
+  font-size: 16px;
+  min-height: 58px;
+  padding: 15px;
+}
+.remote-trophy {
+  display: block;
+  margin: 0 auto 24px;
+  color: var(--lime);
+}
+.remote-winner {
+  text-align: center;
+  font-size: 25px;
+  font-weight: 600;
+  color: #efd9ff;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  overflow-wrap: anywhere;
+}
+.remote-final-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 90px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--pink);
+  margin-bottom: 28px;
+}
+.remote-final-score span {
+  color: #bda1d2;
+}
+.remote-game > .final-stars {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.remote-game > .action-pair > .button {
+  min-height: 54px;
+  font-size: 15px;
+}
+@media (max-width: 560px) {
+  .remote-header {
+    padding: 18px 20px;
+    gap: 16px;
+    min-height: 80px;
+  }
+  .remote-header .brand {
+    font-size: 21px;
+  }
+  .remote-header .brand-icon {
+    width: 35px;
+    height: 40px;
+  }
+  .remote-room {
+    font-size: 8px;
+    gap: 8px;
+    letter-spacing: 0.8px;
+  }
+  .remote-room b {
+    font-size: 20px;
+    letter-spacing: 1.5px;
+  }
+  .remote-header > .button {
+    width: 38px;
+    min-width: 38px;
+    padding: 8px;
+  }
+  .remote-main {
+    padding: 0 18px 30px;
+  }
+  .remote-intro {
+    padding: 30px 0 24px;
+  }
+  .remote-intro h1 {
+    font-size: 54px;
+    letter-spacing: -1px;
+    white-space: normal;
+  }
+  .remote-intro > p:last-child {
+    font-size: 13px;
+  }
+  .remote-intro .eyebrow {
+    font-size: 10px;
+  }
+  .remote-game {
+    padding: 22px;
+    margin-top: 18px;
+  }
+  .remote-phase {
+    font-size: 10px;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    letter-spacing: 0.6px;
+  }
+  .remote-phase b {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+  }
+  .remote-track {
+    gap: 12px;
+  }
+  .remote-track .track-art {
+    width: 62px;
+    height: 62px;
+  }
+  .remote-track h2 {
+    font-size: 30px;
+  }
+  .remote-track p {
+    font-size: 14px;
+  }
+  .remote-track small {
+    font-size: 9px;
+    letter-spacing: 0.7px;
+  }
+  .remote-track > .button {
+    width: 32px;
+    min-width: 32px;
+    padding: 6px;
+  }
+  .remote-answer-card {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .remote-answer-card p {
+    font-size: 19px;
+    line-height: 1.6;
+  }
+  .remote-answer-card small {
+    font-size: 9px;
+  }
+  .remote-sync {
+    font-size: 12px;
+  }
+  .remote-sync > .button {
+    font-size: 11px;
+  }
+  .remote-launch.button {
+    font-size: 16px;
+    min-height: 58px;
+  }
+  .remote-sound {
+    padding: 20px;
+  }
+  .remote-sound .section-label {
+    font-size: 10px;
+    gap: 8px;
+  }
+  .remote-sound .section-label > span:last-child {
+    font-size: 11px;
+  }
+  .remote-bottom-actions {
+    gap: 8px;
+  }
+  .remote-bottom-actions > .button {
+    font-size: 11px;
+    padding: 10px;
+    min-height: 46px;
+  }
+  .remote-bottom-actions .specular-button__label {
+    gap: 6px;
+  }
+  .remote-state-title {
+    font-size: 52px;
+    letter-spacing: -0.5px;
+  }
+  .remote-current-line {
+    font-size: 16px;
+  }
+  .remote-clock strong {
+    font-size: 90px;
+  }
+  .remote-clock span {
+    font-size: 10px;
+  }
+  .remote-question {
+    font-size: 18px;
+  }
+  .remote-awards > .button {
+    font-size: 14px;
+    padding: 13px 9px;
+  }
+  .remote-winner {
+    font-size: 22px;
+  }
+  .remote-game > .action-pair > .button {
+    font-size: 13px;
+  }
+  .station-alert {
+    padding: 18px;
+    bottom: 100px;
+    gap: 12px;
+    flex-wrap: wrap;
+    max-width: calc(100vw - 28px);
+    width: 100%;
+  }
+  .station-alert > div {
+    flex: 1;
+    min-width: 180px;
+  }
+  .station-alert strong {
+    font-size: 16px;
+  }
+  .station-alert p {
+    font-size: 12px;
+  }
+  .station-alert > .button {
+    width: 100%;
+    font-size: 14px;
+  }
+  .station-tools .button {
+    font-size: 10px;
+    padding: 9px;
+  }
+  .pair-status {
+    font-size: 12px;
+  }
+  .pair-status b {
+    font-size: 24px;
+  }
+  .pair-qr {
+    padding: 4px;
+  }
+  .network-notice {
+    padding: 16px;
+  }
+  .network-notice strong {
+    font-size: 15px;
+  }
+  .network-notice p {
+    font-size: 13px;
+  }
+}
+/* Keep live host actions within reach on a phone. */
+.remote-shell:not(.remote-phase-ready) .remote-intro {
+  padding: 20px 0;
+}
+.remote-shell:not(.remote-phase-ready) .remote-intro h1,
+.remote-shell:not(.remote-phase-ready) .remote-intro > p:last-child {
+  display: none;
+}
+.remote-shell:not(.remote-phase-ready) .remote-intro .eyebrow {
+  margin: 0;
+}
+.remote-phase-answer .remote-sound {
+  display: none;
+}
+.remote-phase-answer .remote-answer-card {
+  margin-top: 18px;
+}
+@media (max-width: 560px) {
+  .remote-shell:not(.remote-phase-ready) .remote-intro {
+    padding: 20px 0;
+  }
+  .remote-phase-answer .remote-game {
+    padding: 20px;
+  }
+  .remote-phase-answer .remote-clock {
+    margin-bottom: 18px;
+  }
+  .remote-phase-answer .remote-clock strong {
+    font-size: 78px;
+  }
+  .remote-phase-answer .remote-answer-card {
+    padding: 14px;
+    margin: 16px 0;
+  }
+  .remote-phase-answer .remote-answer-card p {
+    font-size: 17px;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+  .remote-phase-answer .remote-question {
+    font-size: 17px;
+    margin-bottom: 14px;
+  }
+  .remote-phase-answer .remote-phase {
+    margin-bottom: 18px;
+  }
+  .remote-phase-answer .remote-awards > .button {
+    min-height: 54px;
+  }
+  .remote-phase-answer .remote-bottom-actions {
+    padding-top: 18px;
+  }
+}

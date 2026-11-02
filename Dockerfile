@@ -22,12 +22,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/server 
 FROM alpine:3.20
 RUN adduser -D -H app && apk add --no-cache wget
 WORKDIR /app
+RUN mkdir -p /app/state/studio && chown -R app:app /app/state
 
 COPY --from=build /out/server /app/server
 COPY --from=frontend /src/dist /app/web
 COPY web /app/classic
 
-ENV PORT=3000 WEB_DIR=/app/web LEGACY_WEB_DIR=/app/classic
+ENV PORT=3000 WEB_DIR=/app/web LEGACY_WEB_DIR=/app/classic STUDIO_STATE_DIR=/app/state/studio
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \

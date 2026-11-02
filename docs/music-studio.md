@@ -1,4 +1,4 @@
-# Music Studio 1.2
+# Music Studio 1.3
 
 ## Direction
 
@@ -76,8 +76,8 @@ BroadcastChannel synchronizes public scene data in the same browser and origin;
 the room id survives host reloads. The scene receives no target answer before the
 result and never renders the host panel. Audio still plays from the host device,
 which can output to the TV via HDMI. Keep the host window visible while playing.
-A stale host connection shows a reconnect notice. This is local multi-display
-support, not yet a phone remote or a network room.
+A stale host connection shows a reconnect notice. This local multi-display mode
+is separate from the network phone mode described below.
 
 ## Assets
 
@@ -87,7 +87,13 @@ The font files are local; the show does not fetch fonts from a third-party CDN.
 
 ## Follow-up scope
 
-- Authoritative network rooms for a separate host phone and audience device.
+- Account-backed room ownership, event packs and room browsing.
 - Integrate account/guest entry and the other competition types into this shell.
 - Add a supported full-track playback path, word-aligned content and clip editing.
 - Scenario packs, sound design, session recovery and deployment hardening.
+
+## Network studio 1.3
+
+See studio-network.md for the protocol, persistence and operational limits. The
+existing same-browser BroadcastChannel audience remains available for local play.
+The new phone mode uses a server-authoritative WebSocket room and three roles.

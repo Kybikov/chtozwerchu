@@ -21,6 +21,12 @@ import (
 )
 
 type musicCue struct {
+	StartMS int64       `json:"startMs"`
+	EndMS   int64       `json:"endMs"`
+	Text    string      `json:"text"`
+	Words   []musicWord `json:"words,omitempty"`
+}
+type musicWord struct {
 	StartMS int64  `json:"startMs"`
 	EndMS   int64  `json:"endMs"`
 	Text    string `json:"text"`
@@ -263,7 +269,7 @@ func (a *musicAdapter) lyrics(ctx context.Context, id, token string) ([]musicCue
 		for _, line := range body.Data.Track.Lyrics.Lines {
 			text := strings.TrimSpace(line.Line)
 			if text != "" && line.MS >= 0 {
-				cues = append(cues, musicCue{line.MS, line.MS + line.Duration, text})
+				cues = append(cues, musicCue{StartMS: line.MS, EndMS: line.MS + line.Duration, Text: text})
 			}
 		}
 	}

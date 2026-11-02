@@ -35,6 +35,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/presets", s.presets)
 	s.registerAuthRoutes(mux)
 	s.registerMusicRoutes(mux)
+	s.registerStudioRoutes(mux)
 	legacy := os.Getenv("LEGACY_WEB_DIR")
 	if legacy == "" {
 		legacy = "../web"

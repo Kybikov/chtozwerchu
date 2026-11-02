@@ -19,7 +19,7 @@ export type ShowState = Pick<
   effects: boolean;
 };
 
-export function useShowBroadcast(state: ShowState) {
+export function useShowBroadcast(state: ShowState, enabled = true) {
   const room = useRef("");
   if (!room.current) {
     const saved = sessionStorage.getItem("khz:show-room");
@@ -30,7 +30,7 @@ export function useShowBroadcast(state: ShowState) {
   const latest = useRef(state);
   latest.current = state;
   useEffect(() => {
-    if (!("BroadcastChannel" in window)) return;
+    if (!enabled || !("BroadcastChannel" in window)) return;
     const channel = new BroadcastChannel(`khz:show:${room.current}`);
     channel.onmessage = (e) => {
       if (e.data?.type === "hello")
@@ -44,6 +44,6 @@ export function useShowBroadcast(state: ShowState) {
       clearInterval(interval);
       channel.close();
     };
-  }, []);
+  }, [enabled]);
   return `/?screen=show&room=${room.current}`;
 }

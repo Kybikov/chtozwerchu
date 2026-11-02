@@ -32,6 +32,9 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       WEB_DIR: "/app/web"
       PUBLIC_URL: "${PUBLIC_URL:-}"
+      STUDIO_STATE_DIR: "/app/state/studio"
+    volumes:
+      - studio_state:/app/state
     depends_on:
       postgres:
         condition: service_healthy
@@ -43,3 +46,4 @@ services:
 
 volumes:
   pgdata:
+  studio_state:

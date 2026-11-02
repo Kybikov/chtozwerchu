@@ -11,6 +11,8 @@ const child = spawn("go", ["run", "./cmd/server"], {
     WEB_DIR: process.env.WEB_DIR ?? `${root}/dist`,
     PORT: process.env.PORT ?? "5599",
     HOST: process.env.HOST ?? "127.0.0.1",
+    STUDIO_STATE_DIR:
+      process.env.STUDIO_STATE_DIR ?? `${root}/output/studio-state`,
   },
 });
 child.on("error", () => {

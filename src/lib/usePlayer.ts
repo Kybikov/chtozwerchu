@@ -8,6 +8,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
   const [loading, setLoading] = useState(false);
   const [volume, setVolume] = useState(65);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
   const errors = useRef(onError);
   errors.current = onError;
   useEffect(() => {
@@ -18,6 +19,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
     setDuration(0);
     setPlaying(false);
     setReady(false);
+    setFailed(false);
     setLoading(!!src);
     if (src) {
       audio.src = src;
@@ -37,6 +39,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
       canplay = () => setLoading(false);
     const time = () => setPosition(audio.currentTime);
     const error = () => {
+      setFailed(true);
       setLoading(false);
       setReady(false);
       setPlaying(false);
@@ -92,11 +95,13 @@ export function usePlayer(src: string, onError: (message: string) => void) {
   }, []);
   const pause = () => ref.current?.pause();
   const play = async () => {
-    if (!ref.current || !src) return;
+    if (!ref.current || !src) return false;
     try {
       await ref.current.play();
+      return true;
     } catch {
       errors.current("Натисни «Відтворити», щоб увімкнути звук.");
+      return false;
     }
   };
   const seek = (seconds: number) => {
@@ -114,6 +119,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
     volume,
     setVolume,
     ready,
+    failed,
     play,
     pause,
     seek,
