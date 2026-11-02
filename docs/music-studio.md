@@ -1,4 +1,4 @@
-# Music Studio 1.13
+# Music Studio 1.14
 
 ## Direction
 
@@ -71,6 +71,11 @@ The app itself has no dependency on WTAdmin's database or stored secret format.
 - A changed provider line timeline invalidates the previous live calibration.
   Saved preparations retain their own immutable cue snapshot. A provider refresh
   does not silently retime a saved song.
+- The preparation dialog has its own React Bits seek controls and bounded
+  per-line audition. Bounds use the calibrated audio clock; unavailable lines
+  cannot be auditioned. Closing or changing calibration stops the audition.
+  Playback checks do not start a round or award points. Host operation text is
+  14–18 px, with a two-column desktop workspace and stacked phone layout.
 
 ## Separate audience window
 
@@ -92,8 +97,7 @@ The font files are local; the show does not fetch fonts from a third-party CDN.
 ## Follow-up scope
 
 - Account-backed room ownership, event packs and room browsing.
-- Integrate account/guest entry and the other competition types into this shell.
-- Add a supported full-track playback path, word-aligned content and clip editing.
+- Add a supported full-track playback path and configurable round clip editing.
 - Scenario packs, sound design, session recovery and deployment hardening.
 
 ## Network studio 1.3

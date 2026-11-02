@@ -68,12 +68,13 @@ import { savedRoom, rememberRoom, type RoomAccess } from "./lib/studioRoom";
 import { AccountButton, useIdentity } from "./lib/identity";
 import LocalArchive from "./components/LocalArchive";
 import WordTimingEditor from "./components/WordTimingEditor";
-import { serializeLyrics, timingCount } from "./lib/wordTiming";
+import { serializeLyrics } from "./lib/wordTiming";
 import type { WordCue } from "./lib/music";
 import PreparedSongs from "./components/PreparedSongs";
 import ProgrammeEditor from "./components/ProgrammeEditor";
 import ProgrammeOrder from "./components/ProgrammeOrder";
 import LyricTimingStatus from "./components/LyricTimingStatus";
+import CuePreparation from "./components/CuePreparation";
 import { sameCueTimeline } from "./lib/lyricTimeline";
 import {
   emptyProgramme,
@@ -144,7 +145,6 @@ export default function App() {
   const [results, setResults] = useState<Track[]>([]);
   const [searchBusy, setSearchBusy] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [cueQuery, setCueQuery] = useState("");
   const [wordLine, setWordLine] = useState(0);
   const [lyricsConfigured, setLyricsConfigured] = useState<boolean | null>(
     null,
@@ -717,7 +717,10 @@ export default function App() {
     resetRound();
     setSession((s) => ({
       ...s,
-      offset: Math.round(cue.startMs - player.position * 1000),
+      offset: Math.round(
+        cue.startMs -
+          (player.ref.current?.currentTime ?? player.position) * 1000,
+      ),
       aligned: true,
       target: Math.min(index + 2, cues.length - 1),
     }));
@@ -1315,7 +1318,7 @@ export default function App() {
                       <Button
                         className="full-width sync-button"
                         onClick={() => {
-                          setCueQuery("");
+                          resetRound();
                           setSheet("cues");
                         }}
                       >
@@ -1352,7 +1355,7 @@ export default function App() {
                     className="target-line"
                     disabled={!cues.length}
                     onClick={() => {
-                      setCueQuery("");
+                      resetRound();
                       setSheet("cues");
                     }}
                   >
@@ -1721,154 +1724,55 @@ export default function App() {
             open={sheet === "cues"}
             onOpenChange={(v) => !v && setSheet(null)}
             title="Музика й текст — разом"
-            description="Знайди рядок, який чуєш у плеєрі. Прив’язка зіставить його початок із поточною позицією аудіо."
+            description="Прослухай фрагмент, перевір прив’язку тексту й обери рядок, який продовжить команда."
             wide
           >
-            <div className="cue-transport">
-              <Button
-                onClick={player.toggle}
-                disabled={
-                  !player.ready || phase === "answer" || phase === "final"
-                }
-              >
-                {player.playing ? <Pause size={17} /> : <Play size={17} />}{" "}
-                {player.playing ? "Пауза" : "Слухати"}
-              </Button>
-              <span className="mono">
-                {formatTime(player.position)} / {formatTime(player.duration)}
-              </span>
-              {track?.lyricsStatus === "imported" && (
-                <Button
-                  variant="ghost"
-                  onClick={async () => {
-                    if (!track) return;
-                    await del(`khz:lrc:${track.id}`);
-                    await loadTrack(track.id);
-                    tell(
-                      "Повернули текст Deezer. Прив’язку потрібно перевірити знову.",
+            {sheet === "cues" && track && (
+              <CuePreparation
+                key={track.id}
+                cues={cues}
+                player={player}
+                offset={session.offset}
+                aligned={session.aligned}
+                target={session.target}
+                localAudio={!!localAudio}
+                imported={track.lyricsStatus === "imported"}
+                onAlign={align}
+                onTarget={(index) => {
+                  resetRound();
+                  setSession((s) => ({ ...s, target: index }));
+                  setSheet(null);
+                }}
+                onWords={(index) => {
+                  resetRound();
+                  setWordLine(index);
+                  setSheet("words");
+                }}
+                onOffset={(offset) => setSession((s) => ({ ...s, offset }))}
+                onOriginal={() => {
+                  resetRound();
+                  setSession((s) => ({ ...s, offset: 0, aligned: true }));
+                  tell("Використовуємо оригінальну шкалу повного запису.");
+                }}
+                onImport={() => lrcFile.current?.click()}
+                onExport={exportLyrics}
+                onProvider={() => {
+                  void del(`khz:lrc:${track.id}`)
+                    .then(() => loadTrack(track.id))
+                    .then((loaded) => {
+                      if (loaded)
+                        tell(
+                          "Повернули текст Deezer. Прив’язку потрібно перевірити знову.",
+                        );
+                    })
+                    .catch(() =>
+                      tell(
+                        "Не вдалося повернути текст Deezer. Спробуй ще раз.",
+                      ),
                     );
-                  }}
-                >
-                  Текст Deezer
-                </Button>
-              )}
-              <Button variant="ghost" onClick={() => lrcFile.current?.click()}>
-                <Upload size={15} />
-                Свій LRC
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={!cues.length}
-                onClick={exportLyrics}
-              >
-                <ArrowDownToLine size={15} /> Зберегти LRC
-              </Button>
-            </div>
-            <div className="offset-row">
-              <span>
-                Зміщення тексту{" "}
-                <strong>{(session.offset / 1000).toFixed(1)} с</strong>
-              </span>
-              <div>
-                <Button
-                  className="icon-button"
-                  aria-label="Зменшити зміщення на 100 мс"
-                  onClick={() =>
-                    setSession((s) => ({ ...s, offset: s.offset - 100 }))
-                  }
-                >
-                  <Minus size={15} />
-                </Button>
-                <Button
-                  className="icon-button"
-                  aria-label="Збільшити зміщення на 100 мс"
-                  onClick={() =>
-                    setSession((s) => ({ ...s, offset: s.offset + 100 }))
-                  }
-                >
-                  <Plus size={15} />
-                </Button>
-                <Button
-                  disabled={!localAudio}
-                  onClick={() => {
-                    resetRound();
-                    setSession((s) => ({ ...s, offset: 0, aligned: true }));
-                    tell("Використовуємо оригінальну шкалу повного запису.");
-                  }}
-                >
-                  Повний запис · 0 с
-                </Button>
-              </div>
-            </div>
-            <label className="search-field compact">
-              <Search size={17} />
-              <input
-                value={cueQuery}
-                onChange={(e) => setCueQuery(e.target.value)}
-                placeholder="Знайти слова в пісні"
-                aria-label="Пошук рядка"
+                }}
               />
-            </label>
-            <div className="cue-list">
-              {cues
-                .map((cue, index) => ({ cue, index }))
-                .filter(({ cue }) =>
-                  cue.text
-                    .toLocaleLowerCase("uk")
-                    .includes(cueQuery.toLocaleLowerCase("uk")),
-                )
-                .map(({ cue, index }) => (
-                  <div
-                    key={`${cue.startMs}-${index}`}
-                    className={`cue-row ${current === index ? "cue-current" : ""} ${session.target === index ? "cue-target" : ""}`}
-                  >
-                    <time>{formatTime(cue.startMs / 1000)}</time>
-                    <span>
-                      {cue.text}
-                      {cue.words?.length ? (
-                        <small className="cue-word-badge">
-                          <Check size={12} /> {timingCount(cue.words.length)}
-                        </small>
-                      ) : null}
-                    </span>
-                    <Button
-                      className="cue-word-button"
-                      aria-label={`${cue.words?.length ? "Перевірити мітки" : "Розмітити слова"} рядка ${index + 1}`}
-                      title="Мітки слів"
-                      onClick={() => {
-                        resetRound();
-                        setWordLine(index);
-                        setSheet("words");
-                      }}
-                    >
-                      <AudioLines size={17} />
-                      <span className="cue-word-label">Слова</span>
-                    </Button>
-                    <Button onClick={() => align(index)}>Прив’язати</Button>
-                    <Button
-                      variant={session.target === index ? "primary" : "soft"}
-                      aria-label={`Загадати рядок ${index + 1}`}
-                      onClick={() => {
-                        resetRound();
-                        setSession((s) => ({ ...s, target: index }));
-                        setSheet(null);
-                      }}
-                    >
-                      {session.target === index ? (
-                        <Check size={15} />
-                      ) : (
-                        <Plus size={15} />
-                      )}
-                      <span className="cue-action-label">Загадати</span>
-                    </Button>
-                  </div>
-                ))}
-            </div>
-            <p className="modal-footnote">
-              «Прив’язати» — рядок, що звучить зараз. «Загадати» — рядок, який
-              команда має продовжити. На сцені він залишається прихованим до
-              результату. Кнопка з хвилею відкриває запис міток окремих слів.
-            </p>
+            )}
           </Modal>
 
           {sheet === "words" && cues[wordLine] && (
