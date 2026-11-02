@@ -140,7 +140,9 @@ export default function PartyBuzzer({
           {b.phase === "handoff"
             ? `${b.notice} Зараз шанс суперників. Ведучий продовжить фрагмент.`
             : s.paused
-              ? "Кнопки відкриються разом із музикою."
+              ? s.round?.previewStatus === "unavailable"
+                ? "Прев’ю недоступне. Ведучий може наспівати мотив або пропустити цю мелодію."
+                : "Кнопки відкриються разом із музикою."
               : "Впізнали хіт? Тисніть. Першій команді — 10 секунд на відповідь."}
         </p>
       )}
@@ -258,7 +260,9 @@ export default function PartyBuzzer({
           >
             {s.paused ? <Play size={18} /> : <Pause size={18} />}
             {s.round?.awaitingAudio
-              ? "Увімкнути мелодію"
+              ? s.round.previewStatus === "unavailable"
+                ? "Грати з наспівом ведучого"
+                : "Увімкнути мелодію"
               : s.paused
                 ? b.phase === "handoff"
                   ? "Продовжити для суперників"
