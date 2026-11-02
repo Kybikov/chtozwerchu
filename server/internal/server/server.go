@@ -66,7 +66,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusServiceUnavailable
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.5.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil})
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.5.1", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil})
 }
 
 // roundTypeName maps round types to Ukrainian display names.
@@ -107,7 +107,7 @@ func (s *Server) presets(w http.ResponseWriter, r *http.Request) {
 
 // static serves the web directory with an index.html SPA fallback.
 func (s *Server) static(w http.ResponseWriter, r *http.Request) {
-	clean := filepath.Clean(r.URL.Path)
+	clean := filepath.ToSlash(filepath.Clean(r.URL.Path))
 	if clean == "/" || clean == "." {
 		clean = "/index.html"
 	}
@@ -118,10 +118,14 @@ func (s *Server) static(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if info, err := os.Stat(path); err == nil && !info.IsDir() {
+		if clean == "/sw.js" || clean == "/manifest.webmanifest" || strings.HasSuffix(clean, ".html") {
+			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+		}
 		http.ServeFile(w, r, path)
 		return
 	}
 	// SPA fallback.
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 	http.ServeFile(w, r, filepath.Join(s.cfg.WebDir, "index.html"))
 }
 

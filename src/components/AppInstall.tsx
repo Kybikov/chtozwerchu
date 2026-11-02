@@ -11,6 +11,7 @@ export default function AppInstall() {
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState<InstallEvent | null>(null);
   const [notice, setNotice] = useState("");
+  const [checking, setChecking] = useState(false);
   const [installed, setInstalled] = useState(
     matchMedia("(display-mode: standalone)").matches,
   );
@@ -18,6 +19,7 @@ export default function AppInstall() {
     needRefresh: [update],
     offlineReady: [ready],
     updateServiceWorker,
+    checkForUpdate,
   } = usePWA();
   useEffect(() => {
     const before = (event: Event) => {
@@ -95,6 +97,26 @@ export default function AppInstall() {
               <Check size={18} />
               Оболонку гри збережено для наступного відкриття.
             </div>
+          )}
+          {!update && (
+            <Button
+              disabled={checking || !navigator.onLine}
+              onClick={async () => {
+                setChecking(true);
+                setNotice("");
+                try {
+                  const supported = await checkForUpdate();
+                  setNotice(supported
+                    ? "Перевірку завершено. Якщо нова версія готова, з’явиться кнопка встановлення."
+                    : "Перевірка оновлень недоступна в цьому браузері.");
+                } catch {
+                  setNotice("Не вдалося перевірити оновлення. Перевір з’єднання й спробуй ще раз.");
+                } finally { setChecking(false); }
+              }}
+            >
+              <RefreshCw size={18} className={checking ? "spin" : ""} />
+              {checking ? "Перевіряємо…" : "Перевірити оновлення"}
+            </Button>
           )}
           {update && (
             <>
