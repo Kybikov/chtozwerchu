@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PartyView } from "./party";
 import type { Team } from "./music";
+import { RoomClock } from "./roomClock";
 
 type Access = {
   code: string;
@@ -82,13 +83,16 @@ export function useParty() {
   const [tvAuthenticated, setTVAuthenticated] = useState(false);
   const [pending, setPending] = useState(false),
     unlockTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [now, setNow] = useState(Date.now()),
-    offset = useRef(0);
+  const [now, setNow] = useState(0);
+  const clock = useRef(new RoomClock());
   const socket = useRef<WebSocket | null>(null),
     locked = useRef(0),
     reconnect = useRef<Intent | null>(intent);
   useEffect(() => {
-    const tick = setInterval(() => setNow(Date.now()), 200);
+    const tick = setInterval(
+      () => setNow(clock.current.read(performance.now())),
+      200,
+    );
     return () => {
       clearInterval(tick);
       clearTimeout(unlockTimer.current);
@@ -110,6 +114,7 @@ export function useParty() {
     const connect = () => {
       if (!live || stopped) return;
       setStatus(attempts ? "reconnecting" : "connecting");
+      clock.current.freeze(performance.now());
       setTVAuthenticated(false);
       const ws = new WebSocket(
         `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`,
@@ -138,9 +143,8 @@ export function useParty() {
           typeof data.serverTime === "number" &&
           Number.isFinite(data.serverTime)
         ) {
-          const received = Date.now();
-          offset.current = received - data.serverTime;
-          setNow(received);
+          clock.current.sync(data.serverTime, performance.now());
+          setNow(clock.current.read(performance.now()));
         }
         if (data.type === "you_are") {
           const p = reconnect.current?.payload;
@@ -174,6 +178,8 @@ export function useParty() {
           );
         } else if (data.type === "replaced" || data.type === "fatal") {
           stopped = true;
+          clock.current.freeze(performance.now());
+          setNow(clock.current.read(performance.now()));
           setStatus("idle");
           setPending(false);
           setError(data.message || "Це підключення завершено.");
@@ -190,6 +196,8 @@ export function useParty() {
       };
       ws.onclose = () => {
         if (!live || stopped || socket.current !== ws) return;
+        clock.current.freeze(performance.now());
+        setNow(clock.current.read(performance.now()));
         setPending(false);
         if (reconnect.current?.type === "create_room") {
           setError(
@@ -209,6 +217,8 @@ export function useParty() {
       const ws = socket.current;
       if (ws?.readyState !== WebSocket.OPEN) return;
       if (Date.now() - last > 12000) {
+        clock.current.freeze(performance.now());
+        setNow(clock.current.read(performance.now()));
         setStatus("reconnecting");
         setPending(false);
         socket.current = null;
@@ -293,7 +303,7 @@ export function useParty() {
     tvRequested: options.tv,
     tvToken,
     initialCode: options.code,
-    serverNow: now - offset.current,
+    serverNow: now,
     enter: (type: Intent["type"], payload: Record<string, unknown>) => {
       setState(null);
       setIntent({ type, payload });

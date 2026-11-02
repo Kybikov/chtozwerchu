@@ -94,7 +94,7 @@ export default function RemotePanel() {
       ctrl.abort();
     };
   }, [query]);
-  const scene = s ? roomScene(s, room.serverNow) : null;
+  const scene = s ? roomScene(s, room.serverNow, room.connected) : null;
   const locked = !room.connected || room.pending || room.terminal;
   const remaining = s ? roomRemaining(s, room.serverNow) : 0;
   const target = s?.track.cues[s.session.target];
@@ -352,11 +352,13 @@ export default function RemotePanel() {
                   <div className="remote-clock">
                     <strong>{String(remaining).padStart(2, "0")}</strong>
                     <span>
-                      {remaining === 0
-                        ? "ЧАС ВИЙШОВ"
-                        : s.timer.paused
-                          ? "ВІДЛІК НА ПАУЗІ"
-                          : "СЕКУНД НА ВІДПОВІДЬ"}
+                      {!room.connected
+                        ? "ЧЕКАЄМО ЗВ’ЯЗКУ"
+                        : remaining === 0
+                          ? "ЧАС ВИЙШОВ"
+                          : s.timer.paused
+                            ? "ВІДЛІК НА ПАУЗІ"
+                            : "СЕКУНД НА ВІДПОВІДЬ"}
                     </span>
                   </div>
                   <Button

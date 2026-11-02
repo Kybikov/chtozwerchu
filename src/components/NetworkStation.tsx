@@ -209,6 +209,7 @@ export default function NetworkStation({
             },
           },
           room.serverNow,
+          room.connected,
         )
       : null;
   const url = roomURL(access.code, "host", access.hostToken),

@@ -646,7 +646,13 @@ export default function PartyScreen() {
                         className={`party-clock ${remaining <= 10 ? "urgent" : ""}`}
                       >
                         <strong>{remaining}</strong>
-                        <span>{s.paused ? "ПАУЗА" : "СЕКУНД"}</span>
+                        <span>
+                          {!online
+                            ? "ЧЕКАЄМО ЗВ’ЯЗКУ"
+                            : s.paused
+                              ? "ПАУЗА"
+                              : "СЕКУНД"}
+                        </span>
                       </div>
                     ) : (
                       <span className="points-chip">

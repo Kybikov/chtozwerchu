@@ -7,6 +7,7 @@ import {
   type Team,
 } from "./music";
 import type { ShowState } from "./show";
+import { RoomClock } from "./roomClock";
 
 export type RoomAccess = {
   code: string;
@@ -116,7 +117,11 @@ export function roomRemaining(state: RoomState, serverNow: number) {
     ),
   );
 }
-export function roomScene(state: RoomState, serverNow: number): ShowState {
+export function roomScene(
+  state: RoomState,
+  serverNow: number,
+  connected = true,
+): ShowState {
   const { session: s, track: t, audio: a } = state,
     nowMS = a.position * 1000 + s.offset;
   const current = s.aligned ? activeCue(t.cues, nowMS) : -1,
@@ -129,7 +134,7 @@ export function roomScene(state: RoomState, serverNow: number): ShowState {
     round: s.round,
     rounds: s.rounds,
     phase: state.phase,
-    playing: a.playing,
+    playing: connected && a.playing,
     nowMS,
     lyric: visible ? t.cues[current].text : "",
     words: visible ? t.cues[current].words : undefined,
@@ -138,7 +143,7 @@ export function roomScene(state: RoomState, serverNow: number): ShowState {
       : {}),
     awarded: state.awarded,
     remaining: roomRemaining(state, serverNow),
-    timerPaused: state.timer.paused,
+    timerPaused: !connected || state.timer.paused,
     effects: state.effects,
   };
 }
@@ -157,8 +162,8 @@ export function useStudioConnection(
     station: false,
     audience: 0,
   });
-  const [serverOffset, setServerOffset] = useState(0),
-    [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
+  const clock = useRef(new RoomClock());
   const socket = useRef<WebSocket | null>(null),
     latest = useRef(state),
     handler = useRef(onInstruction),
@@ -183,7 +188,7 @@ export function useStudioConnection(
         ws.send(JSON.stringify({ type: "auth", role, code, token }));
       };
       ws.onmessage = (e) => {
-        if (disposed) return;
+        if (disposed || socket.current !== ws) return;
         lastMessage = performance.now();
         let m;
         try {
@@ -197,6 +202,8 @@ export function useStudioConnection(
           m.type === "closed"
         ) {
           stopped = true;
+          clock.current.freeze(performance.now());
+          setNow(clock.current.read(performance.now()));
           setTerminal(true);
           setConnected(false);
           setError(m.message || "З’єднання завершено.");
@@ -220,8 +227,10 @@ export function useStudioConnection(
           setConnected(true);
           setTerminal(false);
           attempt = 0;
-          if (typeof m.serverTime === "number")
-            setServerOffset(Date.now() - m.serverTime);
+          if (typeof m.serverTime === "number") {
+            clock.current.sync(m.serverTime, performance.now());
+            setNow(clock.current.read(performance.now()));
+          }
           if (m.presence) setPresence(m.presence);
           if (m.type === "state") {
             setState(m.state);
@@ -243,7 +252,9 @@ export function useStudioConnection(
         }
       };
       ws.onclose = () => {
-        if (disposed) return;
+        if (disposed || socket.current !== ws) return;
+        clock.current.freeze(performance.now());
+        setNow(clock.current.read(performance.now()));
         authenticated = false;
         setConnected(false);
         setPending(false);
@@ -256,12 +267,14 @@ export function useStudioConnection(
     };
     retry = setTimeout(open, 0);
     const tick = setInterval(() => {
-      setNow(Date.now());
+      setNow(clock.current.read(performance.now()));
       if (
         socket.current?.readyState === WebSocket.OPEN &&
         performance.now() - lastMessage > 5000
       ) {
         setConnected(false);
+        clock.current.freeze(performance.now());
+        setNow(clock.current.read(performance.now()));
         socket.current.close();
       }
     }, 200);
@@ -299,7 +312,10 @@ export function useStudioConnection(
   );
   return {
     state,
-    scene,
+    scene:
+      scene && !connected
+        ? { ...scene, playing: false, timerPaused: true }
+        : scene,
     connected,
     error,
     terminal,
@@ -307,6 +323,6 @@ export function useStudioConnection(
     pending,
     send,
     action,
-    serverNow: now - serverOffset,
+    serverNow: now,
   };
 }

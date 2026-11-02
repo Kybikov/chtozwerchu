@@ -38,6 +38,15 @@ function fixture(): RoomState {
   };
 }
 describe("network room projections", () => {
+  it("stops playback and marks a cached scene paused while disconnected", () => {
+    const s = fixture();
+    const frozen = roomScene(s, 107001, false);
+    expect(frozen.playing).toBe(false);
+    expect(frozen.timerPaused).toBe(true);
+    expect(frozen.remaining).toBe(13);
+    expect(s.audio.playing).toBe(true);
+    expect(s.timer.paused).toBe(false);
+  });
   it("never projects the target as a live lyric or answer before adjudication", () => {
     const s = fixture();
     for (const phase of ["ready", "playing", "answer"] as const) {

@@ -1,0 +1,200 @@
+/* Shared reading scale for the host's phone and a room-sized TV scene. */
+.remote-shell .remote-phase {
+  font-size: 12px;
+}
+.remote-shell .remote-phase b {
+  font-size: 12px;
+}
+.remote-shell .remote-track small,
+.remote-shell .remote-answer-card small,
+.remote-shell .remote-room,
+.remote-shell .remote-intro .eyebrow {
+  font-size: 12px;
+}
+.remote-shell .remote-sync,
+.remote-shell .remote-hint,
+.remote-shell .remote-sound .section-label,
+.remote-shell .remote-sound .section-label > span:last-child,
+.remote-shell .remote-volume > span,
+.remote-shell .remote-intro > p:last-child {
+  font-size: 14px;
+}
+.remote-shell .remote-bottom-actions > .button,
+.remote-shell .remote-game > .action-pair > .button,
+.remote-shell .remote-sync > .button {
+  font-size: 14px;
+  min-height: 44px;
+}
+.remote-shell .remote-game > .remote-awards > .button {
+  font-size: 17px;
+  min-height: 56px;
+}
+.remote-shell .remote-launch.button {
+  font-size: 17px;
+  min-height: 56px;
+}
+.remote-shell .remote-clock span {
+  font-size: 12px;
+}
+.remote-shell .remote-header > .button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.remote-shell .micro-label {
+  font-size: 11px;
+}
+.remote-shell .team-turn {
+  font-size: 12px;
+}
+.remote-shell .notice {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.remote-shell .remote-current-line {
+  font-size: 18px;
+  line-height: 1.55;
+}
+.remote-shell .remote-answer-card p {
+  font-size: 19px;
+  line-height: 1.5;
+}
+.remote-shell .remote-question {
+  font-size: 19px;
+}
+.remote-shell .remote-bottom-actions {
+  flex-wrap: wrap;
+}
+
+@media (min-width: 850px) and (min-height: 540px) {
+  .stage-only main {
+    max-width: none;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100svh;
+    min-height: 0;
+    gap: clamp(12px, 2vmin, 40px);
+    padding: clamp(20px, 2.4vmin, 52px);
+  }
+  .stage-only .scoreboard {
+    flex: none;
+    margin: 0;
+  }
+  .stage-only .show-stage {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+  .stage-only .team-meta strong {
+    font-size: clamp(28px, 3vmin, 72px);
+  }
+  .stage-only .score-number {
+    font-size: clamp(70px, 8.5vmin, 188px);
+  }
+  .stage-only .team-turn {
+    font-size: clamp(13px, 1.6vmin, 36px);
+  }
+  .stage-only .micro-label,
+  .stage-only .stage-kicker,
+  .stage-only .ready-copy .stage-kicker,
+  .stage-only .round-tag,
+  .stage-only .stage-state,
+  .stage-only .stage-bottomline {
+    font-size: clamp(13px, 1.65vmin, 38px);
+  }
+  .stage-only .stage-caption,
+  .stage-only .ready-copy .stage-caption {
+    font-size: clamp(20px, 2.6vmin, 58px);
+  }
+  .stage-only .stage-content .lyric-live {
+    font-size: clamp(52px, 7vmin, 160px);
+    line-height: 1.2;
+    max-width: min(90%, 28ch);
+    text-wrap: balance;
+  }
+  .stage-only .phase-ready .stage-content h2:not(.stage-blur) {
+    font-size: clamp(54px, 9.5vmin, 208px);
+  }
+  .stage-only .phase-answer h2,
+  .stage-only .phase-final h2 {
+    font-size: clamp(54px, 9vmin, 208px) !important;
+  }
+  .stage-only .phase-result h2 {
+    font-size: clamp(54px, 10vmin, 220px) !important;
+  }
+  .stage-only .final-score {
+    font-size: clamp(70px, 10vmin, 220px);
+  }
+  .stage-only .winner-name {
+    font-size: clamp(30px, 4vmin, 90px);
+  }
+  .stage-only .revealed-line {
+    font-size: clamp(24px, 3.8vmin, 86px);
+  }
+  .stage-only .result-track {
+    font-size: clamp(15px, 2vmin, 44px);
+  }
+  .stage-only .answer-clock > span {
+    font-size: clamp(80px, 11vmin, 240px);
+  }
+  .stage-only .answer-clock > small {
+    font-size: clamp(13px, 1.7vmin, 38px);
+  }
+  .stage-only .active-team {
+    font-size: clamp(16px, 2vmin, 44px);
+  }
+  .stage-only .stage-exit .button {
+    font-size: clamp(14px, 1.5vmin, 32px);
+    min-height: 44px;
+  }
+  .party-stage-only .party-round-heading h2 {
+    font-size: clamp(34px, 4vmin, 90px);
+  }
+  .party-stage-only .party-clock strong {
+    font-size: clamp(60px, 8vmin, 180px);
+  }
+  .party-stage-only .party-clock span,
+  .party-stage-only .contest-instruction {
+    font-size: clamp(15px, 2vmin, 42px);
+  }
+  .party-stage-only .truth-stage h3 {
+    font-size: clamp(30px, 4vmin, 90px);
+  }
+  .party-stage-only .party-main {
+    max-width: none;
+    width: 100%;
+  }
+  .party-stage-only .alias-stage h3 {
+    font-size: clamp(44px, 6.5vmin, 148px);
+  }
+  .party-stage-only .buzzer-scene h3 {
+    font-size: clamp(44px, 6vmin, 144px);
+  }
+}
+
+@media (max-width: 560px) {
+  .remote-shell .remote-phase {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+  .remote-shell .remote-sync {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .remote-shell .remote-room {
+    letter-spacing: 0.06em;
+  }
+  .remote-shell .remote-room b {
+    font-size: 23px;
+  }
+  .remote-shell .remote-clock strong {
+    font-size: 90px;
+  }
+  .remote-shell .remote-bottom-actions > .button {
+    flex: 1 1 140px;
+  }
+  .remote-shell .network-notice p {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+}
