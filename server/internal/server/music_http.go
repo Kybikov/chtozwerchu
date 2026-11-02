@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
-	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -42,6 +42,7 @@ type musicTrack struct {
 	Link         string     `json:"link"`
 	Cues         []musicCue `json:"cues"`
 	LyricsStatus string     `json:"lyricsStatus"`
+	LyricsSync   string     `json:"lyricsSync,omitempty"`
 }
 type musicAdapter struct {
 	mu         sync.Mutex
@@ -79,7 +80,7 @@ func (s *Server) registerMusicRoutes(mux *http.ServeMux) {
 		a.mu.Lock()
 		configured := a.token != "" || a.arl != ""
 		a.mu.Unlock()
-		writeJSON(w, 200, map[string]any{"lyricsConfigured": configured, "audio": "preview", "sync": "line"})
+		writeJSON(w, 200, map[string]any{"lyricsConfigured": configured, "audio": "preview", "sync": "line_and_word"})
 	})
 	mux.HandleFunc("GET /api/music/search", a.search)
 	mux.HandleFunc("GET /api/music/track", a.track)
@@ -133,7 +134,7 @@ func (a *musicAdapter) track(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var p publicTrack
-	if a.get(r.Context(), "https://api.deezer.com/track/"+id, &p) != nil || p.ID == 0 {
+	if a.get(r.Context(), "https://api.deezer.com/track/"+id, &p) != nil || strconv.FormatInt(p.ID, 10) != id {
 		writeJSON(w, 502, map[string]string{"error": "Трек недоступний. Обери інший або додай власний файл."})
 		return
 	}
@@ -155,6 +156,9 @@ func (a *musicAdapter) track(w http.ResponseWriter, r *http.Request) {
 		}
 		t.Cues = cues
 		t.LyricsStatus = status
+		if status == "ready" {
+			t.LyricsSync = lyricSync(cues)
+		}
 	} else if err.Error() != "unconfigured" {
 		t.LyricsStatus = "reauth_required"
 	}
@@ -219,7 +223,18 @@ func (a *musicAdapter) access(ctx context.Context) (string, error) {
 	return a.token, nil
 }
 func (a *musicAdapter) lyrics(ctx context.Context, id, token string) ([]musicCue, string) {
-	payload, _ := json.Marshal(map[string]any{"query": `query StudioLyrics($id:String!){track(trackId:$id){lyrics{synchronizedLines{milliseconds duration line}}}}`, "variables": map[string]string{"id": id}})
+	cues, status := a.lyricsRequest(ctx, id, token, true)
+	if status == "word_timing_unsupported" {
+		return a.lyricsRequest(ctx, id, token, false)
+	}
+	return cues, status
+}
+func (a *musicAdapter) lyricsRequest(ctx context.Context, id, token string, withWords bool) ([]musicCue, string) {
+	fields := `synchronizedLines{milliseconds duration line}`
+	if withWords {
+		fields += ` synchronizedWordByWordLines{start end words{start end word}}`
+	}
+	payload, _ := json.Marshal(map[string]any{"query": `query StudioLyrics($id:String!){track(trackId:$id){lyrics{` + fields + `}}}`, "variables": map[string]string{"id": id}})
 	req, _ := http.NewRequestWithContext(ctx, "POST", "https://pipe.deezer.com/api", bytes.NewReader(payload))
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
@@ -239,13 +254,7 @@ func (a *musicAdapter) lyrics(ctx context.Context, id, token string) ([]musicCue
 	var body struct {
 		Data struct {
 			Track struct {
-				Lyrics *struct {
-					Lines []struct {
-						MS       int64  `json:"milliseconds"`
-						Duration int64  `json:"duration"`
-						Line     string `json:"line"`
-					} `json:"synchronizedLines"`
-				} `json:"lyrics"`
+				Lyrics *providerLyrics `json:"lyrics"`
 			} `json:"track"`
 		} `json:"data"`
 		Errors []struct {
@@ -256,32 +265,25 @@ func (a *musicAdapter) lyrics(ctx context.Context, id, token string) ([]musicCue
 		return []musicCue{}, "provider_unavailable"
 	}
 	if len(body.Errors) > 0 {
+		unsupported := false
 		for _, e := range body.Errors {
 			m := strings.ToLower(e.Message)
 			if strings.Contains(m, "token") || strings.Contains(m, "unauth") {
 				return []musicCue{}, "reauth_required"
 			}
-		}
-		return []musicCue{}, "provider_unavailable"
-	}
-	cues := []musicCue{}
-	if body.Data.Track.Lyrics != nil {
-		for _, line := range body.Data.Track.Lyrics.Lines {
-			text := strings.TrimSpace(line.Line)
-			if text != "" && line.MS >= 0 {
-				cues = append(cues, musicCue{StartMS: line.MS, EndMS: line.MS + line.Duration, Text: text})
+			if withWords && (strings.Contains(m, "synchronizedwordbyword") || strings.Contains(m, "cannot query field")) {
+				unsupported = true
 			}
 		}
-	}
-	sort.SliceStable(cues, func(i, j int) bool { return cues[i].StartMS < cues[j].StartMS })
-	for i := range cues {
-		if i+1 < len(cues) && (cues[i].EndMS <= cues[i].StartMS || cues[i].EndMS > cues[i+1].StartMS) {
-			cues[i].EndMS = cues[i+1].StartMS
+		if unsupported {
+			return []musicCue{}, "word_timing_unsupported"
 		}
-		if cues[i].EndMS <= cues[i].StartMS {
-			cues[i].EndMS = cues[i].StartMS + 4000
+		if body.Data.Track.Lyrics == nil || len(body.Data.Track.Lyrics.Lines) == 0 {
+			return []musicCue{}, "provider_unavailable"
 		}
+		body.Data.Track.Lyrics.WordLines = nil
 	}
+	cues := providerCues(body.Data.Track.Lyrics)
 	if len(cues) == 0 {
 		return cues, "unavailable"
 	}

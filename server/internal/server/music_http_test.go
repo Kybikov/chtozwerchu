@@ -71,3 +71,16 @@ func TestStudioProviderRejectionDoesNotExposeResponse(t *testing.T) {
 		t.Fatal("unsafe or ambiguous rejection")
 	}
 }
+
+func TestStudioDoesNotAttachLyricsToAnotherProviderRecording(t *testing.T) {
+	calls := 0
+	a := &musicAdapter{token: musicJWT(), cache: map[string]musicCache{}, http: &http.Client{Transport: musicTransport(func(r *http.Request) (*http.Response, error) {
+		calls++
+		return musicResponse(200, `{"id":456,"title":"Different recording"}`), nil
+	})}}
+	rec := httptest.NewRecorder()
+	a.track(rec, httptest.NewRequest("GET", "/api/music/track?id=123", nil))
+	if rec.Code != 502 || calls != 1 {
+		t.Fatal("provider recording mismatch continued to lyrics lookup")
+	}
+}

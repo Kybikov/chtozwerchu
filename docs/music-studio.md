@@ -1,4 +1,4 @@
-# Music Studio 1.3
+# Music Studio 1.13
 
 ## Direction
 
@@ -65,8 +65,12 @@ The app itself has no dependency on WTAdmin's database or stored secret format.
 - Audio timelines use audio.currentTime; answer clocks use elapsed monotonic time.
   Hiding the host pauses audio and the answer clock. Time expiry leaves adjudication
   to the host instead of awarding or skipping automatically.
-- Enhanced LRC imports preserve exact word timestamps. Malformed word timing falls
-  back to line timing. Deezer line-only responses remain line-synchronized.
+- Native Deezer word data and Enhanced LRC preserve exact word timestamps and gaps.
+  Invalid optional word data falls back to valid lines. Partial native data never
+  manufactures missing word intervals. Coverage is visible to the host.
+- A changed provider line timeline invalidates the previous live calibration.
+  Saved preparations retain their own immutable cue snapshot. A provider refresh
+  does not silently retime a saved song.
 
 ## Separate audience window
 

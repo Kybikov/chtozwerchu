@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  BadgeCheck,
   Check,
   Headphones,
   Minus,
@@ -34,6 +35,7 @@ type Props = {
   player: ReturnType<typeof usePlayer>;
   onSave: (words: WordCue[] | undefined) => Promise<boolean>;
   onClose: () => void;
+  providerWords?: boolean;
 };
 
 export default function WordTimingEditor({
@@ -44,6 +46,7 @@ export default function WordTimingEditor({
   player,
   onSave,
   onClose,
+  providerWords = false,
 }: Props) {
   const [draft, setDraft] = useState<WordCue[] | undefined>(() =>
     cue.words?.map((w) => ({ ...w })),
@@ -225,7 +228,9 @@ export default function WordTimingEditor({
       description={
         discard
           ? "Збережені раніше мітки залишаться. Поточні зміни буде втрачено."
-          : `Рядок ${line + 1}. Натискай пробіл або кнопку на початку кожного слова, а потім познач кінець рядка.`
+          : providerWords && !dirty
+            ? `Рядок ${line + 1}. Послівні мітки вже готові. Перевір прив’язку до аудіо й прослухай підсвічування.`
+            : `Рядок ${line + 1}. Натискай пробіл або кнопку на початку кожного слова, а потім познач кінець рядка.`
       }
       wide
     >
@@ -252,6 +257,18 @@ export default function WordTimingEditor({
                   : "Мітки рядка"}
             </span>
           </div>
+          {providerWords && !dirty && (
+            <div className="word-editor-source">
+              <BadgeCheck size={24} />
+              <div>
+                <strong>Послівні мітки Deezer</strong>
+                <p>
+                  Мітки для цього рядка вже отримано. Прослухай рядок і перевір
+                  прив’язку до свого аудіо; за потреби відкоригуй мітки.
+                </p>
+              </div>
+            </div>
+          )}
           <div
             className={`word-editor-lyric ${recording ? "is-recording" : ""}`}
             aria-label="Попередній перегляд слів"
@@ -466,8 +483,8 @@ export default function WordTimingEditor({
             </Button>
           )}
           <p className="word-editor-footnote">
-            <Check size={14} /> Мітки беруться з позиції аудіо. Підсвічування не
-            вгадує темп за довжиною слова.
+            <Check size={14} /> Підсвічування йде за аудіо та часовими мітками.
+            Проміжки між словами залишаються тишею.
           </p>
         </div>
       )}

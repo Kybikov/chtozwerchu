@@ -18,6 +18,7 @@ export type Track = {
   link: string;
   cues: Cue[];
   lyricsStatus: string;
+  lyricsSync?: "word" | "line" | "mixed";
 };
 export type Team = "girls" | "boys";
 export type Phase = "ready" | "playing" | "answer" | "result" | "final";

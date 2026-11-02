@@ -37,6 +37,7 @@ import { api, curated, formatTime, type Track, type Team } from "../lib/music";
 import { matchWinner } from "../lib/match";
 import PreparedSongs from "./PreparedSongs";
 import ProgrammeOrder from "./ProgrammeOrder";
+import LyricTimingStatus from "./LyricTimingStatus";
 import "../programme.css";
 
 export default function RemotePanel() {
@@ -293,6 +294,10 @@ export default function RemotePanel() {
                       <ChevronRight size={22} />
                     </Button>
                   </div>
+                  <LyricTimingStatus
+                    cues={s.track.cues}
+                    imported={s.track.lyricsStatus === "imported"}
+                  />
                   <div className="remote-sync">
                     <span
                       className={

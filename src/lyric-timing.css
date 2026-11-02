@@ -1,0 +1,95 @@
+.lyric-timing {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin: 18px 0;
+  border: 1px solid #c4a1ea29;
+  border-radius: 18px;
+  background: #c4a1ea06;
+  text-align: left;
+}
+.lyric-timing.has-words {
+  background: linear-gradient(115deg, #dba4ff16, #b6bdff05);
+  border-color: #d5adff40;
+}
+.lyric-timing-symbol {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d5adff26;
+  border-radius: 12px;
+  background: #c4a1ea0a;
+  color: #d6b6f5;
+}
+.lyric-timing > div {
+  min-width: 0;
+  flex: 1;
+}
+.lyric-timing strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.lyric-timing p {
+  color: #bfb1d0;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 5px 0 0;
+}
+.lyric-timing-count {
+  flex: none;
+  font:
+    500 30px/1 "Oswald Variable",
+    sans-serif;
+  text-align: center;
+  color: #e1c7fa;
+  font-variant-numeric: tabular-nums;
+}
+.lyric-timing-count small {
+  display: block;
+  color: #c3b3d2;
+  font:
+    450 12px/1.6 "Onest Variable",
+    sans-serif;
+  margin-top: 5px;
+}
+.word-editor-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #c4a1ea3a;
+  border-radius: 16px;
+  background: #c4a1ea0b;
+  color: #e1c7fa;
+}
+.word-editor-source p {
+  color: #c9b6da;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+.word-editor-source strong {
+  font-size: 17px;
+}
+@media (max-width: 420px) {
+  .lyric-timing {
+    gap: 10px;
+    padding: 14px;
+  }
+  .lyric-timing-symbol {
+    width: 36px;
+    height: 40px;
+  }
+  .lyric-timing-count {
+    font-size: 26px;
+  }
+  .lyric-timing strong {
+    font-size: 16px;
+  }
+}

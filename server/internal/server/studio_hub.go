@@ -860,8 +860,12 @@ func (r *studioRoom) public(now time.Time) map[string]any {
 		view["eventName"] = session.Programme.Title
 	}
 	if s.Phase == "playing" && session.Aligned {
-		for i, c := range s.Track.Cues {
-			if i < session.Target && clock >= float64(c.StartMS) && clock < float64(c.EndMS) {
+		for i := len(s.Track.Cues) - 1; i >= 0; i-- {
+			c := s.Track.Cues[i]
+			if clock >= float64(c.StartMS) {
+				if i >= session.Target || clock >= float64(c.EndMS) {
+					break
+				}
 				view["lyric"] = c.Text
 				if len(c.Words) > 0 {
 					view["words"] = c.Words

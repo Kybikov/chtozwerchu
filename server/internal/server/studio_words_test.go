@@ -40,3 +40,25 @@ func TestStudioPublishesExactCurrentWordTimelineAndHidesFutureWords(t *testing.T
 		t.Fatal("overlapping word timings accepted")
 	}
 }
+
+func TestStudioWordProjectionMatchesTheLatestLineAndPreservesRealSilence(t *testing.T) {
+	s := studioFixture()
+	s.Phase = "playing"
+	s.Session.Target = 3
+	s.Track.Cues[0].EndMS = 8000
+	s.Track.Cues[1].StartMS = 2000
+	s.Track.Cues[1].EndMS = 4000
+	r := &studioRoom{State: s}
+	r.State.Audio.Position = 3
+	if r.public(time.Now())["lyric"] != s.Track.Cues[1].Text {
+		t.Fatal("audience stayed on an overlapping earlier line")
+	}
+	r.State.Audio.Position = 5
+	if r.public(time.Now())["lyric"] != "" {
+		t.Fatal("audience filled a silent gap with an older line")
+	}
+	r.State.Audio.Position = 9.5
+	if r.public(time.Now())["lyric"] != "" {
+		t.Fatal("target answer leaked through overlap handling")
+	}
+}

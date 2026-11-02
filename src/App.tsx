@@ -73,6 +73,8 @@ import type { WordCue } from "./lib/music";
 import PreparedSongs from "./components/PreparedSongs";
 import ProgrammeEditor from "./components/ProgrammeEditor";
 import ProgrammeOrder from "./components/ProgrammeOrder";
+import LyricTimingStatus from "./components/LyricTimingStatus";
+import { sameCueTimeline } from "./lib/lyricTimeline";
 import {
   emptyProgramme,
   readProgramme,
@@ -361,6 +363,9 @@ export default function App() {
           return true;
         }
         let value: Track;
+        const previous = await get<Track>(`khz:track:${id}`).catch(
+          () => undefined,
+        );
         try {
           value = await api<Track>(`/api/music/track?id=${id}`);
         } catch (error) {
@@ -380,6 +385,8 @@ export default function App() {
         );
         if (imported?.length)
           value = { ...value, cues: imported, lyricsStatus: "imported" };
+        const retimed =
+          preserve && !sameCueTimeline(previous?.cues, value.cues);
         setTrack(value);
         void set(`khz:track:${id}`, value).catch(() => {});
         const saved = await get<LocalAudio>("khz:audio").catch(() => undefined);
@@ -393,13 +400,20 @@ export default function App() {
           programme: preserve ? s.programme : undefined,
           trackId: id,
           ...(preserve
-            ? { target: Math.min(s.target, Math.max(0, value.cues.length - 1)) }
+            ? {
+                target: Math.min(s.target, Math.max(0, value.cues.length - 1)),
+                aligned: retimed ? false : s.aligned,
+              }
             : {
                 aligned: false,
                 offset: 0,
                 target: Math.min(3, Math.max(0, value.cues.length - 1)),
               }),
         }));
+        if (retimed && latestSession.current.aligned)
+          tell(
+            "Часова шкала тексту оновилася. Перевір прив’язку до аудіо перед наступним раундом.",
+          );
         return true;
       } catch (error) {
         if (version === requestVersion.current)
@@ -1279,7 +1293,7 @@ export default function App() {
                   </div>
                   <div className="panel-divider" />
                   <div className="section-label">
-                    <span>СИНХРОНІЗАЦІЯ РЯДКІВ</span>
+                    <span>МУЗИКА Й ТЕКСТ</span>
                     <span
                       className={`sync-status ${session.aligned ? "synced" : ""}`}
                     >
@@ -1289,6 +1303,10 @@ export default function App() {
                   </div>
                   {cues.length > 0 ? (
                     <>
+                      <LyricTimingStatus
+                        cues={cues}
+                        imported={track?.lyricsStatus === "imported"}
+                      />
                       <p className="host-note">
                         {session.aligned
                           ? "Текст слідує за музикою. Перед грою перевір потрібний фрагмент."
@@ -1815,7 +1833,7 @@ export default function App() {
                     </span>
                     <Button
                       className="cue-word-button"
-                      aria-label={`Розмітити слова рядка ${index + 1}`}
+                      aria-label={`${cue.words?.length ? "Перевірити мітки" : "Розмітити слова"} рядка ${index + 1}`}
                       title="Мітки слів"
                       onClick={() => {
                         resetRound();
@@ -1861,6 +1879,10 @@ export default function App() {
               offset={session.offset}
               aligned={session.aligned}
               player={player}
+              providerWords={
+                track?.lyricsStatus === "ready" &&
+                !!cues[wordLine].words?.length
+              }
               onSave={saveWordTiming}
               onClose={() => setSheet("cues")}
             />
