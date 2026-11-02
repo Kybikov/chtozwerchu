@@ -51,6 +51,9 @@ func (h *Hub) restoreParty() {
 
 // Call while holding the room lock so writes cannot overtake newer state.
 func (h *Hub) savePartyLocked(s *RoomSession) {
+	if s.lost || s.cluster != nil && !s.cluster.owns(s.binding) {
+		return
+	}
 	if h.dir == "" {
 		return
 	}
@@ -83,6 +86,9 @@ func (h *Hub) savePartyLocked(s *RoomSession) {
 	}
 }
 func (h *Hub) archiveParty(s *RoomSession) {
+	if s.lost || s.cluster != nil && !s.committed {
+		return
+	}
 	if h.db == nil || s.room.Stage != game.StageFinal || s.saved || s.saving {
 		return
 	}
@@ -126,7 +132,7 @@ func (h *Hub) persist(s *RoomSession) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	h.savePartyLocked(s)
-	if h.cache != nil {
+	if h.cache != nil && h.cluster == nil {
 		b, _ := json.Marshal(game.BuildView(s.room, nil))
 		code := s.room.Code
 		go h.cache.SaveRoomSnapshot(context.Background(), code, b, 3*time.Hour)

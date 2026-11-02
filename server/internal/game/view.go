@@ -13,6 +13,7 @@ type YouInfo struct {
 
 // RoomView is the redacted, per-viewer snapshot sent over the wire.
 type RoomView struct {
+	Revision    uint64              `json:"revision"`
 	ServerTime  int64               `json:"serverTime"`
 	Media       *RoomMedia          `json:"media,omitempty"`
 	Code        string              `json:"code"`
@@ -37,6 +38,7 @@ type RoomView struct {
 // BuildView renders the room for a specific viewer (may be nil for spectators).
 func BuildView(room *Room, viewer *Player) RoomView {
 	v := RoomView{
+		Revision:   room.Revision,
 		ServerTime: time.Now().UnixMilli(),
 		Media:      room.Media,
 		Code:       room.Code,

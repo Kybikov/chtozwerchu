@@ -20,11 +20,12 @@ import (
 
 // Hub owns all live room sessions on this instance.
 type Hub struct {
-	engine *game.Engine
-	cache  *store.Cache // optional (nil disables snapshots)
-	db     *store.DB    // optional (nil disables accounts/history)
-	secret string       // token secret for resolving authenticated players
-	dir    string
+	cluster *roomCluster
+	engine  *game.Engine
+	cache   *store.Cache // optional (nil disables snapshots)
+	db      *store.DB    // optional (nil disables accounts/history)
+	secret  string       // token secret for resolving authenticated players
+	dir     string
 
 	mu    sync.Mutex
 	rooms map[string]*RoomSession
@@ -33,11 +34,16 @@ type Hub struct {
 
 // RoomSession binds a game room to the clients watching it.
 type RoomSession struct {
+	cluster        *roomCluster
+	binding        roomBinding
+	lost           bool
+	committed      bool
 	mediaLast      time.Time
 	mediaRequested time.Time
 	mediaProgress  time.Time
 	mediaClock     time.Time
 	mediaTimer     *time.Timer
+	checkpoint     *time.Timer
 	mu             sync.Mutex
 	room           *game.Room
 	clients        map[*Client]bool
@@ -85,6 +91,15 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	c := &Client{hub: h, conn: conn, send: make(chan []byte, sendBuffer)}
 	if cookie, err := r.Cookie(sessionCookie); err == nil {
 		c.userID, c.displayName = h.resolveUser(cookie.Value)
+	}
+	go c.writePump()
+	go c.readPump()
+}
+
+func (h *Hub) acceptClusterConnection(conn roomConnection, cookie string) {
+	c := &Client{hub: h, conn: conn, send: make(chan []byte, sendBuffer)}
+	if cookie != "" {
+		c.userID, c.displayName = h.resolveUser(cookie)
 	}
 	go c.writePump()
 	go c.readPump()
@@ -148,7 +163,7 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 	if p.HostName == "" && displayName != "" {
 		p.HostName = displayName
 	}
-	room, host := h.engine.CreateRoom(game.CreateParams{
+	params := game.CreateParams{
 		HostName:   p.HostName,
 		HostTeam:   p.HostTeam,
 		GirlsName:  p.GirlsName,
@@ -159,11 +174,36 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 		UserID:     userID,
 		VoteMode:   p.VoteMode,
 		MelodyMode: p.MelodyMode,
-	})
-	s := &RoomSession{room: room, clients: map[*Client]bool{}}
+	}
+	var room *game.Room
+	var host *game.Player
+	var binding roomBinding
+	for attempt := 0; attempt < 8; attempt++ {
+		room, host = h.engine.CreateRoom(params)
+		if h.cluster == nil {
+			break
+		}
+		var err error
+		binding, err = h.cluster.reserve("party", room.Code)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, errRoomOwner) || attempt == 7 {
+			c.enqueue(errorMsg("Не вдалося підключити кімнату. Спробуй за мить."))
+			return
+		}
+	}
+	s := &RoomSession{room: room, clients: map[*Client]bool{}, cluster: h.cluster, binding: binding}
+	if h.cluster != nil && !s.commitCluster() {
+		c.conn.Close()
+		return
+	}
 	h.mu.Lock()
 	if len(h.rooms) >= 200 || h.rooms[room.Code] != nil {
 		h.mu.Unlock()
+		if h.cluster != nil {
+			h.cluster.discardNew(binding)
+		}
 		c.enqueue(errorMsg("Зараз багато ігор. Спробуй створити кімнату трохи пізніше."))
 		return
 	}
@@ -200,6 +240,11 @@ func (h *Hub) joinRoom(c *Client, payload json.RawMessage) {
 		name = displayName
 	}
 	s.mu.Lock()
+	if s.lost || s.cluster != nil && (!s.cluster.owns(s.binding) || !bindRoomConnection(c.conn, s.binding)) {
+		s.mu.Unlock()
+		c.conn.Close()
+		return
+	}
 	if s.room.Config.MelodyMode == "buzzer" && p.Protocol < 3 {
 		s.mu.Unlock()
 		c.enqueue(errorMsg("У цій кімнаті грають із кнопкою «Знаю пісню». Онови застосунок і приєднайся знову."))
@@ -336,6 +381,11 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 		c.enqueue(errorMsg("Це підключення вже замінено. Відкрий кімнату заново."))
 		return
 	}
+	if s.lost || s.cluster != nil && !s.cluster.owns(s.binding) {
+		s.mu.Unlock()
+		c.conn.Close()
+		return
+	}
 	err := fn(s)
 	var msgs []clientMsg
 	if err == nil {
@@ -369,6 +419,16 @@ func (h *Hub) mutate(c *Client, fn func(*RoomSession) error) {
 func (h *Hub) armTimer(s *RoomSession) {
 	r := s.room
 	timed := r.Stage == game.StagePlaying && !r.Paused && r.Current != nil && !r.Current.Deadline.IsZero()
+	if s.cluster != nil {
+		if !timed || s.lost {
+			if s.checkpoint != nil {
+				s.checkpoint.Stop()
+				s.checkpoint = nil
+			}
+		} else if s.checkpoint == nil {
+			s.checkpoint = time.AfterFunc(time.Second, func() { h.checkpointRoom(s) })
+		}
+	}
 	if !timed {
 		if s.timer != nil {
 			s.timer.Stop()
@@ -393,6 +453,20 @@ func (h *Hub) armTimer(s *RoomSession) {
 	deadline := r.Current.Deadline
 	s.timerDeadline = deadline
 	s.timer = time.AfterFunc(d, func() { h.fireTimeout(s, key, deadline) })
+}
+
+// Checkpoint the remaining clock even during a quiet, non-musical round.
+// Transport revisions stay unchanged because no new public state is emitted.
+func (h *Hub) checkpointRoom(s *RoomSession) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.checkpoint = nil
+	if s.lost || s.cluster == nil || s.room.Stage != game.StagePlaying || s.room.Paused {
+		return
+	}
+	if s.commitCluster() {
+		h.armTimer(s)
+	}
 }
 
 // fireTimeout resolves a timed round when its deadline passes.
@@ -498,6 +572,10 @@ func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 		c.enqueue(errorMsg("Кімнату не знайдено."))
 		return
 	}
+	if s.cluster != nil && (!s.cluster.owns(s.binding) || !bindRoomConnection(c.conn, s.binding)) {
+		c.conn.Close()
+		return
+	}
 	if c.session != nil {
 		h.disconnect(c)
 	}
@@ -554,6 +632,10 @@ func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 }
 
 func (h *Hub) attach(c *Client, s *RoomSession, p *game.Player) {
+	if s.cluster != nil && !bindRoomConnection(c.conn, s.binding) {
+		c.conn.Close()
+		return
+	}
 	c.session = s
 	c.player = p
 	s.mu.Lock()
@@ -637,13 +719,17 @@ func (h *Hub) disconnect(c *Client) {
 		m.c.enqueue(m.b)
 	}
 	if empty {
-		h.scheduleCleanup(code)
+		h.scheduleCleanup(code, s)
 	}
 	h.persist(s)
 }
 
 // renderAll builds a per-viewer state message for every client. Caller holds s.mu.
 func (s *RoomSession) renderAll() []clientMsg {
+	s.room.Revision++
+	if !s.commitCluster() {
+		return nil
+	}
 	msgs := make([]clientMsg, 0, len(s.clients))
 	for c := range s.clients {
 		view := game.BuildView(s.room, c.player)
@@ -662,20 +748,25 @@ func (h *Hub) session(code string) *RoomSession {
 	return h.rooms[code]
 }
 
-func (h *Hub) scheduleCleanup(code string) {
+func (h *Hub) scheduleCleanup(code string, expected *RoomSession) {
 	time.AfterFunc(10*time.Minute, func() {
 		h.mu.Lock()
 		s := h.rooms[code]
-		if s != nil {
+		removed := false
+		if s != nil && s == expected {
 			s.mu.Lock()
 			empty := len(s.clients) == 0
 			s.mu.Unlock()
 			if empty {
 				delete(h.rooms, code)
+				removed = true
 			}
 		}
 		h.mu.Unlock()
-		if h.cache != nil {
+		if removed && h.cluster != nil {
+			h.cluster.release(expected.binding)
+		}
+		if removed && h.cache != nil && h.cluster == nil {
 			h.cache.DeleteRoom(context.Background(), code)
 		}
 	})

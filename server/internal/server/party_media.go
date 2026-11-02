@@ -126,6 +126,11 @@ func (h *Hub) receiveMedia(c *Client, payload json.RawMessage) {
 		return
 	}
 	s.mu.Lock()
+	if s.lost || s.cluster != nil && !s.cluster.owns(s.binding) {
+		s.mu.Unlock()
+		c.conn.Close()
+		return
+	}
 	r := s.room
 	r.EnsureMedia()
 	m := r.Media
@@ -178,8 +183,12 @@ func (h *Hub) receiveMedia(c *Client, payload json.RawMessage) {
 		}
 		h.savePartyLocked(s)
 	} else if time.Since(s.mediaClock) > 500*time.Millisecond {
+		if !s.commitCluster() {
+			s.mu.Unlock()
+			return
+		}
 		s.mediaClock = time.Now()
-		b, _ := json.Marshal(map[string]any{"type": "media_clock", "media": m, "serverTime": time.Now().UnixMilli()})
+		b, _ := json.Marshal(map[string]any{"type": "media_clock", "stateRevision": s.room.Revision, "media": m, "serverTime": time.Now().UnixMilli()})
 		for peer := range s.clients {
 			peer.enqueue(b)
 		}

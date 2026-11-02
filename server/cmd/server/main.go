@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"chtozverchu/internal/config"
@@ -55,15 +59,17 @@ func main() {
 	if cfg.RedisURL != "" {
 		c, err := store.ConnectRedis(ctx, cfg.RedisURL)
 		if err != nil {
-			log.Printf("redis unavailable, running without persistence: %v", err)
+			log.Printf("redis unavailable; network rooms disabled")
 		} else {
 			cache = c
+			defer cache.Close()
 		}
 	}
 
 	engine := game.NewEngine(catalog)
 	hub := server.NewHub(engine, cache, db, cfg.JWTSecret)
 	srv := server.New(cfg, hub, catalog, db)
+	defer srv.Close()
 
 	httpSrv := &http.Server{
 		Addr:              cfg.Host + ":" + cfg.Port,
@@ -71,7 +77,18 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	log.Printf("Хто зверху? online — listening on :%s", cfg.Port)
-	if err := httpSrv.ListenAndServe(); err != nil {
-		log.Fatalf("http: %v", err)
+	stopping, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	errorsCh := make(chan error, 1)
+	go func() { errorsCh <- httpSrv.ListenAndServe() }()
+	select {
+	case <-stopping.Done():
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = httpSrv.Shutdown(ctx)
+	case err := <-errorsCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("http: %v", err)
+		}
 	}
 }

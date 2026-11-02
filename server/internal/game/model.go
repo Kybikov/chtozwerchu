@@ -144,6 +144,7 @@ func (r *Room) ResetMedia() {
 
 // Room is the authoritative game state for a single lobby/match.
 type Room struct {
+	Revision   uint64              `json:"revision"`
 	MatchID    string              `json:"-"`
 	Code       string              `json:"code"`
 	HostToken  string              `json:"-"`

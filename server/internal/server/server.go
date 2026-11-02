@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"chtozverchu/internal/config"
@@ -16,10 +17,15 @@ import (
 
 // Server wires HTTP routes to the hub and content catalog.
 type Server struct {
-	cfg     config.Config
-	hub     *Hub
-	catalog *store.Catalog
-	db      *store.DB // optional (nil in embedded mode disables accounts)
+	cluster   *roomCluster
+	studio    *studioHub
+	once      sync.Once
+	closeOnce sync.Once
+	handler   http.Handler
+	cfg       config.Config
+	hub       *Hub
+	catalog   *store.Catalog
+	db        *store.DB // optional (nil in embedded mode disables accounts)
 }
 
 // New builds the HTTP server.
@@ -29,22 +35,34 @@ func New(cfg config.Config, hub *Hub, catalog *store.Catalog, db *store.DB) *Ser
 
 // Handler returns the root HTTP handler.
 func (s *Server) Handler() http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/ws", s.hub.ServeWS)
-	mux.HandleFunc("/health", s.health)
-	mux.HandleFunc("/api/health", s.health)
-	mux.HandleFunc("/api/meta", s.meta)
-	mux.HandleFunc("/api/presets", s.presets)
-	s.registerAuthRoutes(mux)
-	s.registerMusicRoutes(mux)
-	s.registerStudioRoutes(mux)
-	legacy := os.Getenv("LEGACY_WEB_DIR")
-	if legacy == "" {
-		legacy = "../web"
-	}
-	mux.Handle("/classic/", http.StripPrefix("/classic/", http.FileServer(http.Dir(legacy))))
-	mux.HandleFunc("/", s.static)
-	return mux
+	s.once.Do(func() {
+		s.setupRoomCluster()
+		mux := http.NewServeMux()
+		if s.cluster != nil {
+			mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) { s.cluster.serveWS("party", w, r) })
+		} else if s.cfg.RedisURL != "" {
+			mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Зв’язок із грою відновлюється", 503)
+			})
+		} else {
+			mux.HandleFunc("/ws", s.hub.ServeWS)
+		}
+		mux.HandleFunc("/health", s.health)
+		mux.HandleFunc("/api/health", s.health)
+		mux.HandleFunc("/api/meta", s.meta)
+		mux.HandleFunc("/api/presets", s.presets)
+		s.registerAuthRoutes(mux)
+		s.registerMusicRoutes(mux)
+		s.registerStudioRoutes(mux)
+		legacy := os.Getenv("LEGACY_WEB_DIR")
+		if legacy == "" {
+			legacy = "../web"
+		}
+		mux.Handle("/classic/", http.StripPrefix("/classic/", http.FileServer(http.Dir(legacy))))
+		mux.HandleFunc("/", s.static)
+		s.handler = mux
+	})
+	return s.handler
 }
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
@@ -61,12 +79,30 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	if s.cfg.RedisURL != "" && s.hub.cache == nil {
 		ok = false
 	}
+	if s.cfg.RedisURL != "" {
+		if s.cluster == nil || !s.cluster.ready.Load() {
+			ok = false
+		} else {
+			ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+			if s.hub.cache.Ping(ctx) != nil {
+				ok = false
+			}
+			cancel()
+		}
+	}
 	status := http.StatusOK
 	if !ok {
 		status = http.StatusServiceUnavailable
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.8.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil})
+	transport := "memory"
+	if s.cfg.RedisURL != "" {
+		transport = "unavailable"
+		if s.cluster != nil && s.cluster.ready.Load() {
+			transport = "redis"
+		}
+	}
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.9.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
 }
 
 // roundTypeName maps round types to Ukrainian display names.

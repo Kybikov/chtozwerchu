@@ -22,7 +22,7 @@ type Client struct {
 	mediaSupported bool
 	partyTV        bool
 	hub            *Hub
-	conn           *websocket.Conn
+	conn           roomConnection
 	send           chan []byte
 	session        *RoomSession
 	player         *game.Player
@@ -61,6 +61,7 @@ func (c *Client) readPump() {
 }
 
 func (c *Client) writePump() {
+	var lastRevision uint64
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -69,6 +70,9 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case msg, ok := <-c.send:
+			if ok && !freshPartyMessage(msg, &lastRevision) {
+				continue
+			}
 			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})

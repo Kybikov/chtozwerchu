@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,8 @@ import (
 )
 
 type studioRoom struct {
+	binding        roomBinding
+	lost           bool
 	OwnerID        string `json:"ownerId,omitempty"`
 	ArchivedKey    string `json:"archivedKey,omitempty"`
 	historySaving  bool
@@ -40,18 +43,19 @@ type studioRoom struct {
 	dirty          bool
 }
 type studioHub struct {
-	db    *store.DB
-	owner func(*http.Request) *store.User
-	mu    sync.Mutex
-	rooms map[string]*studioRoom
-	dir   string
-	stop  chan struct{}
+	cluster *roomCluster
+	db      *store.DB
+	owner   func(*http.Request) *store.User
+	mu      sync.Mutex
+	rooms   map[string]*studioRoom
+	dir     string
+	stop    chan struct{}
 }
 type studioPeer struct {
 	hub  *studioHub
 	room *studioRoom
 	role string
-	conn *websocket.Conn
+	conn roomConnection
 	send chan []byte
 	done chan struct{}
 	once sync.Once
@@ -70,6 +74,13 @@ type studioEnvelope struct {
 }
 
 func newStudioHub(dir string, databases ...*store.DB) *studioHub {
+	h := loadStudioHub(dir, databases...)
+	go h.tick()
+	return h
+}
+
+// The server starts ticking only after migration and transport wiring finish.
+func loadStudioHub(dir string, databases ...*store.DB) *studioHub {
 	h := &studioHub{rooms: map[string]*studioRoom{}, dir: dir, stop: make(chan struct{})}
 	if len(databases) > 0 {
 		h.db = databases[0]
@@ -92,20 +103,11 @@ func newStudioHub(dir string, databases ...*store.DB) *studioHub {
 				if err != nil || !validStudioCode(room.Code) || e.Name() != room.Code+".json" || room.Expires <= time.Now().UnixMilli() || validateStudio(room.State.Session, room.State.Track, room.State.Audio) != nil {
 					continue
 				}
-				room.clients = map[*studioPeer]bool{}
-				room.seen = map[string]bool{}
-				room.State.pause(time.Now())
-				if room.State.Session.MatchID == "" {
-					room.State.Session.MatchID = studioSecret()
-				}
-				room.State.Audio.Ready = false
-				room.State.Notice = "Сервер відновив гру. Увімкни звук на екрані й продовжуй."
-				room.State.Version++
+				resetRestoredStudio(&room)
 				h.rooms[room.Code] = &room
 			}
 		}
 	}
-	go h.tick()
 	return h
 }
 func (h *studioHub) close() {
@@ -164,11 +166,34 @@ func studioOrigin(r *http.Request) bool {
 	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && strings.EqualFold(u.Host, r.Host)
 }
 func (s *Server) registerStudioRoutes(mux *http.ServeMux) {
-	h := newStudioHub(os.Getenv("STUDIO_STATE_DIR"), s.db)
-	h.owner = s.userFromRequest
-	mux.HandleFunc("POST /api/studio/rooms", h.create)
-	mux.HandleFunc("DELETE /api/studio/rooms/{code}", h.end)
-	mux.HandleFunc("GET /api/studio/ws", h.connect)
+	h := s.studio
+	if h == nil {
+		h = newStudioHub(os.Getenv("STUDIO_STATE_DIR"), s.db)
+		h.owner = s.userFromRequest
+		s.studio = h
+	}
+	if s.cluster != nil {
+		mux.HandleFunc("POST /api/studio/rooms", func(w http.ResponseWriter, r *http.Request) {
+			if !s.cluster.ready.Load() {
+				http.Error(w, "Зв’язок із грою відновлюється", 503)
+				return
+			}
+			h.create(w, r)
+		})
+		mux.HandleFunc("DELETE /api/studio/rooms/{code}", s.cluster.endHTTP)
+		mux.HandleFunc("GET /api/studio/ws", func(w http.ResponseWriter, r *http.Request) { s.cluster.serveWS("studio", w, r) })
+	} else if s.cfg.RedisURL != "" {
+		offline := func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Зв’язок із грою відновлюється", 503)
+		}
+		mux.HandleFunc("POST /api/studio/rooms", offline)
+		mux.HandleFunc("DELETE /api/studio/rooms/{code}", offline)
+		mux.HandleFunc("GET /api/studio/ws", offline)
+	} else {
+		mux.HandleFunc("POST /api/studio/rooms", h.create)
+		mux.HandleFunc("DELETE /api/studio/rooms/{code}", h.end)
+		mux.HandleFunc("GET /api/studio/ws", h.connect)
+	}
 }
 func (h *studioHub) create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
@@ -223,13 +248,28 @@ func (h *studioHub) create(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 503, map[string]string{"error": "На сервері забагато активних ігор. Спробуй пізніше."})
 		return
 	}
-	for {
+	for attempt := 0; attempt < 8; attempt++ {
 		room.Code = newStudioCode()
-		if h.rooms[room.Code] == nil {
+		if h.rooms[room.Code] != nil {
+			continue
+		}
+		if h.cluster == nil {
 			break
+		}
+		b, err := h.cluster.reserve("studio", room.Code)
+		if err == nil {
+			room.binding = b
+			break
+		}
+		if !errors.Is(err, errRoomOwner) || attempt == 7 {
+			writeJSON(w, 503, map[string]string{"error": "Не вдалося підключити кімнату. Спробуй за мить."})
+			return
 		}
 	}
 	if err := h.save(room); err != nil {
+		if h.cluster != nil {
+			h.cluster.discardNew(room.binding)
+		}
 		writeJSON(w, 503, map[string]string{"error": "Не вдалося зберегти кімнату. Локальна гра залишається доступною."})
 		return
 	}
@@ -245,7 +285,7 @@ func (h *studioHub) get(code string) *studioRoom {
 		return nil
 	}
 	r.mu.Lock()
-	expired := r.Expires <= time.Now().UnixMilli()
+	expired := r.Expires <= time.Now().UnixMilli() || r.lost
 	r.mu.Unlock()
 	if expired {
 		return nil
@@ -253,7 +293,11 @@ func (h *studioHub) get(code string) *studioRoom {
 	return r
 }
 func (h *studioHub) save(room *studioRoom) error {
-	if h.dir == "" {
+	if room.lost {
+		return errRoomOwner
+	}
+	room.State.Timer.LeftMS = room.State.left(time.Now())
+	if h.dir == "" && h.cluster == nil {
 		room.lastSaved = time.Now()
 		room.dirty = false
 		return nil
@@ -262,12 +306,36 @@ func (h *studioHub) save(room *studioRoom) error {
 	if err != nil {
 		return err
 	}
+	if h.cluster != nil {
+		if err = h.cluster.commit(room.binding, b, time.Until(time.UnixMilli(room.Expires))); err != nil {
+			room.lost = true
+			go h.cluster.lose(room.binding)
+			return err
+		}
+	}
+	if h.dir == "" {
+		room.lastSaved = time.Now()
+		room.dirty = false
+		return nil
+	}
 	name := filepath.Join(h.dir, room.Code+".json")
 	tmp := name + ".tmp"
 	if err = os.WriteFile(tmp, b, 0600); err != nil {
+		if h.cluster != nil {
+			log.Printf("studio private backup write failed")
+			room.lastSaved = time.Now()
+			room.dirty = false
+			return nil
+		}
 		return err
 	}
 	if err = os.Rename(tmp, name); err != nil {
+		if h.cluster != nil {
+			log.Printf("studio private backup rename failed")
+			room.lastSaved = time.Now()
+			room.dirty = false
+			return nil
+		}
 		return err
 	}
 	room.lastSaved = time.Now()
@@ -275,6 +343,9 @@ func (h *studioHub) save(room *studioRoom) error {
 	return nil
 }
 func (h *studioHub) end(w http.ResponseWriter, r *http.Request) {
+	h.endBound(w, r, nil)
+}
+func (h *studioHub) endBound(w http.ResponseWriter, r *http.Request, expected *roomBinding) {
 	if !studioOrigin(r) {
 		writeJSON(w, 403, map[string]string{"error": "Недозволене джерело запиту."})
 		return
@@ -288,15 +359,22 @@ func (h *studioHub) end(w http.ResponseWriter, r *http.Request) {
 	digest := sha256.Sum256([]byte(token))
 	room.mu.Lock()
 	defer room.mu.Unlock()
+	if room.lost || expected != nil && (room.binding != *expected || !h.cluster.owns(*expected)) {
+		writeJSON(w, 503, map[string]string{"error": "Кімната відновлює зв’язок."})
+		return
+	}
 	if subtle.ConstantTimeCompare(digest[:], room.StationHash[:]) != 1 {
 		writeJSON(w, 403, map[string]string{"error": "Завершити підключення можна на екрані гри."})
 		return
 	}
 	room.Expires = 0
+	if err := h.save(room); err != nil {
+		writeJSON(w, 503, map[string]string{"error": "Не вдалося завершити кімнату. Повтори спробу."})
+		return
+	}
 	for p := range room.clients {
 		p.queue(map[string]any{"type": "closed", "message": "Мережевий режим завершено на екрані гри."})
 	}
-	_ = h.save(room)
 	writeJSON(w, 200, map[string]bool{"ok": true})
 }
 func (h *studioHub) connect(w http.ResponseWriter, r *http.Request) {
@@ -305,6 +383,9 @@ func (h *studioHub) connect(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	h.acceptConnection(conn)
+}
+func (h *studioHub) acceptConnection(conn roomConnection) {
 	_ = conn.SetReadDeadline(time.Now().Add(8 * time.Second))
 	conn.SetReadLimit(512 << 10)
 	var hello studioEnvelope
@@ -321,6 +402,11 @@ func (h *studioHub) connect(w http.ResponseWriter, r *http.Request) {
 	role := hello.Role
 	hash := sha256.Sum256([]byte(hello.Token))
 	room.mu.Lock()
+	if room.lost || h.cluster != nil && (!h.cluster.owns(room.binding) || !bindRoomConnection(conn, room.binding)) {
+		room.mu.Unlock()
+		conn.Close()
+		return
+	}
 	allowed := role == "audience" || role == "station" && subtle.ConstantTimeCompare(hash[:], room.StationHash[:]) == 1 || role == "host" && subtle.ConstantTimeCompare(hash[:], room.HostHash[:]) == 1
 	if !allowed || len(room.clients) >= 64 {
 		room.mu.Unlock()
@@ -459,6 +545,10 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 	room := p.room
 	room.mu.Lock()
 	defer room.mu.Unlock()
+	if room.lost || h.cluster != nil && !h.cluster.owns(room.binding) {
+		p.close()
+		return
+	}
 	if !room.clients[p] || room.Expires <= time.Now().UnixMilli() {
 		p.queue(map[string]string{"type": "closed", "message": "Мережеву гру завершено."})
 		return
@@ -612,6 +702,14 @@ func (h *studioHub) sendState(room *studioRoom, p *studioPeer, full bool) {
 	}
 }
 func (h *studioHub) broadcast(room *studioRoom, full bool) {
+	if h.cluster != nil && (full || time.Since(room.lastSaved) > 500*time.Millisecond) {
+		if room.lost || h.save(room) != nil {
+			for p := range room.clients {
+				p.close()
+			}
+			return
+		}
+	}
 	for p := range room.clients {
 		h.sendState(room, p, full)
 	}
@@ -632,6 +730,10 @@ func (h *studioHub) tick() {
 			h.mu.Unlock()
 			for _, r := range rooms {
 				r.mu.Lock()
+				if r.lost || h.cluster != nil && !h.cluster.owns(r.binding) {
+					r.mu.Unlock()
+					continue
+				}
 				if now.Sub(r.lastBeat) > time.Second {
 					for p := range r.clients {
 						p.queue(map[string]any{"type": "heartbeat", "serverTime": now.UnixMilli()})
@@ -650,6 +752,9 @@ func (h *studioHub) tick() {
 						delete(h.rooms, r.Code)
 					}
 					h.mu.Unlock()
+					if h.cluster != nil {
+						h.cluster.release(r.binding)
+					}
 					if h.dir != "" {
 						_ = os.Remove(filepath.Join(h.dir, r.Code+".json"))
 					}

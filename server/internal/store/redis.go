@@ -7,13 +7,15 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Cache wraps Redis. It is used for health, a cluster-wide room registry and
-// best-effort room snapshots (analytics / future horizontal scaling with
-// sticky routing). The authoritative live state lives in the hub in-memory,
-// because each viewer receives a differently-redacted view.
+// Cache wraps Redis. The server coordinator uses a private client for canonical
+// room snapshots, ownership fencing and per-connection pub/sub delivery.
 type Cache struct {
 	rdb *redis.Client
 }
+
+// RedisClient is for the server's private room coordinator. It is never exposed
+// through an HTTP response or embedded in frontend configuration.
+func (c *Cache) RedisClient() *redis.Client { return c.rdb }
 
 // ConnectRedis dials Redis, retrying briefly for docker-compose startup.
 func ConnectRedis(ctx context.Context, url string) (*Cache, error) {
@@ -27,8 +29,14 @@ func ConnectRedis(ctx context.Context, url string) (*Cache, error) {
 		if pingErr = rdb.Ping(ctx).Err(); pingErr == nil {
 			return &Cache{rdb: rdb}, nil
 		}
-		time.Sleep(2 * time.Second)
+		select {
+		case <-ctx.Done():
+			rdb.Close()
+			return nil, ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
 	}
+	rdb.Close()
 	return nil, pingErr
 }
 

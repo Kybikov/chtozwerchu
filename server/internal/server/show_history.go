@@ -72,6 +72,9 @@ func (s *Server) saveLocalShow(w http.ResponseWriter, r *http.Request) {
 // Called with the room locked. A stable match key makes the database write
 // idempotent across transport retries and a process restart.
 func (h *studioHub) archive(room *studioRoom) {
+	if room.lost || h.cluster != nil && !h.cluster.owns(room.binding) {
+		return
+	}
 	if h.db == nil || room.OwnerID == "" || room.State.Phase != "final" || room.ArchivedKey == room.State.Session.MatchID || room.historySaving || time.Since(room.historyAttempt) < 5*time.Second {
 		return
 	}
