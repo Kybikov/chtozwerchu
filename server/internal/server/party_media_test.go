@@ -46,6 +46,17 @@ func TestPartyTVCapabilityAndAcknowledgedPlayback(t *testing.T) {
 	}
 	defer func() {
 		for _, c := range peers {
+			// Acknowledge leave before removing the snapshot directory. Closing
+			// the client socket alone does not wait for server-side persistence.
+			_ = c.SetReadDeadline(time.Now().Add(2 * time.Second))
+			if c.WriteJSON(map[string]any{"type": "leave"}) == nil && c.WriteJSON(map[string]any{"type": "ping"}) == nil {
+				for {
+					var m mediaWire
+					if c.ReadJSON(&m) != nil || m.Type == "pong" {
+						break
+					}
+				}
+			}
 			c.Close()
 		}
 	}()
