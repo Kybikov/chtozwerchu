@@ -85,6 +85,12 @@ func (h *Hub) mediaAction(s *RoomSession, c *Client, p actionPayload) (bool, err
 	if r.Stage != game.StagePlaying || r.Current == nil || r.Current.Type != game.RoundMelody {
 		return true, game.ErrBadStage
 	}
+	if game.MelodyAnswerWindow(r) {
+		if name == "resume" {
+			return false, nil
+		}
+		return true, errors.New("Команда відповідає. Музика продовжиться після рішення.")
+	}
 	round, _ := game.BuildView(r, c.player).Round.(map[string]any)
 	if round["previewUrl"] == "" && round["previewStatus"] == "unavailable" {
 		return false, nil

@@ -68,6 +68,7 @@ export type PartyView = {
     roundTypes: Contest[];
     preset: string;
     voteMode?: "team" | "players";
+    melodyMode?: "team" | "buzzer";
   };
   teams: Record<Team, { name: string; score: number }>;
   players: {
@@ -90,6 +91,16 @@ export type PartyView = {
     previewUrl?: string;
     previewStatus?: string;
     awaitingAudio?: boolean;
+    buzzer?: {
+      phase: "open" | "answer" | "handoff" | "closed";
+      team?: Team;
+      playerName?: string;
+      attempt: number;
+      blocked: Team[];
+      canBuzz: boolean;
+      canAnswer: boolean;
+      notice?: string;
+    };
     hints?: string[];
     hint?: string;
     hostAnswer?: string;

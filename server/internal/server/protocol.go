@@ -13,6 +13,7 @@ type inMsg struct {
 }
 
 type createPayload struct {
+	MelodyMode string           `json:"melodyMode"`
 	Protocol   int              `json:"protocol"`
 	VoteMode   string           `json:"voteMode"`
 	HostName   string           `json:"hostName"`
@@ -39,6 +40,7 @@ type setTeamPayload struct {
 }
 
 type configPayload struct {
+	MelodyMode string           `json:"melodyMode"`
 	VoteMode   string           `json:"voteMode"`
 	Rounds     int              `json:"rounds"`
 	RoundTypes []game.RoundType `json:"roundTypes"`

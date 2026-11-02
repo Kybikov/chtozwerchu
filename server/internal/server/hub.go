@@ -129,8 +129,13 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 	}
 	var p createPayload
 	_ = json.Unmarshal(payload, &p)
+	c.protocol = p.Protocol
 	c.mediaSupported = p.Protocol >= 2
 	c.partyTV = false
+	if p.MelodyMode == "buzzer" && p.Protocol < 3 {
+		c.enqueue(errorMsg("Онови застосунок, щоб створити гру з кнопкою «Знаю пісню»."))
+		return
+	}
 	userID, displayName := h.resolveUser(p.AuthToken)
 	if userID == nil && p.AuthToken == "" {
 		userID, displayName = c.userID, c.displayName
@@ -152,6 +157,7 @@ func (h *Hub) createRoom(c *Client, payload json.RawMessage) {
 		Preset:     p.Preset,
 		UserID:     userID,
 		VoteMode:   p.VoteMode,
+		MelodyMode: p.MelodyMode,
 	})
 	s := &RoomSession{room: room, clients: map[*Client]bool{}}
 	h.mu.Lock()
@@ -171,6 +177,7 @@ func (h *Hub) joinRoom(c *Client, payload json.RawMessage) {
 	}
 	var p joinPayload
 	_ = json.Unmarshal(payload, &p)
+	c.protocol = p.Protocol
 	c.mediaSupported = p.Protocol >= 2
 	c.partyTV = false
 	code := strings.ToUpper(strings.TrimSpace(p.Code))
@@ -192,6 +199,11 @@ func (h *Hub) joinRoom(c *Client, payload json.RawMessage) {
 		name = displayName
 	}
 	s.mu.Lock()
+	if s.room.Config.MelodyMode == "buzzer" && p.Protocol < 3 {
+		s.mu.Unlock()
+		c.enqueue(errorMsg("У цій кімнаті грають із кнопкою «Знаю пісню». Онови застосунок і приєднайся знову."))
+		return
+	}
 	if len(s.clients) >= 64 {
 		s.mu.Unlock()
 		c.enqueue(errorMsg("У кімнаті забагато підключень."))
@@ -217,7 +229,14 @@ func (h *Hub) setConfig(c *Client, payload json.RawMessage) {
 	var p configPayload
 	_ = json.Unmarshal(payload, &p)
 	h.mutate(c, func(s *RoomSession) error {
-		h.engine.SetConfig(s.room, p.Rounds, p.RoundTypes, p.Preset, p.VoteMode)
+		if p.MelodyMode == "buzzer" {
+			for peer := range s.clients {
+				if (peer.player != nil || peer.partyTV) && peer.protocol < 3 {
+					return errors.New("Для гри наввипередки учасникам і TV потрібно оновити застосунок.")
+				}
+			}
+		}
+		h.engine.SetConfig(s.room, p.Rounds, p.RoundTypes, p.Preset, p.VoteMode, p.MelodyMode)
 		return nil
 	})
 }
@@ -442,9 +461,10 @@ func (h *Hub) resolveUser(token string) (*string, string) {
 
 func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 	var p struct {
-		Code    string `json:"code"`
-		TVToken string `json:"tvToken"`
-		TV      bool   `json:"tv"`
+		Protocol int    `json:"protocol"`
+		Code     string `json:"code"`
+		TVToken  string `json:"tvToken"`
+		TV       bool   `json:"tv"`
 	}
 	if json.Unmarshal(payload, &p) != nil {
 		c.enqueue(errorMsg("Перевір код кімнати."))
@@ -461,6 +481,13 @@ func (h *Hub) watchRoom(c *Client, payload json.RawMessage) {
 	c.session = s
 	c.player = nil
 	s.mu.Lock()
+	c.protocol = p.Protocol
+	if s.room.Config.MelodyMode == "buzzer" && p.Protocol < 3 {
+		s.mu.Unlock()
+		c.session = nil
+		c.enqueue(errorMsg("Для сцени з кнопкою «Знаю пісню» потрібне оновлення застосунку."))
+		return
+	}
 	s.room.EnsureMedia()
 	if p.TV || p.TVToken != "" {
 		if subtle.ConstantTimeCompare([]byte(p.TVToken), []byte(s.room.TVToken)) != 1 {

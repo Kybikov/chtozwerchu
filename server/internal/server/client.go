@@ -18,6 +18,7 @@ const (
 
 // Client is a single WebSocket connection.
 type Client struct {
+	protocol       int
 	mediaSupported bool
 	partyTV        bool
 	hub            *Hub

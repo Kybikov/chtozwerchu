@@ -29,6 +29,8 @@ export function usePartyAudio(party: Party, onNotice: (s: string) => void) {
     m = s?.media;
   const [armed, setArmed] = useState(false),
     unlocking = useRef(false);
+  const tones = useRef<AudioContext | null>(null);
+  const lastBuzz = useRef("");
   const online = party.status === "connected";
   const ownerHere =
     !!s &&
@@ -50,6 +52,59 @@ export function usePartyAudio(party: Party, onNotice: (s: string) => void) {
     onNotice,
   });
   refs.current = { party, s, m, armed, online, ownerHere, source, onNotice };
+  useEffect(
+    () => () => {
+      void tones.current?.close();
+    },
+    [],
+  );
+  const buzz = s?.round?.buzzer;
+  useEffect(() => {
+    const key = s ? `${s.code}:${s.roundIndex}:${buzz?.attempt || 0}` : "";
+    const previous = lastBuzz.current;
+    lastBuzz.current = key;
+    const context = tones.current;
+    if (
+      !previous ||
+      previous === key ||
+      buzz?.phase !== "answer" ||
+      !ownerHere ||
+      !armed ||
+      !online ||
+      document.hidden ||
+      context?.state !== "running" ||
+      m?.volume === 0 ||
+      localStorage.getItem("khz:effects") === "off"
+    )
+      return;
+    const gain = context.createGain();
+    gain.connect(context.destination);
+    const at = context.currentTime;
+    const volume = Math.min(0.09, ((m?.volume ?? 65) / 100) * 0.09);
+    gain.gain.setValueAtTime(0, at);
+    gain.gain.linearRampToValueAtTime(volume, at + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.32);
+    for (const [index, frequency] of [880, 1320].entries()) {
+      const note = context.createOscillator();
+      note.type = "sine";
+      note.frequency.value = frequency;
+      note.connect(gain);
+      note.start(at + index * 0.07);
+      note.stop(at + 0.34);
+      note.onended = () => {
+        note.disconnect();
+        if (index === 1) gain.disconnect();
+      };
+    }
+  }, [
+    s?.code,
+    s?.roundIndex,
+    buzz?.attempt,
+    buzz?.phase,
+    ownerHere,
+    armed,
+    online,
+  ]);
   const report = useCallback((failed = false) => {
     const x = refs.current,
       a = player.ref.current;
@@ -124,6 +179,12 @@ export function usePartyAudio(party: Party, onNotice: (s: string) => void) {
     if (!a || unlocking.current) return;
     unlocking.current = true;
     try {
+      try {
+        tones.current ??= new AudioContext();
+        void tones.current.resume().catch(() => {});
+      } catch {
+        /* Music playback remains available without sound effects. */
+      }
       // Authorize this media element with a user gesture and silent PCM.
       a.src = SILENCE;
       a.load();

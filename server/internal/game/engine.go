@@ -37,6 +37,7 @@ type CreateParams struct {
 	Preset     string
 	UserID     *string
 	VoteMode   string
+	MelodyMode string
 }
 
 // CreateRoom builds a fresh lobby with the host as its first player.
@@ -71,6 +72,7 @@ func (e *Engine) CreateRoom(p CreateParams) (*Room, *Player) {
 			RoundTypes: types,
 			Preset:     firstNonEmpty(p.Preset, "party"),
 			VoteMode:   validVoteMode(p.VoteMode),
+			MelodyMode: validMelodyMode(p.MelodyMode),
 		},
 		Teams: map[Team]*TeamState{
 			TeamGirls: {Name: firstNonEmpty(strings.TrimSpace(p.GirlsName), "Дівчата")},
@@ -136,6 +138,9 @@ func (e *Engine) SetConfig(room *Room, rounds int, types []RoundType, preset str
 	}
 	if len(voteModes) > 0 && voteModes[0] != "" {
 		room.Config.VoteMode = validVoteMode(voteModes[0])
+	}
+	if len(voteModes) > 1 && voteModes[1] != "" {
+		room.Config.MelodyMode = validMelodyMode(voteModes[1])
 	}
 	room.touch()
 }
@@ -269,6 +274,7 @@ func (e *Engine) Apply(room *Room, act Action) error {
 		if act.Name == "pause" {
 			e.Pause(room)
 		} else if room.Paused {
+			melodyResume(room)
 			if room.Current.PausedRemaining > 0 {
 				room.Current.Deadline = time.Now().Add(room.Current.PausedRemaining)
 			}
@@ -280,7 +286,7 @@ func (e *Engine) Apply(room *Room, act Action) error {
 		}
 		return nil
 	}
-	if room.Paused && act.Name != "finish" && act.Name != "lobby" {
+	if room.Paused && act.Name != "finish" && act.Name != "lobby" && act.Name != "end_melody" {
 		return errors.New("гра на паузі — ведучий має продовжити")
 	}
 	switch act.Name {
@@ -374,6 +380,13 @@ func (e *Engine) Pause(room *Room) {
 
 func validVoteMode(mode string) string {
 	if mode == "players" {
+		return mode
+	}
+	return "team"
+}
+
+func validMelodyMode(mode string) string {
+	if mode == "buzzer" {
 		return mode
 	}
 	return "team"

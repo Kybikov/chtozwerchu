@@ -121,7 +121,7 @@ export function useParty() {
           ws.send(
             JSON.stringify({
               ...reconnect.current,
-              payload: { ...reconnect.current.payload, protocol: 2 },
+              payload: { ...reconnect.current.payload, protocol: 3 },
             }),
           );
       };

@@ -15,11 +15,16 @@ func (melody) Duration() time.Duration { return 40 * time.Second }
 // OnTimeout resolves the round as unguessed when time runs out.
 func (melody) OnTimeout(room *Room) {
 	if d, ok := room.Current.Data.(*melodyData); ok {
+		if d.Buzzer != nil && d.Buzzer.Phase == "answer" {
+			failMelodyClaim(room, d, true)
+			return
+		}
 		resolveMelody(room, d, false, "")
 	}
 }
 
 type melodyData struct {
+	Buzzer        *melodyBuzzer
 	PreviewStatus string
 	AwaitingAudio bool
 	Song          Song
@@ -37,10 +42,17 @@ func (melody) Start(room *Room, cat Catalog) (RoundData, error) {
 	if len(pool) == 0 {
 		return nil, ErrEmptyDeck
 	}
-	return &melodyData{Song: pool[pickRandom(len(pool))], AwaitingAudio: true}, nil
+	d := &melodyData{Song: pool[pickRandom(len(pool))], AwaitingAudio: true}
+	if room.Config.MelodyMode == "buzzer" {
+		d.Buzzer = &melodyBuzzer{Phase: "open", Blocked: map[Team]bool{}}
+	}
+	return d, nil
 }
 
 func melodyPoints(room *Room, d *melodyData) int {
+	if d.Buzzer != nil && d.Buzzer.Phase == "answer" {
+		return d.Buzzer.Points
+	}
 	p := melodyMaxPoints - d.Hints
 	left := time.Until(room.Current.Deadline)
 	if room.Paused {
@@ -67,8 +79,17 @@ func (melody) Action(room *Room, act Action) error {
 		return ErrBadStage
 	}
 	switch act.Name {
+	case "end_melody":
+		if !act.IsHost {
+			return ErrNotHost
+		}
+		room.Paused = false
+		resolveMelody(room, d, false, "Ведучий пропустив мелодію.")
+		return nil
+	case "buzz":
+		return claimMelody(room, d, act)
 	case "hint":
-		if !activeOrHost(room, act) {
+		if d.Buzzer != nil && (!act.IsHost || d.Buzzer.Phase == "answer") || d.Buzzer == nil && !activeOrHost(room, act) {
 			return errors.New("зараз не ваша черга")
 		}
 		if d.Hints < 2 {
@@ -76,6 +97,18 @@ func (melody) Action(room *Room, act Action) error {
 		}
 		return nil
 	case "guess":
+		if d.Buzzer != nil {
+			if !melodyAnswerAllowed(room, d, act) {
+				return errors.New("Зараз відповідає команда, яка натиснула першою.")
+			}
+			guess := act.Str("text")
+			if matchesAny(guess, append([]string{d.Song.Title, d.Song.Artist}, d.Song.Aliases...)...) {
+				resolveMelody(room, d, true, guess)
+			} else {
+				failMelodyClaim(room, d, false)
+			}
+			return nil
+		}
 		if !activeOrHost(room, act) {
 			return errors.New("зараз не ваша черга")
 		}
@@ -87,6 +120,19 @@ func (melody) Action(room *Room, act Action) error {
 		if !act.IsHost {
 			return ErrNotHost
 		}
+		if d.Buzzer != nil {
+			if d.Buzzer.Phase == "answer" {
+				if act.Bool("won") {
+					resolveMelody(room, d, true, act.Str("text"))
+				} else {
+					failMelodyClaim(room, d, false)
+				}
+				return nil
+			}
+			if act.Bool("won") {
+				return errors.New("Спочатку зафіксуй команду кнопкою «Знаю пісню».")
+			}
+		}
 		resolveMelody(room, d, act.Bool("won"), act.Str("text"))
 		return nil
 	}
@@ -94,19 +140,26 @@ func (melody) Action(room *Room, act Action) error {
 }
 
 func resolveMelody(room *Room, d *melodyData, won bool, guess string) {
+	team := room.ActiveTeam
+	if d.Buzzer != nil && d.Buzzer.Team.Valid() {
+		team = d.Buzzer.Team
+	}
 	pts := 0
 	if won {
 		pts = melodyPoints(room, d)
-		room.Teams[room.ActiveTeam].Score += pts
+		room.Teams[team].Score += pts
 	}
 	room.Current.Result = &RoundResult{
 		Won:    won,
 		Points: pts,
-		Team:   room.ActiveTeam,
+		Team:   team,
 		Answer: d.Song.Title + " — " + d.Song.Artist,
 		Detail: guess,
 	}
 	room.Stage = StageResult
+	if d.Buzzer != nil {
+		d.Buzzer.Phase = "closed"
+	}
 }
 
 func (melody) View(room *Room, viewer *Player) any {
@@ -121,6 +174,9 @@ func (melody) View(room *Room, viewer *Player) any {
 		"hints":         melodyHints(d),
 		"previewStatus": d.PreviewStatus,
 		"awaitingAudio": d.AwaitingAudio,
+	}
+	if d.Buzzer != nil {
+		out["buzzer"] = buzzerView(room, d, viewer)
 	}
 	if viewer != nil && viewer.IsHost {
 		out["hostAnswer"] = d.Song.Title + " — " + d.Song.Artist

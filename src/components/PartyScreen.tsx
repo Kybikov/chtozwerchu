@@ -38,6 +38,7 @@ import { contests, useParty, type Contest, type PartyView } from "../lib/party";
 import { usePartyAudio } from "../lib/usePartyAudio";
 import PartyVote, { VoteModePicker } from "./PartyVote";
 import PartySound, { TVSoundGate } from "./PartySound";
+import PartyBuzzer, { BuzzerScene, MelodyModePicker } from "./PartyBuzzer";
 import WakeSlider from "./react-bits/WakeSlider";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
@@ -55,6 +56,7 @@ export default function PartyScreen() {
   const [names, setNames] = useState({ girls: "Дівчата", boys: "Хлопці" });
   const [rounds, setRounds] = useState(10);
   const [voteMode, setVoteMode] = useState<"team" | "players">("team");
+  const [melodyMode, setMelodyMode] = useState<"team" | "buzzer">("buzzer");
   const [types, setTypes] = useState<Contest[]>(contests.map((c) => c.id));
   const [sheet, setSheet] = useState<
     "invite" | "leave" | "settings" | "finish" | null
@@ -123,6 +125,7 @@ export default function PartyScreen() {
         roundTypes: types,
         preset: "party",
         voteMode,
+        melodyMode,
       });
     }
   };
@@ -146,16 +149,21 @@ export default function PartyScreen() {
     }
   };
   const metadata = contests.find((c) => c.id === s?.roundType);
+  const buzzer = s?.round?.buzzer;
+  const roundTeam = buzzer?.team || s?.activeTeam || "girls";
   const remaining = s?.paused
     ? Math.ceil((s.remainingMs || 0) / 1000)
     : s?.deadlineMs
       ? Math.max(0, Math.ceil((s.deadlineMs - now) / 1000))
       : 0;
-  const melodyPoints = Math.max(
-    1,
-    (remaining > 25 ? 3 : remaining > 10 ? 2 : 1) -
-      (s?.round?.hints?.length || 0),
-  );
+  const melodyPoints =
+    buzzer?.phase === "answer"
+      ? s?.round?.potential || 1
+      : Math.max(
+          1,
+          (remaining > 25 ? 3 : remaining > 10 ? 2 : 1) -
+            (s?.round?.hints?.length || 0),
+        );
   const startMelody = () => {
     if (host && online) party.action("resume");
   };
@@ -191,7 +199,7 @@ export default function PartyScreen() {
     );
   return (
     <div
-      className={`app-shell party-shell ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
+      className={`app-shell party-shell ${buzzer ? "party-buzzer-round" : ""} ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
     >
       <Backdrop effects={localStorage.getItem("khz:effects") !== "off"} />
       <audio ref={player.ref} preload="metadata" />
@@ -330,6 +338,13 @@ export default function PartyScreen() {
                     onChange={setVoteMode}
                     disabled={busy}
                   />
+                  {types.includes("melody") && (
+                    <MelodyModePicker
+                      value={melodyMode}
+                      onChange={setMelodyMode}
+                      disabled={busy}
+                    />
+                  )}
                   <div className="field-label">
                     Скільки раундів?
                     <div className="choice-row">
@@ -454,7 +469,7 @@ export default function PartyScreen() {
             {(["girls", "boys"] as Team[]).map((t, index) => (
               <div
                 key={t}
-                className={`party-team-score ${t} ${s.activeTeam === t && s.stage !== "final" ? "active" : ""}`}
+                className={`party-team-score ${t} ${(buzzer ? buzzer.team === t || (buzzer.phase === "open" && !buzzer.blocked.includes(t)) : s.activeTeam === t) && s.stage !== "final" ? "active" : ""}`}
               >
                 <span className="party-team-symbol">
                   {index === 0 ? <Sparkles size={25} /> : <Zap size={25} />}
@@ -465,9 +480,19 @@ export default function PartyScreen() {
                   <span className="party-team-caption">
                     {s.stage === "final"
                       ? "Фінальний рахунок"
-                      : s.activeTeam === t
-                        ? "Ваш вихід"
-                        : "Наступними — ви"}
+                      : s.stage === "result"
+                        ? s.result?.won && s.result.team === t
+                          ? "Виграли раунд"
+                          : "Раунд завершено"
+                        : buzzer && s.stage === "playing"
+                          ? buzzer.team === t
+                            ? "Відповідають"
+                            : buzzer.blocked.includes(t)
+                              ? "Шанс використано"
+                              : "Готові тиснути"
+                          : s.activeTeam === t
+                            ? "Ваш вихід"
+                            : "Наступними — ви"}
                   </span>
                 </div>
                 <strong>
@@ -607,8 +632,12 @@ export default function PartyScreen() {
                 <div className="party-live-stage">
                   <div className="party-round-heading">
                     <div>
-                      <span className={`team-chip ${s.activeTeam}`}>
-                        {s.teams[s.activeTeam].name}
+                      <span
+                        className={`team-chip ${buzzer && !buzzer.team ? "buzzer-both" : roundTeam}`}
+                      >
+                        {buzzer && !buzzer.team
+                          ? "ОБИДВІ КОМАНДИ"
+                          : s.teams[roundTeam].name}
                       </span>
                       <h2>{metadata?.title}</h2>
                     </div>
@@ -662,15 +691,23 @@ export default function PartyScreen() {
                     </>
                   )}
                   {s.roundType === "melody" && (
-                    <div className="melody-stage">
-                      <div
-                        className={`melody-disc ${s.media?.playing ? "spinning" : ""}`}
-                        aria-hidden="true"
-                      >
-                        <DiscIcon />
-                      </div>
-                      <h3>Знайомий мотив?</h3>
-                      <p>Назвіть пісню та виконавця.</p>
+                    <div
+                      className={`melody-stage ${buzzer ? "melody-buzzer-stage" : ""}`}
+                    >
+                      {buzzer ? (
+                        <BuzzerScene state={s} />
+                      ) : (
+                        <>
+                          <div
+                            className={`melody-disc ${s.media?.playing ? "spinning" : ""}`}
+                            aria-hidden="true"
+                          >
+                            <DiscIcon />
+                          </div>
+                          <h3>Знайомий мотив?</h3>
+                          <p>Назвіть пісню та виконавця.</p>
+                        </>
+                      )}
                       {host && (
                         <>
                           <Button
@@ -679,6 +716,7 @@ export default function PartyScreen() {
                               !s.media?.ready ||
                               !online ||
                               s.paused ||
+                              buzzer?.phase === "answer" ||
                               party.pending
                             }
                             onClick={() => {
@@ -775,16 +813,20 @@ export default function PartyScreen() {
                         <Pause size={34} />
                       )}
                       <h3>
-                        {s.round?.awaitingAudio
-                          ? "Ловимо хвилю"
-                          : "Перепочинок"}
+                        {buzzer?.phase === "handoff"
+                          ? "Ще один шанс"
+                          : s.round?.awaitingAudio
+                            ? "Ловимо хвилю"
+                            : "Перепочинок"}
                       </h3>
                       <p>
-                        {s.round?.awaitingAudio
-                          ? s.round.previewStatus === "unavailable"
-                            ? "Цей фрагмент недоступний. Ведучий може наспівати пісню або завершити раунд без балів."
-                            : "Ведучий увімкне фрагмент. Тоді почнеться відлік часу."
-                          : "Ведучий продовжить гру, коли всі будуть готові."}
+                        {buzzer?.phase === "handoff"
+                          ? `${buzzer.notice} Ведучий продовжить фрагмент для суперників.`
+                          : s.round?.awaitingAudio
+                            ? s.round.previewStatus === "unavailable"
+                              ? "Цей фрагмент недоступний. Ведучий може наспівати пісню або завершити раунд без балів."
+                              : "Ведучий увімкне фрагмент. Тоді почнеться відлік часу."
+                            : "Ведучий продовжить гру, коли всі будуть готові."}
                       </p>
                       {host && (
                         <Button
@@ -795,6 +837,7 @@ export default function PartyScreen() {
                             !!s.media?.pending ||
                             (s.roundType === "melody" &&
                               !s.media?.ready &&
+                              buzzer?.phase !== "answer" &&
                               s.round?.previewStatus !== "unavailable")
                           }
                           onClick={() =>
@@ -828,6 +871,14 @@ export default function PartyScreen() {
             </Panel>
             {!party.watching && (
               <aside className="party-controls">
+                {buzzer && s.stage === "playing" && (
+                  <PartyBuzzer
+                    state={s}
+                    online={online}
+                    pending={party.pending}
+                    action={party.action}
+                  />
+                )}
                 {host && s.config.roundTypes.includes("melody") && (
                   <PartySound
                     state={s}
@@ -893,6 +944,7 @@ export default function PartyScreen() {
                               setRounds(s.rounds);
                               setTypes(s.config.roundTypes);
                               setVoteMode(s.config.voteMode || "team");
+                              setMelodyMode(s.config.melodyMode || "team");
                               setSheet("settings");
                             }}
                           >
@@ -941,8 +993,8 @@ export default function PartyScreen() {
                           : "Буває. Рухаємось далі."}
                       </h3>
                       <p>
-                        Команда «{s.teams[s.activeTeam].name}» отримує{" "}
-                        {s.result?.points || 0} балів.
+                        Команда «{s.teams[s.result?.team || s.activeTeam].name}»
+                        отримує {s.result?.points || 0} балів.
                       </p>
                       {host ? (
                         <Button
@@ -969,8 +1021,18 @@ export default function PartyScreen() {
                   ) : (
                     <>
                       <h3>
-                        {s.teams[s.activeTeam].name},<br />
-                        ваш вихід
+                        {buzzer ? (
+                          buzzer.team ? (
+                            `${s.teams[buzzer.team].name}, ваші 10 секунд`
+                          ) : (
+                            "Хто впізнає першим?"
+                          )
+                        ) : (
+                          <>
+                            {s.teams[s.activeTeam].name},<br />
+                            ваш вихід
+                          </>
+                        )}
                       </h3>
                       <p>{metadata?.description}</p>
                       {(s.round?.hostAnswer || s.round?.current) && (
@@ -1035,7 +1097,7 @@ export default function PartyScreen() {
                             Завершити пояснення
                           </Button>
                         </div>
-                      ) : s.roundType !== "truth_lie" && canAct ? (
+                      ) : s.roundType !== "truth_lie" && !buzzer && canAct ? (
                         <>
                           {host && (
                             <div className="verdict-buttons">
@@ -1123,7 +1185,7 @@ export default function PartyScreen() {
                             Підбити голоси
                           </Button>
                         )}
-                      {host && !s.round?.awaitingAudio && (
+                      {host && !buzzer && !s.round?.awaitingAudio && (
                         <div className="party-pause-control">
                           <Button
                             disabled={!online || party.pending}
@@ -1294,6 +1356,9 @@ export default function PartyScreen() {
       >
         <div className="account-form">
           <VoteModePicker value={voteMode} onChange={setVoteMode} />
+          {types.includes("melody") && (
+            <MelodyModePicker value={melodyMode} onChange={setMelodyMode} />
+          )}
           <div className="field-label">
             Кількість раундів
             <div className="choice-row">
@@ -1333,6 +1398,7 @@ export default function PartyScreen() {
                   roundTypes: types,
                   preset: "party",
                   voteMode,
+                  melodyMode,
                 })
               )
                 setSheet(null);

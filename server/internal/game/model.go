@@ -96,6 +96,7 @@ type RoomConfig struct {
 	RoundTypes []RoundType `json:"roundTypes"`
 	Preset     string      `json:"preset"`
 	VoteMode   string      `json:"voteMode"`
+	MelodyMode string      `json:"melodyMode"`
 }
 
 type RoomMedia struct {
