@@ -161,6 +161,7 @@ export default function App() {
   const sourceRequest = useRef<AbortController | null>(null);
   const [preparedSongs, setPreparedSongs] = useState<PreparedSummary[]>([]);
   const [preparedBusy, setPreparedBusy] = useState(false);
+  const [programmeChecking, setProgrammeChecking] = useState(false);
   const [preparedLoaded, setPreparedLoaded] = useState(false);
   const [programmeDraft, setProgrammeDraft] =
     useState<Programme>(emptyProgramme);
@@ -214,6 +215,7 @@ export default function App() {
   usePWAActivity(
     networkBusy ||
       preparedBusy ||
+      programmeChecking ||
       sourceBusy ||
       (!network &&
         (phase === "playing" ||
@@ -1759,7 +1761,10 @@ export default function App() {
           </Modal>
           <Modal
             open={sheet === "programme"}
-            onOpenChange={(v) => !v && !preparedBusy && setSheet(null)}
+            onOpenChange={(v) =>
+              !v && !preparedBusy && !programmeChecking && setSheet(null)
+            }
+            closeDisabled={programmeChecking || preparedBusy}
             title="Програма вечора"
             description="Підготуй порядок пісень до приходу гостей. Кожна команда отримає свій хіт."
             wide
@@ -1769,8 +1774,7 @@ export default function App() {
                 initial={programmeDraft}
                 songs={preparedSongs}
                 busy={
-                  preparedBusy ||
-                  !["ready", "result", "final"].includes(phase)
+                  preparedBusy || !["ready", "result", "final"].includes(phase)
                 }
                 replacing={
                   session.history.length > 0 ||
@@ -1779,6 +1783,8 @@ export default function App() {
                 }
                 onSave={saveProgrammeDraft}
                 onStart={startProgramme}
+                onChecking={setProgrammeChecking}
+                onBeforeCheck={player.pause}
               />
             )}
           </Modal>
@@ -2020,8 +2026,7 @@ export default function App() {
               <ShowPackDialog
                 programme={programmeDraft}
                 allowed={
-                  !preparedBusy &&
-                  ["ready", "result", "final"].includes(phase)
+                  !preparedBusy && ["ready", "result", "final"].includes(phase)
                 }
                 onClose={() => setSheet("library")}
                 onProgramme={() => setSheet("programme")}

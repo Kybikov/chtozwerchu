@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
   Check,
   Disc3,
+  Headphones,
+  LoaderCircle,
   ListMusic,
   Plus,
   Save,
   X,
+  TriangleAlert,
 } from "lucide-react";
 import { Button, Panel } from "./ui";
 import AlbumCover from "./AlbumCover";
@@ -19,14 +22,20 @@ import {
   type Programme,
 } from "../lib/programme";
 import "../programme.css";
+import {
+  checkProgrammeAudio,
+  type SongReadiness,
+} from "../lib/programmeReadiness";
 
 export default function ProgrammeEditor({
   initial,
   songs,
-  busy,
+  busy: externalBusy,
   replacing,
   onSave,
   onStart,
+  onChecking,
+  onBeforeCheck,
 }: {
   initial: Programme;
   songs: PreparedSummary[];
@@ -34,6 +43,8 @@ export default function ProgrammeEditor({
   replacing: boolean;
   onSave: (programme: Programme) => Promise<void>;
   onStart: (programme: Programme) => Promise<void>;
+  onChecking: (checking: boolean) => void;
+  onBeforeCheck: () => void;
 }) {
   const [draft, setDraft] = useState<Programme>(() => ({
     ...initial,
@@ -42,12 +53,31 @@ export default function ProgrammeEditor({
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checks, setChecks] = useState<SongReadiness[]>([]);
+  const [checked, setChecked] = useState(false);
+  const operation = useRef<AbortController | null>(null);
+  const report = useRef<HTMLDivElement>(null);
+  const busy = externalBusy || checking;
+  const readyCount = checks.filter((c) => c.status === "ready").length;
+  const problems = checks.filter((c) => c.status === "error");
+  const available = songs.filter((song) => !draft.trackIds.includes(song.id));
+  useEffect(
+    () => () => {
+      operation.current?.abort();
+      operation.current = null;
+      onChecking(false);
+    },
+    [onChecking],
+  );
   const missing = draft.trackIds.some((id) => !songs.some((s) => s.id === id));
   const edit = (next: Programme) => {
     setDraft(next);
     setSaved(false);
     setConfirm(false);
     setError("");
+    setChecks([]);
+    setChecked(false);
   };
   const move = (index: number, direction: number) => {
     const ids = [...draft.trackIds],
@@ -56,14 +86,64 @@ export default function ProgrammeEditor({
     [ids[index], ids[to]] = [ids[to], ids[index]];
     edit({ ...draft, trackIds: ids });
   };
+  const checkAudio = async (start: boolean) => {
+    if (busy || operation.current) return;
+    const controller = new AbortController();
+    operation.current = controller;
+    setChecking(true);
+    setChecks([]);
+    setChecked(false);
+    setError("");
+    onChecking(true);
+    try {
+      onBeforeCheck();
+      const results = await checkProgrammeAudio(
+        draft.trackIds,
+        controller.signal,
+        (result) => {
+          if (!controller.signal.aborted)
+            setChecks((current) => [
+              ...current.filter((c) => c.id !== result.id),
+              result,
+            ]);
+        },
+      );
+      if (controller.signal.aborted) return;
+      setChecked(true);
+      if (results.some((c) => c.status === "error")) {
+        setError("Є пісні, які потребують уваги. Поточна гра збережена.");
+        report.current?.scrollIntoView({ block: "nearest" });
+      } else if (start) await onStart(draft);
+    } catch (e) {
+      if (!controller.signal.aborted)
+        setError(
+          e instanceof Error ? e.message : "Не вдалося перевірити програму.",
+        );
+    } finally {
+      if (operation.current === controller) {
+        operation.current = null;
+        setChecking(false);
+        onChecking(false);
+      }
+    }
+  };
+  const cancelCheck = () => {
+    operation.current?.abort();
+    setChecks((current) =>
+      current.filter((item) => item.status !== "checking"),
+    );
+    setError("Перевірку скасовано. Програма й поточна гра збережені.");
+    setChecked(false);
+  };
   const perform = async (start: boolean) => {
+    if (start) {
+      await checkAudio(true);
+      return;
+    }
     setError("");
     try {
-      if (start) await onStart(draft);
-      else {
-        await onSave(draft);
-        setSaved(true);
-      }
+      await onSave(draft);
+      setSaved(true);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Не вдалося зберегти програму.",
@@ -119,6 +199,7 @@ export default function ProgrammeEditor({
       <ol className="programme-order" aria-label="Порядок пісень">
         {draft.trackIds.map((id, index) => {
           const song = songs.find((s) => s.id === id);
+          const status = checks.find((c) => c.id === id);
           return (
             <li key={id} className={!song ? "programme-missing" : ""}>
               <span
@@ -131,6 +212,25 @@ export default function ProgrammeEditor({
                 <span>
                   {song?.artist ?? "Прибери цей запис або віднови підготовку."}
                 </span>
+                {song && (
+                  <small
+                    className={`programme-audio-state ${status?.status ?? ""}`}
+                  >
+                    {status?.status === "checking" ? (
+                      <LoaderCircle size={15} className="spin" />
+                    ) : status?.status === "ready" ? (
+                      <Check size={15} />
+                    ) : status?.status === "error" ? (
+                      <TriangleAlert size={15} />
+                    ) : (
+                      <Disc3 size={15} />
+                    )}
+                    {status?.message ??
+                      (song.local
+                        ? "Власне аудіо · з цього пристрою"
+                        : "Прев’ю · потрібна мережа")}
+                  </small>
+                )}
               </div>
               <div className="programme-order-actions">
                 <Button
@@ -167,10 +267,92 @@ export default function ProgrammeEditor({
           );
         })}
       </ol>
-      <div className="programme-section-title">
-        <strong>Додати до програми</strong>
-        <span>З бібліотеки «Готові до гри»</span>
+      <div ref={report}>
+        <Panel className="programme-soundcheck">
+          <div className="programme-soundcheck-title">
+            <Headphones size={30} />
+            <div>
+              <h4>Нехай усе звучить.</h4>
+              <p>Перевірка програми на цьому пристрої</p>
+            </div>
+            <strong
+              aria-label={`Аудіо перевірено: ${readyCount} з ${draft.trackIds.length}`}
+            >
+              {readyCount}
+              <span> / {draft.trackIds.length}</span>
+            </strong>
+          </div>
+          <p className="programme-hint">
+            Відкриємо кожне аудіо й перемотаємо до початку та кінця фрагмента
+            без відтворення. Перед запуском програми перевіримо ще раз.
+          </p>
+          {checks.length > 0 && (
+            <div
+              className="programme-check-progress"
+              role="progressbar"
+              aria-label="Перевірка аудіо програми"
+              aria-valuemin={0}
+              aria-valuemax={draft.trackIds.length}
+              aria-valuenow={
+                checks.filter((c) => c.status !== "checking").length
+              }
+            >
+              <span
+                style={{
+                  width: `${(checks.filter((c) => c.status !== "checking").length / draft.trackIds.length) * 100}%`,
+                }}
+              />
+            </div>
+          )}
+          <div className="programme-check-status" role="status">
+            {checking
+              ? externalBusy
+                ? "Починаємо перевірену програму…"
+                : `Перевіряємо пісню ${Math.min(draft.trackIds.length, checks.filter((c) => c.status !== "checking").length + 1)} з ${draft.trackIds.length}…`
+              : checked
+                ? problems.length
+                  ? `Потребують уваги: ${problems.length}. Відкрий ці пісні в студії та онови підготовку.`
+                  : "Усі фрагменти відкрилися. Перевір звук колонок у студії перед приходом гостей."
+                : "Перевірка не запускає музику та не скидає рахунок."}
+          </div>
+          {problems.length > 0 && (
+            <ul className="programme-check-errors">
+              {problems.map((problem) => (
+                <li key={problem.id}>
+                  <TriangleAlert size={17} />
+                  <div>
+                    <strong>
+                      {songs.find((s) => s.id === problem.id)?.title ??
+                        "Підготовку прибрано"}
+                    </strong>
+                    <span>{problem.message}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {checking ? (
+            <Button disabled={externalBusy} onClick={cancelCheck}>
+              <X size={18} />
+              Скасувати перевірку
+            </Button>
+          ) : (
+            <Button
+              disabled={busy || !draft.trackIds.length || missing}
+              onClick={() => void checkAudio(false)}
+            >
+              <Headphones size={18} />
+              {checked ? "Перевірити ще раз" : "Перевірити аудіо"}
+            </Button>
+          )}
+        </Panel>
       </div>
+      {(available.length > 0 || !songs.length) && (
+        <div className="programme-section-title">
+          <strong>Додати до програми</strong>
+          <span>З бібліотеки «Готові до гри»</span>
+        </div>
+      )}
       {!songs.length && (
         <p className="programme-hint">
           Спочатку підготуй пісні: обери запис, аудіо, текст і рядок, потім
@@ -178,14 +360,13 @@ export default function ProgrammeEditor({
         </p>
       )}
       <div className="programme-available">
-        {songs.map((song) => {
-          const included = draft.trackIds.includes(song.id);
+        {available.map((song) => {
           return (
             <Button
               key={song.id}
               variant="ghost"
               className="programme-add"
-              disabled={busy || included || draft.trackIds.length >= 16}
+              disabled={busy || draft.trackIds.length >= 16}
               onClick={() =>
                 edit({ ...draft, trackIds: [...draft.trackIds, song.id] })
               }
@@ -202,7 +383,7 @@ export default function ProgrammeEditor({
                 <strong>{song.title}</strong>
                 <span>{song.artist}</span>
               </span>
-              {included ? <Check size={20} /> : <Plus size={20} />}
+              <Plus size={20} />
             </Button>
           );
         })}
