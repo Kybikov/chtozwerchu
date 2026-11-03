@@ -8,7 +8,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { usePWA, usePWAActivity } from "./lib/pwa";
 import { PWAUpdateControl } from "./components/PWAUpdate";
-import { get, set, setMany, del } from "idb-keyval";
+import { getMany, setMany, del } from "idb-keyval";
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -81,7 +81,7 @@ import CuePreparation from "./components/CuePreparation";
 import ClipLengthControl from "./components/ClipLengthControl";
 import RoundClipEditor from "./components/RoundClipEditor";
 import { clipLength, roundClip } from "./lib/roundClip";
-import { sameCueTimeline } from "./lib/lyricTimeline";
+import { resolveStudioTrack, type LocalAudio } from "./lib/studioCache";
 import {
   emptyProgramme,
   readProgramme,
@@ -113,7 +113,6 @@ type Sheet =
   | "history"
   | "connect"
   | null;
-type LocalAudio = { file: Blob; trackId: number };
 export default function App() {
   const identity = useIdentity();
   const [network, setNetwork] = useState<RoomAccess | null>(savedRoom);
@@ -384,39 +383,29 @@ export default function App() {
           }));
           return true;
         }
-        let value: Track;
-        const previous = await get<Track>(`khz:track:${id}`).catch(
-          () => undefined,
+        const snapshot = await getMany<unknown>([
+          `khz:track:${id}`,
+          "khz:audio",
+          `khz:lrc:${id}`,
+        ]).catch(() => []);
+        if (version !== requestVersion.current) return false;
+        const {
+          track: value,
+          audio: saved,
+          fromDevice,
+          retimed,
+        } = await resolveStudioTrack(id, preserve, snapshot, (trackId) =>
+          api<Track>(`/api/music/track?id=${trackId}`),
         );
-        try {
-          value = await api<Track>(`/api/music/track?id=${id}`);
-        } catch (error) {
-          const cached = await get<Track>(`khz:track:${id}`).catch(
-            () => undefined,
-          );
-          const saved = await get<LocalAudio>("khz:audio").catch(
-            () => undefined,
-          );
-          if (!cached || saved?.trackId !== id) throw error;
-          value = cached;
-          tell("Без мережі: відновлено твій аудіофайл і збережений текст.");
-        }
-        if (version !== requestVersion.current) return;
-        const imported = await get<Track["cues"]>(`khz:lrc:${id}`).catch(
-          () => undefined,
-        );
-        if (imported?.length)
-          value = { ...value, cues: imported, lyricsStatus: "imported" };
-        const retimed =
-          preserve && !sameCueTimeline(previous?.cues, value.cues);
+        if (version !== requestVersion.current) return false;
         setTrack(value);
-        void set(`khz:track:${id}`, value).catch(() => {});
-        const saved = await get<LocalAudio>("khz:audio").catch(() => undefined);
-        if (version !== requestVersion.current) return;
-        if (saved?.trackId === id) {
+        if (!fromDevice)
+          void setMany([[`khz:track:${id}`, value]]).catch(() => {});
+        if (saved) {
           setLocalAudio(saved);
           setAudioURL(URL.createObjectURL(saved.file));
         } else setAudioURL(value.preview);
+        if (fromDevice) tell("Власне аудіо відкрито з пристрою.");
         setSession((s) => ({
           ...s,
           programme: preserve ? s.programme : undefined,
@@ -771,7 +760,10 @@ export default function App() {
     // Full-track timelines are absolute; matching edition must be checked by the host.
     setSession((s) => ({ ...s, offset: 0, aligned: false }));
     try {
-      await set("khz:audio", { file, trackId: track.id });
+      await setMany([
+        ["khz:audio", { file, trackId: track.id }],
+        [`khz:track:${track.id}`, track],
+      ]);
       tell(
         "Аудіо збережено на цьому пристрої. Перевір синхронізацію й підтвердь прив’язку.",
       );
@@ -802,8 +794,10 @@ export default function App() {
       aligned: false,
     }));
     try {
-      await set(`khz:lrc:${track.id}`, imported);
-      await set(`khz:track:${track.id}`, updated);
+      await setMany([
+        [`khz:lrc:${track.id}`, imported],
+        [`khz:track:${track.id}`, updated],
+      ]);
     } catch {
       tell("Текст відкрито, але браузер не зміг зберегти його між сеансами.");
       return;

@@ -28,7 +28,8 @@ export default function PreparedSongs({
         <span>{songs.length} / 40</span>
       </div>
       <p className="prepared-description">
-        Аудіо, текст і прив’язку вже підготовлено на пристрої сцени.
+        Власне аудіо й текст відкриваються з цього пристрою без мережі. Для
+        прев’ю Deezer потрібне підключення.
       </p>
       <div className="prepared-list">
         {songs.map((song) => (
