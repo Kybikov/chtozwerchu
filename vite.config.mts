@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
           })),
         },
         workbox: {
+          importScripts: ["/pwa-update-guard.js"],
           globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2}"],
           navigateFallbackDenylist: [/^\/api\//, /^\/ws/, /^\/classic/],
           maximumFileSizeToCacheInBytes: 2_000_000,

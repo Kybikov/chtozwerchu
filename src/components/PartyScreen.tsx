@@ -36,6 +36,8 @@ import { Brand } from "./Home";
 import { AccountButton, useIdentity } from "../lib/identity";
 import { contests, useParty, type Contest, type PartyView } from "../lib/party";
 import { usePartyAudio } from "../lib/usePartyAudio";
+import { usePWAActivity } from "../lib/pwa";
+import { PWAUpdateControl } from "./PWAUpdate";
 import PartyVote, { VoteModePicker } from "./PartyVote";
 import PartySound, { TVSoundGate } from "./PartySound";
 import PartyBuzzer, { BuzzerScene, MelodyModePicker } from "./PartyBuzzer";
@@ -70,6 +72,7 @@ export default function PartyScreen() {
   const [privateOpen, setPrivateOpen] = useState(false);
   const [stageOnly, setStageOnly] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [setupDirty, setSetupDirty] = useState(false);
   const now = party.serverNow;
   const busy = party.status === "connecting" || party.status === "reconnecting";
   const host = !!s?.you?.host;
@@ -83,6 +86,16 @@ export default function PartyScreen() {
   const [notice, setNotice] = useState("");
   const sound = usePartyAudio(party, setNotice);
   const player = sound.player;
+  usePWAActivity(
+    busy ||
+      party.pending ||
+      (!s && setupDirty) ||
+      s?.stage === "playing" ||
+      !!s?.media?.playing ||
+      player.playing ||
+      sheet === "settings",
+    true,
+  );
   useEffect(() => {
     if (user && !name) setName(user.displayName);
   }, [user]);
@@ -213,6 +226,7 @@ export default function PartyScreen() {
             На головну
             <ArrowLeft size={18} />
           </a>
+          <PWAUpdateControl compact={false} />
         </Panel>
       </div>
     );
@@ -234,6 +248,7 @@ export default function PartyScreen() {
         </nav>
         <div className="header-actions">
           <AccountButton />
+          <PWAUpdateControl />
           {s && !party.watching && (
             <Button
               variant="ghost"
@@ -282,6 +297,14 @@ export default function PartyScreen() {
             className={`account-form party-setup-form ${setup === "join" ? "is-joining" : ""}`}
             noValidate
             onSubmit={configure}
+            onChangeCapture={() => setSetupDirty(true)}
+            onClickCapture={(event) => {
+              if (
+                event.target instanceof Element &&
+                event.target.closest("button")
+              )
+                setSetupDirty(true);
+            }}
           >
             <Panel className="party-setup-panel">
               <div
@@ -533,6 +556,7 @@ export default function PartyScreen() {
       ) : (
         <main className="party-main">
           <div className="party-room-bar">
+            {(stageOnly || party.watching) && <PWAUpdateControl />}
             <div>
               <span className={`connection-dot ${online ? "online" : ""}`} />
               <span>

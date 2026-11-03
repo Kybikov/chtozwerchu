@@ -19,6 +19,8 @@ import { Button, Modal, Panel } from "./ui";
 import { AccountButton, useIdentity } from "../lib/identity";
 import { savedRoom } from "../lib/studioRoom";
 import AppInstall from "./AppInstall";
+import { usePWAActivity } from "../lib/pwa";
+import { PWAUpdateControl } from "./PWAUpdate";
 
 export function Brand() {
   return (
@@ -41,6 +43,7 @@ export default function Home() {
   const [join, setJoin] = useState(false);
   const [code, setCode] = useState("");
   const [joinError, setJoinError] = useState("");
+  usePWAActivity(join, true);
   const active = savedRoom();
   const goMusic = () => location.assign("/?screen=studio");
   const enterRoom = (event: React.FormEvent) => {
@@ -73,11 +76,13 @@ export default function Home() {
           <Button
             variant="ghost"
             className="home-join"
+            aria-label="Є код гри"
             onClick={() => setJoin(true)}
           >
             <Radio size={18} />Є код гри
           </Button>
           <AccountButton />
+          <PWAUpdateControl />
         </div>
       </header>
       <main className="home-main">
@@ -305,7 +310,7 @@ export default function Home() {
         <Brand />
         <span>Зроблено для ваших вечорів.</span>
         <AppInstall />
-        <span className="home-version">СТУДІЯ 1.21.0</span>
+        <span className="home-version">СТУДІЯ 1.22.0</span>
       </footer>
       <Modal
         open={join}

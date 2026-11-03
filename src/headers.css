@@ -1,0 +1,139 @@
+/* Keep every header action reachable without compressing its touch area. */
+@media (min-width: 561px) and (max-width: 1000px) {
+  .site-header.studio-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: auto;
+    padding-block: 16px;
+    gap: 14px;
+  }
+  .studio-header .header-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .studio-header nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    width: 100%;
+    gap: 8px;
+  }
+  .studio-header nav .button {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .stage-only .studio-header {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .site-header.home-header,
+  .site-header.party-header,
+  .site-header.studio-header {
+    padding-inline: 16px;
+    gap: 8px;
+  }
+  .home-header .brand,
+  .party-header .brand,
+  .studio-header .brand {
+    font-size: 21px;
+    gap: 8px;
+  }
+  .home-header .brand-icon,
+  .party-header .brand-icon,
+  .studio-header .brand-icon {
+    width: 36px;
+    height: 41px;
+  }
+  .home-header .header-actions,
+  .party-header .header-actions,
+  .studio-header .header-actions {
+    gap: 4px;
+  }
+  .home-header .header-actions > .button,
+  .party-header .header-actions > .button,
+  .studio-header .header-actions > .button {
+    flex: none;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+  .home-header .home-join .specular-button__label {
+    font-size: 0;
+    gap: 0;
+  }
+  .site-header.studio-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: auto;
+    padding-block: 16px 12px;
+    row-gap: 14px;
+  }
+  .stage-only .studio-header {
+    display: none;
+  }
+  .studio-header .header-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .studio-header nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    width: 100%;
+    gap: 8px;
+  }
+  .studio-header nav .button {
+    flex: 1;
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .studio-header nav > .button:nth-child(2) {
+    width: auto;
+    font-size: 0;
+  }
+  .studio-header nav > .button:nth-child(2) .specular-button__label:after {
+    font-size: 16px;
+  }
+  .app-shell:has(.studio-header) .page-intro h1 {
+    white-space: normal;
+  }
+  .app-shell:has(.studio-header) .page-intro h1 > span:first-of-type {
+    display: block;
+  }
+  .app-shell:has(.studio-header) .intro-copy {
+    font-size: 16px;
+  }
+  .remote-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 16px;
+    gap: 12px;
+  }
+  .remote-header .remote-header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 4px;
+  }
+  .remote-header-actions > .button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+  .remote-header .remote-room {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 12px;
+  }
+  .remote-header .remote-room > span:last-child {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+}

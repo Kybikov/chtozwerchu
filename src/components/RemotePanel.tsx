@@ -22,6 +22,8 @@ import {
   Zap,
 } from "lucide-react";
 import { Button, Modal, Panel } from "./ui";
+import { usePWAActivity } from "../lib/pwa";
+import { PWAUpdateControl } from "./PWAUpdate";
 import Backdrop from "./Backdrop";
 import WakeSlider from "./react-bits/WakeSlider";
 import SquishSwitch from "./react-bits/SquishSwitch";
@@ -108,6 +110,15 @@ export default function RemotePanel() {
   }, [query]);
   const scene = s ? roomScene(s, room.serverNow, room.connected) : null;
   const locked = !room.connected || room.pending || room.terminal;
+  usePWAActivity(
+    (!s && !room.terminal) ||
+      s?.phase === "playing" ||
+      s?.phase === "answer" ||
+      !!s?.audio.playing ||
+      room.pending ||
+      sheet === "settings",
+    true,
+  );
   const remaining = s ? roomRemaining(s, room.serverNow) : 0;
   const target = s?.track.cues[s.session.target];
   const showSettings = () => {
@@ -149,15 +160,18 @@ export default function RemotePanel() {
             КІМНАТА <b>{connection.code || "—"}</b>
           </span>
         </div>
-        <Button
-          variant="ghost"
-          className="icon-button"
-          aria-label="Налаштування гри"
-          onClick={showSettings}
-          disabled={!s}
-        >
-          <Settings2 size={20} />
-        </Button>
+        <div className="remote-header-actions">
+          <PWAUpdateControl />
+          <Button
+            variant="ghost"
+            className="icon-button"
+            aria-label="Налаштування гри"
+            onClick={showSettings}
+            disabled={!s}
+          >
+            <Settings2 size={20} />
+          </Button>
+        </div>
       </header>
       <main className="remote-main">
         <div className="remote-intro">

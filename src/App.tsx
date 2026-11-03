@@ -6,7 +6,8 @@ import {
   type ChangeEvent,
 } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { usePWA } from "./lib/pwa";
+import { usePWA, usePWAActivity } from "./lib/pwa";
+import { PWAUpdateControl } from "./components/PWAUpdate";
 import { get, set, setMany, del } from "idb-keyval";
 import {
   ArrowDownToLine,
@@ -189,10 +190,18 @@ export default function App() {
     };
   }, [tell]);
   const player = usePlayer(audioURL, tell);
-  const {
-    needRefresh: [needsUpdate],
-    updateServiceWorker,
-  } = usePWA();
+  const { needsUpdate, openUpdate } = usePWA();
+  usePWAActivity(
+    networkBusy ||
+      preparedBusy ||
+      (!network &&
+        (phase === "playing" ||
+          phase === "answer" ||
+          player.playing ||
+          trackBusy ||
+          ["words", "clip", "programme"].includes(sheet ?? ""))),
+    true,
+  );
   const [installEvent, setInstallEvent] = useState<
     (Event & { prompt: () => Promise<void> }) | null
   >(null);
@@ -957,7 +966,7 @@ export default function App() {
             onChange={uploadLRC}
             aria-label="Додати текст LRC"
           />
-          <header className="site-header">
+          <header className="site-header studio-header">
             <a className="brand" href="/" aria-label="Хто зверху — головна">
               <span className="brand-icon">
                 <Zap size={24} fill="currentColor" />
@@ -994,6 +1003,7 @@ export default function App() {
             </nav>
             <div className="header-actions">
               <AccountButton />
+              <PWAUpdateControl />
               <span className="local-badge">
                 <span className="status-dot" />
                 Локальна гра
@@ -1581,6 +1591,7 @@ export default function App() {
           </footer>
           {stageOnly && (
             <StageControls>
+              <PWAUpdateControl compact={false} />
               <Button onClick={() => setStageOnly(false)}>
                 <ArrowLeft size={17} />
                 Повернути пульт
@@ -2121,10 +2132,12 @@ export default function App() {
             {needsUpdate && (
               <Button
                 className="full-width"
-                disabled={phase === "playing"}
-                onClick={() => void updateServiceWorker(true)}
+                onClick={() => {
+                  setSheet(null);
+                  openUpdate();
+                }}
               >
-                Встановити готове оновлення
+                Оновлення застосунку
               </Button>
             )}
             <Button

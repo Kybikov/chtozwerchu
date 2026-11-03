@@ -4,11 +4,17 @@ import Backdrop from "./Backdrop";
 import ShowStage, { Scoreboard } from "./ShowStage";
 import { Button } from "./ui";
 import StageControls from "./StageControls";
+import { usePWAActivity } from "../lib/pwa";
+import { PWAUpdateControl } from "./PWAUpdate";
 import type { ShowState } from "../lib/show";
 
 export default function AudienceScreen() {
   const [state, setState] = useState<ShowState | null>(null);
   const [connected, setConnected] = useState(false);
+  usePWAActivity(
+    state?.phase === "playing" || state?.phase === "answer" || !!state?.playing,
+    true,
+  );
   const last = useRef(0);
   useEffect(() => {
     const room = new URLSearchParams(location.search).get("room");
@@ -59,6 +65,7 @@ export default function AudienceScreen() {
         </div>
       )}
       <StageControls>
+        <PWAUpdateControl compact={false} />
         <Button
           onClick={() =>
             void document.documentElement.requestFullscreen().catch(() => {})

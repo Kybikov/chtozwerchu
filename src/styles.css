@@ -13,13 +13,15 @@
   --lime: #e0ff8a;
   --radius: 24px;
   color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: #75558c #0c0915;
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
 }
 button,
 input {

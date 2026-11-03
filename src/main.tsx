@@ -9,6 +9,7 @@ import RoomAudience from "./components/RoomAudience";
 import Home from "./components/Home";
 import { IdentityProvider } from "./lib/identity";
 import { PWAProvider } from "./lib/pwa";
+import { PWAUpdateDialog } from "./components/PWAUpdate";
 const PartyScreen = lazy(() => import("./components/PartyScreen"));
 import "./styles.css";
 import "./platform.css";
@@ -16,7 +17,9 @@ import "./party.css";
 import "./party-extensions.css";
 import "./party-buzzer.css";
 import "./readability.css";
+import "./headers.css";
 import "./dialogs.css";
+import "./pwa.css";
 import "./account.css";
 const screen = new URLSearchParams(location.search).get("screen");
 const root =
@@ -47,6 +50,7 @@ root.render(
             <Home />
           )}
         </Suspense>
+        <PWAUpdateDialog />
       </IdentityProvider>
     </PWAProvider>
   </React.StrictMode>,

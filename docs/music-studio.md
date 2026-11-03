@@ -102,6 +102,8 @@ uses [Redis coordination](release-1.9.md). [Audio-clock cutoffs](release-1.20.md
 apply to both local play and the network media station.
 [Shared dialogues and idle scene controls](release-1.21.md) use the same
 React Bits button system in local and network studio views.
+[Guarded PWA updates](release-1.22.md) check other application windows and
+defer reloading busy clients.
 
 - Add a supported full-track playback path; see music-playback.md for the current
   provider capabilities. Round clip duration and private audition ship in 1.15.

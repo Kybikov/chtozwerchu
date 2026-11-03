@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button, Modal, Panel } from "../components/ui";
 import type { Session } from "./music";
+import { usePWAActivity } from "./pwa";
 
 export type User = {
   id: string;
@@ -121,6 +122,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  usePWAActivity(busy || mode === "login" || mode === "register");
   const [error, setError] = useState<{
     message: string;
     field?: "name" | "email" | "password";

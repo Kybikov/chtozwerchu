@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Expand, Monitor } from "lucide-react";
 import { Button } from "./ui";
 import StageControls from "./StageControls";
+import { usePWAActivity } from "../lib/pwa";
+import { PWAUpdateControl } from "./PWAUpdate";
 import Backdrop from "./Backdrop";
 import ShowStage, { Scoreboard } from "./ShowStage";
 import { linkConnection, useStudioConnection } from "../lib/studioRoom";
@@ -10,6 +12,13 @@ export default function RoomAudience() {
   const [connection] = useState(() => linkConnection("audience"));
   const room = useStudioConnection(connection),
     scene = room.scene;
+  usePWAActivity(
+    (!scene && !room.terminal) ||
+      scene?.phase === "playing" ||
+      scene?.phase === "answer" ||
+      !!scene?.playing,
+    true,
+  );
   return (
     <div
       className={`app-shell stage-only audience-screen team-${scene?.team ?? "girls"}`}
@@ -33,6 +42,7 @@ export default function RoomAudience() {
         </div>
       )}
       <StageControls>
+        <PWAUpdateControl compact={false} />
         <Button
           onClick={() =>
             void document.documentElement.requestFullscreen().catch(() => {})

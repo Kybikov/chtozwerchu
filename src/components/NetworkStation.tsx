@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Button, Modal } from "./ui";
 import StageControls from "./StageControls";
+import { usePWAActivity } from "../lib/pwa";
+import { PWAUpdateControl } from "./PWAUpdate";
 import Backdrop from "./Backdrop";
 import ShowStage, { Scoreboard } from "./ShowStage";
 import {
@@ -118,6 +120,13 @@ export default function NetworkStation({
   const room = useStudioConnection(
     { code: access.code, token: access.stationToken, role: "station" },
     instruction,
+  );
+  usePWAActivity(
+    (!room.state && !room.terminal) ||
+      room.state?.phase === "playing" ||
+      room.state?.phase === "answer" ||
+      player.playing ||
+      busy,
   );
   useEffect(() => {
     if (room.connected && library !== null)
@@ -335,6 +344,7 @@ export default function NetworkStation({
         </div>
       )}
       <StageControls className="station-tools">
+        <PWAUpdateControl compact={false} />
         <Button onClick={() => setPairing(true)}>
           <Smartphone size={18} />
           Пульт · {access.code}

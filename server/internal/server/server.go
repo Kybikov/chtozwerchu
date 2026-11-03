@@ -102,7 +102,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 			transport = "redis"
 		}
 	}
-	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.21.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.22.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
 }
 
 // roundTypeName maps round types to Ukrainian display names.
@@ -154,7 +154,7 @@ func (s *Server) static(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if info, err := os.Stat(path); err == nil && !info.IsDir() {
-		if clean == "/sw.js" || clean == "/manifest.webmanifest" || strings.HasSuffix(clean, ".html") {
+		if clean == "/sw.js" || clean == "/pwa-update-guard.js" || clean == "/manifest.webmanifest" || strings.HasSuffix(clean, ".html") {
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 		}
 		http.ServeFile(w, r, path)

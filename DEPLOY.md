@@ -15,7 +15,7 @@
 7. Перевірити через HTTPS акаунти, Deezer, кімнати, пульт/сцену й аудіо.
 8. Перевірити CI, включно з go test -race на Linux.
 
-PWA-керування (`/sw.js`, `/manifest.webmanifest`, HTML) має відповідати з
+PWA-керування (`/sw.js`, `/pwa-update-guard.js`, `/manifest.webmanifest`, HTML) має відповідати з
 `Cache-Control: no-store, no-cache, must-revalidate`. Не кешувати ці файли
 правилами CDN. Якщо CDN уже тримає старий `/sw.js`, очистити тільки
 `https://chtozwerchu.wtmelon.store/sw.js` у Cloudflare та перевірити оновлення
@@ -83,4 +83,4 @@ docker compose up --build піднімає локальний стек. Його
 замінити для публічного використання. Coolify використовує окремі випадкові
 runtime-секрети.
 
-Функції та обмеження: [реліз 1.21](docs/release-1.21.md), [стан повного аудіо](docs/music-playback.md).
+Функції та обмеження: [реліз 1.22](docs/release-1.22.md), [стан повного аудіо](docs/music-playback.md).
