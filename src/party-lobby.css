@@ -1,0 +1,356 @@
+/* Only the pre-game room uses this layout; running rounds retain their stage. */
+body:has(.party-lobby-shell) {
+  min-width: 0;
+}
+.party-lobby-shell .party-main {
+  padding: 24px 40px 40px;
+}
+.party-lobby-shell .party-room-bar {
+  margin-bottom: 20px;
+}
+.party-lobby-shell .party-room-bar > div:first-child,
+.party-lobby-shell .party-room-bar .button {
+  font-size: 14px;
+}
+.party-lobby-shell .party-room-bar .button {
+  min-height: 44px;
+}
+.party-lobby-shell .party-scoreboard {
+  margin-bottom: 20px;
+  gap: 20px;
+}
+.party-lobby-shell .party-team-score {
+  padding: 18px 24px;
+  gap: 16px;
+}
+.party-lobby-shell .party-team-score .section-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.party-lobby-shell .party-team-caption {
+  font-size: 14px;
+}
+.party-lobby-shell:not(.party-stage-only) .party-game-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.48fr);
+  gap: 20px;
+  align-items: start;
+}
+.party-lobby-shell:not(.party-stage-only) .party-controls {
+  display: contents;
+}
+.party-lobby-shell:not(.party-stage-only) .party-stage {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: stretch;
+  min-height: 0;
+}
+.party-lobby-shell:not(.party-stage-only) .party-control-panel {
+  grid-column: 2;
+  grid-row: 1;
+}
+.party-lobby-shell:not(.party-stage-only) .party-sound-card {
+  grid-column: 1;
+  grid-row: 2;
+}
+.party-lobby-shell:not(.party-stage-only) .party-players {
+  grid-column: 2;
+  grid-row: 2;
+}
+.party-lobby-shell .party-stage-top {
+  flex: none;
+  padding: 16px 24px;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.party-lobby-shell .party-lobby-stage {
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  align-items: stretch;
+  text-align: left;
+}
+.lobby-welcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.58fr);
+  gap: 16px;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+}
+.lobby-join {
+  min-width: 0;
+}
+.lobby-join .section-label {
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+.party-lobby-shell .lobby-join h2 {
+  font-size: clamp(58px, 6vw, 90px);
+  line-height: 1.2;
+  letter-spacing: 5px;
+  margin: 10px 0 14px;
+}
+.lobby-join p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.lobby-art {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+}
+.party-lobby-shell .lobby-deck {
+  justify-content: flex-start;
+  gap: 8px;
+  max-width: none;
+  margin: 24px 0 16px;
+}
+.party-lobby-shell .lobby-deck span {
+  font-size: 14px;
+  padding: 9px 12px;
+  line-height: 1.4;
+}
+.party-lobby-shell .lobby-rounds {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.party-lobby-shell .panel.party-control-panel,
+.party-lobby-shell .panel.party-players,
+.party-lobby-shell .party-sound-card {
+  padding: 24px;
+}
+.party-lobby-shell .party-control-panel > .section-label,
+.party-lobby-shell .party-players > .section-label,
+.party-lobby-shell .party-sound-card > .section-label {
+  font-size: 12px;
+}
+.party-lobby-shell .party-control-panel > p,
+.party-lobby-shell .party-sound-card > p {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.party-lobby-shell .party-control-panel > .button,
+.party-lobby-shell .party-control-panel .team-choice .button,
+.party-lobby-shell .party-sound-card .button {
+  font-size: 16px;
+  min-height: 48px;
+}
+.party-lobby-shell .party-control-panel > .party-primary-action {
+  font-size: 18px;
+  min-height: 56px;
+}
+.party-lobby-mobile-launch {
+  display: none;
+}
+.party-lobby-shell .party-sound-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+.party-lobby-shell .party-sound-card > .section-label,
+.party-lobby-shell .party-sound-card > .sound-notice {
+  grid-column: 1 / -1;
+}
+.party-lobby-shell .party-sound-card > .party-volume {
+  grid-column: 2;
+}
+.party-lobby-shell .party-stage {
+  display: flex;
+  flex-direction: column;
+}
+.party-lobby-shell .party-roster h4 {
+  font-size: 16px;
+}
+.party-lobby-shell .party-roster > div {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.party-lobby-shell.party-stage-only .party-controls {
+  display: none;
+}
+.party-lobby-shell.party-stage-only .party-main {
+  padding: clamp(16px, 2vw, 40px);
+}
+.party-lobby-shell.party-stage-only .party-room-bar > div:first-child,
+.party-lobby-shell.party-stage-only .party-room-bar .button {
+  font-size: clamp(14px, 1.8svh, 30px);
+}
+.party-lobby-shell.party-stage-only .party-room-bar .button {
+  min-height: clamp(44px, 5svh, 80px);
+}
+.party-lobby-shell.party-stage-only .party-versus {
+  width: clamp(45px, 6svh, 90px);
+  height: clamp(45px, 6svh, 90px);
+  font-size: clamp(18px, 2.5svh, 44px);
+}
+.party-lobby-shell.party-stage-only .party-team-score .section-label {
+  font-size: clamp(12px, 1.8svh, 30px);
+}
+.party-lobby-shell.party-stage-only .party-team-score h2 {
+  font-size: clamp(30px, 4svh, 80px);
+}
+.party-lobby-shell.party-stage-only .party-team-caption {
+  font-size: clamp(14px, 2svh, 34px);
+}
+.party-lobby-shell.party-stage-only .party-team-score > strong {
+  font-size: clamp(62px, 8svh, 160px);
+}
+.party-lobby-shell.party-stage-only .party-stage-top {
+  font-size: clamp(12px, 1.8svh, 28px);
+}
+.party-lobby-shell.party-stage-only .party-lobby-stage {
+  height: auto;
+  padding: clamp(24px, 3svh, 64px);
+}
+.party-lobby-shell.party-stage-only .lobby-welcome {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.6fr);
+  gap: 32px;
+}
+.party-lobby-shell.party-stage-only .lobby-join .section-label,
+.party-lobby-shell.party-stage-only .lobby-rounds {
+  font-size: clamp(14px, 2svh, 34px);
+}
+.party-lobby-shell.party-stage-only .lobby-join h2 {
+  font-size: clamp(64px, min(16svh, 13vw), 260px);
+  letter-spacing: 0.08em;
+}
+.party-lobby-shell.party-stage-only .lobby-join p {
+  font-size: clamp(18px, 2.5svh, 40px);
+}
+.party-lobby-shell.party-stage-only .lobby-art {
+  height: clamp(160px, 32svh, 620px);
+}
+.party-lobby-shell.party-stage-only .lobby-deck span {
+  font-size: clamp(14px, 2svh, 34px);
+}
+@media (max-width: 1000px) {
+  .party-lobby-shell .party-main {
+    padding: 20px 24px 40px;
+  }
+  .lobby-welcome {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lobby-art {
+    display: none;
+  }
+  .party-lobby-shell.party-stage-only .lobby-art {
+    display: block;
+  }
+}
+@media (max-width: 760px) {
+  .party-lobby-shell:has(.party-lobby-mobile-launch) {
+    overflow: clip;
+  }
+  .party-lobby-shell:has(.party-lobby-mobile-launch) .party-main {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  }
+  .party-lobby-shell .party-control-panel > .party-primary-action {
+    display: none;
+  }
+  .party-lobby-mobile-launch {
+    display: block;
+    position: fixed;
+    z-index: 25;
+    left: 16px;
+    right: 16px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #181220;
+    box-shadow: 0 8px 40px #0c091580;
+  }
+  .party-lobby-mobile-launch .party-primary-action {
+    width: 100%;
+    font-size: 18px;
+    min-height: 56px;
+  }
+  .party-lobby-shell .party-main {
+    padding: 16px 14px 40px;
+  }
+  .party-lobby-shell .party-room-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .party-lobby-shell .party-room-bar > div:first-child {
+    font-size: 14px;
+  }
+  .party-lobby-shell .party-room-bar .button {
+    font-size: 13px;
+    padding: 10px;
+  }
+  .party-lobby-shell .party-team-score {
+    padding: 14px;
+    gap: 10px;
+  }
+  .party-lobby-shell .party-team-score .section-label {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .party-lobby-shell .party-team-caption {
+    font-size: 12px;
+  }
+  .party-lobby-shell .party-team-score h2 {
+    font-size: 25px;
+  }
+  .party-lobby-shell:not(.party-stage-only) .party-game-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .party-lobby-shell:not(.party-stage-only) .party-control-panel {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .party-lobby-shell:not(.party-stage-only) .party-sound-card {
+    grid-row: 3;
+  }
+  .party-lobby-shell:not(.party-stage-only) .party-players {
+    grid-column: 1;
+    grid-row: 4;
+  }
+  .party-lobby-shell .party-lobby-stage {
+    padding: 20px;
+  }
+  .party-lobby-shell .lobby-join h2 {
+    font-size: 56px;
+    margin: 10px 0;
+  }
+  .lobby-join p {
+    font-size: 15px;
+  }
+  .party-lobby-shell .lobby-deck {
+    margin: 20px 0 14px;
+  }
+  .party-lobby-shell .lobby-deck span {
+    font-size: 13px;
+  }
+  .party-lobby-shell .panel.party-control-panel,
+  .party-lobby-shell .panel.party-players,
+  .party-lobby-shell .party-sound-card {
+    padding: 20px;
+  }
+  .party-lobby-shell .party-sound-card {
+    display: flex;
+  }
+  .party-lobby-shell.party-stage-only .lobby-welcome {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .party-lobby-shell.party-stage-only .lobby-art {
+    display: none;
+  }
+  .party-lobby-shell.party-stage-only .lobby-join h2 {
+    font-size: clamp(56px, 16vw, 88px);
+  }
+  .party-lobby-shell.party-stage-only .lobby-join p {
+    font-size: 15px;
+  }
+}

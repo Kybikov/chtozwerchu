@@ -43,6 +43,7 @@ import WakeSlider from "./react-bits/WakeSlider";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
 import "../party-setup.css";
+import "../party-lobby.css";
 
 export default function PartyScreen() {
   const { user, openAccount } = useIdentity();
@@ -172,6 +173,18 @@ export default function PartyScreen() {
   const startMelody = () => {
     if (host && online) party.action("resume");
   };
+  const lobbyStartButton =
+    host && s?.stage === "lobby" ? (
+      <Button
+        variant="primary"
+        className="party-primary-action"
+        disabled={!online || party.pending}
+        onClick={() => party.send("start_game")}
+      >
+        <Play size={20} fill="currentColor" />
+        Почати вечір
+      </Button>
+    ) : null;
   const expand = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
@@ -204,7 +217,7 @@ export default function PartyScreen() {
     );
   return (
     <div
-      className={`app-shell party-shell ${buzzer ? "party-buzzer-round" : ""} ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
+      className={`app-shell party-shell ${s?.stage === "lobby" ? "party-lobby-shell" : ""} ${buzzer ? "party-buzzer-round" : ""} ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
     >
       <Backdrop effects={localStorage.getItem("khz:effects") !== "off"} />
       <audio ref={player.ref} preload="metadata" />
@@ -624,16 +637,25 @@ export default function PartyScreen() {
               </div>
               {s.stage === "lobby" ? (
                 <div className="party-lobby-stage">
-                  <div className="party-lobby-orb" aria-hidden="true">
-                    <Users size={58} />
+                  <div className="lobby-welcome">
+                    <div className="lobby-join">
+                      <span className="section-label">КОД ВАШОГО ВЕЧОРА</span>
+                      <h2>{s.code}</h2>
+                      <p>
+                        Обирайте команду. Вмощуйтеся зручніше.
+                        <br />
+                        Ведучий почне, коли всі будуть готові.
+                      </p>
+                    </div>
+                    <img
+                      className="lobby-art"
+                      src="/party-game-kit.webp"
+                      alt=""
+                      width="1536"
+                      height="1024"
+                      decoding="async"
+                    />
                   </div>
-                  <span className="section-label">КОД ВАШОГО ВЕЧОРА</span>
-                  <h2>{s.code}</h2>
-                  <p>
-                    Обирайте команду. Вмощуйтеся зручніше.
-                    <br />
-                    Ведучий почне, коли всі будуть готові.
-                  </p>
                   <div className="lobby-deck">
                     {s.config.roundTypes.map((t) => (
                       <span key={t}>
@@ -1014,6 +1036,7 @@ export default function PartyScreen() {
                           ? "Запроси друзів або веди гру для двох команд із цього пристрою."
                           : "Можеш змінити команду, поки ведучий не почав гру."}
                       </p>
+                      {lobbyStartButton}
                       <Button onClick={() => setSheet("invite")}>
                         <Smartphone size={19} />
                         Запросити компанію
@@ -1036,15 +1059,6 @@ export default function PartyScreen() {
                       )}
                       {host && (
                         <>
-                          <Button
-                            variant="primary"
-                            className="party-primary-action"
-                            disabled={!online || party.pending}
-                            onClick={() => party.send("start_game")}
-                          >
-                            <Play size={20} fill="currentColor" />
-                            Почати вечір
-                          </Button>
                           <Button
                             variant="ghost"
                             onClick={() => {
@@ -1369,6 +1383,9 @@ export default function PartyScreen() {
             </Panel>
           )}
         </main>
+      )}
+      {lobbyStartButton && !stageOnly && !party.watching && (
+        <div className="party-lobby-mobile-launch">{lobbyStartButton}</div>
       )}
       {notice && (
         <div className="toast" role="status">
