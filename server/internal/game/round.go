@@ -7,6 +7,7 @@ import (
 
 // Action is a single player/host input directed at the current round.
 type Action struct {
+	Round   int            // explicit round identity for result corrections
 	Name    string         // round-specific verb, e.g. "reveal", "guess", "vote"
 	Actor   *Player        // resolved player performing the action (nil for system)
 	IsHost  bool           // whether the actor holds host authority
@@ -108,10 +109,10 @@ type Statement struct {
 
 // AliasCard is a word (or short phrase) to explain in the alias round.
 type AliasCard struct {
-	ID     string   `json:"id"`
-	Word   string   `json:"word"`
-	Taboo  []string `json:"taboo"`
-	Pack   string   `json:"pack"`
+	ID    string   `json:"id"`
+	Word  string   `json:"word"`
+	Taboo []string `json:"taboo"`
+	Pack  string   `json:"pack"`
 }
 
 // CrocodilePuzzle is an emoji/description riddle for the crocodile round.

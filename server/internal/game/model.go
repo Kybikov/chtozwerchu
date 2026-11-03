@@ -77,13 +77,21 @@ type RoundState struct {
 
 // RoundResult is the outcome of a resolved round.
 type RoundResult struct {
-	ContentID string      `json:"contentId,omitempty"`
-	Voting    *VoteResult `json:"voting,omitempty"`
-	Won       bool        `json:"won"`
-	Points    int         `json:"points"`
-	Team      Team        `json:"team"`
-	Answer    string      `json:"answer"`
-	Detail    string      `json:"detail,omitempty"`
+	AwardLimit         int         `json:"awardLimit,omitempty"`
+	CorrectionRevision int         `json:"correctionRevision,omitempty"`
+	OriginalAward      *RoundAward `json:"originalAward,omitempty"`
+	ContentID          string      `json:"contentId,omitempty"`
+	Voting             *VoteResult `json:"voting,omitempty"`
+	Won                bool        `json:"won"`
+	Points             int         `json:"points"`
+	Team               Team        `json:"team"`
+	Answer             string      `json:"answer"`
+	Detail             string      `json:"detail,omitempty"`
+}
+
+type RoundAward struct {
+	Team   Team `json:"team"`
+	Points int  `json:"points"`
 }
 
 // RoundData is implemented by each round's internal state struct.

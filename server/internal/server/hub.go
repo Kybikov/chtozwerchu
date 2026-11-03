@@ -351,6 +351,7 @@ func (h *Hub) doAction(c *Client, payload json.RawMessage) {
 			return err
 		}
 		return h.engine.Apply(s.room, game.Action{
+			Round: p.Round,
 			// The React client includes the round and card to reject delayed clicks.
 			Name:    p.Name,
 			Actor:   c.player,

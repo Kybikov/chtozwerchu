@@ -102,3 +102,65 @@
 .party-host-recovery .button {
   width: 100%;
 }
+.party-score-correction {
+  display: grid;
+  gap: 24px;
+}
+.party-correction-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.party-correction-teams .button:last-child {
+  grid-column: 1 / -1;
+}
+.party-correction-teams .button {
+  min-width: 0;
+}
+.party-correction-teams .specular-button__label {
+  overflow-wrap: anywhere;
+}
+.party-correction-teams [aria-pressed="true"] {
+  border-color: var(--lime);
+  box-shadow: inset 0 0 0 1px var(--lime);
+}
+.party-correction-points {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+.party-correction-points output {
+  display: grid;
+  text-align: center;
+}
+.party-correction-points > .button {
+  width: clamp(48px, 6svh, 128px);
+  min-width: 0;
+  padding-inline: 12px;
+}
+.party-correction-points strong {
+  font:
+    550 clamp(56px, 8svh, 160px)/1.15 "Oswald Variable",
+    sans-serif;
+}
+.party-correction-points output span,
+.party-score-correction > p {
+  color: var(--muted);
+  font-size: var(--party-copy);
+  line-height: 1.6;
+}
+.party-correction-note {
+  color: var(--muted);
+  font-size: var(--party-caption, 14px);
+  line-height: 1.5;
+}
+@media (max-width: 560px) {
+  .party-correction-teams {
+    grid-template-columns: 1fr;
+  }
+  .party-score-correction .dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

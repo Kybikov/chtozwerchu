@@ -54,6 +54,7 @@ import PartyBuzzer, {
 } from "./PartyBuzzer";
 import WakeSlider from "./react-bits/WakeSlider";
 import ScreenAwakeButton from "./ScreenAwakeButton";
+import PartyScoreCorrection from "./PartyScoreCorrection";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
 import { appEntryURL } from "../lib/appEntry";
@@ -80,7 +81,7 @@ export default function PartyScreen() {
   const [melodyMode, setMelodyMode] = useState<"team" | "buzzer">("buzzer");
   const [types, setTypes] = useState<Contest[]>(contests.map((c) => c.id));
   const [sheet, setSheet] = useState<
-    "invite" | "leave" | "settings" | "finish" | "controls" | null
+    "invite" | "leave" | "settings" | "finish" | "controls" | "score" | null
   >(null);
   const [guess, setGuess] = useState("");
   const [privateOpen, setPrivateOpen] = useState(false);
@@ -122,7 +123,9 @@ export default function PartyScreen() {
   useEffect(() => {
     setGuess("");
     setPrivateOpen(false);
-    setSheet((current) => (current === "controls" ? null : current));
+    setSheet((current) =>
+      current === "controls" || current === "score" ? null : current,
+    );
     setNotice("");
   }, [s?.roundIndex, s?.stage]);
   useEffect(() => {
@@ -251,6 +254,11 @@ export default function PartyScreen() {
                   {s.teams[r.result.team].name}
                 </span>
                 <strong>{r.result.answer}</strong>
+                {!!r.result.correctionRevision && (
+                  <small className="party-correction-note">
+                    Бали виправив ведучий
+                  </small>
+                )}
               </div>
               <span>+{r.result.points}</span>
             </li>
@@ -391,21 +399,38 @@ export default function PartyScreen() {
                 {s.result?.points || 0} {pointWord(s.result?.points || 0)}.
               </p>
               {host ? (
-                <Button
-                  variant="primary"
-                  className="party-primary-action"
-                  disabled={!online || party.pending}
-                  onClick={() => party.action("next")}
-                >
-                  {s.roundIndex >= s.rounds ? (
-                    <Trophy size={19} />
-                  ) : (
-                    <ArrowRight size={19} />
+                <>
+                  <Button
+                    variant="primary"
+                    className="party-primary-action"
+                    disabled={!online || party.pending}
+                    onClick={() => party.action("next")}
+                  >
+                    {s.roundIndex >= s.rounds ? (
+                      <Trophy size={19} />
+                    ) : (
+                      <ArrowRight size={19} />
+                    )}
+                    {s.roundIndex >= s.rounds
+                      ? "Показати фінал"
+                      : "Наступний конкурс"}
+                  </Button>
+                  {!!s.result?.awardLimit && (
+                    <Button
+                      variant="ghost"
+                      disabled={!online || party.pending}
+                      onClick={() => setSheet("score")}
+                    >
+                      <RotateCcw size={18} />
+                      Виправити бали
+                    </Button>
                   )}
-                  {s.roundIndex >= s.rounds
-                    ? "Показати фінал"
-                    : "Наступний конкурс"}
-                </Button>
+                  {!!s.result?.correctionRevision && (
+                    <p className="party-correction-note">
+                      Бали виправив ведучий
+                    </p>
+                  )}
+                </>
               ) : (
                 <p className="waiting-note">
                   Чекаємо, поки ведучий продовжить.
@@ -1192,12 +1217,19 @@ export default function PartyScreen() {
                       </span>
                       <p>
                         {s.result.voting.outcome === "tie"
-                          ? "Голоси навпіл. Цього разу без балів."
+                          ? s.result.correctionRevision
+                            ? "Голоси навпіл."
+                            : "Голоси навпіл. Цього разу без балів."
                           : s.result.voting.outcome === "empty"
                             ? "Команда не встигла проголосувати."
                             : `Рішення більшості · ${s.result.voting.cast} з ${s.result.voting.eligible} голосів`}
                       </p>
                     </div>
+                  )}
+                  {!!s.result?.correctionRevision && (
+                    <p className="party-correction-note">
+                      Бали виправив ведучий
+                    </p>
                   )}
                   <div className="party-result-points">
                     +{s.result?.points || 0}
@@ -1495,6 +1527,26 @@ export default function PartyScreen() {
       >
         {sheet === "controls" && stageOnly && renderHistory()}
         {sheet === "controls" && stageOnly && renderControls(true)}
+      </Modal>
+      <Modal
+        open={sheet === "score" && host && s?.stage === "result"}
+        onOpenChange={(open) => !open && setSheet(null)}
+        title="Виправити бали"
+        description="Обери команду й бали цього конкурсу. Відповідь та голоси залишаються в історії."
+        className={`party-play-shell party-score-dialog ${stageOnly ? "show-stage-dialog" : ""}`}
+      >
+        {sheet === "score" && host && s?.stage === "result" && s.result && (
+          <PartyScoreCorrection
+            result={s.result}
+            names={{ girls: s.teams.girls.name, boys: s.teams.boys.name }}
+            disabled={!online || party.pending}
+            onCancel={() => setSheet(stageOnly ? "controls" : null)}
+            onSave={(team, points, revision) => {
+              if (party.action("amend_result", { team, points, revision }))
+                setSheet(null);
+            }}
+          />
+        )}
       </Modal>
       <Modal
         open={sheet === "invite"}

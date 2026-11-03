@@ -63,8 +63,10 @@ func BuildView(room *Room, viewer *Player) RoomView {
 		if h, err := Handler(room.Current.Type); err == nil {
 			v.Round = h.View(room, viewer)
 		}
-		if room.Stage == StageResult {
-			v.Result = room.Current.Result
+		if room.Stage == StageResult && room.Current.Result != nil {
+			result := *room.Current.Result
+			result.AwardLimit = correctionLimit(room)
+			v.Result = &result
 		}
 	}
 	if viewer != nil {

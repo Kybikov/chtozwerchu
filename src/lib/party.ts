@@ -44,6 +44,9 @@ export const contests = [
 ] as const;
 export type Contest = (typeof contests)[number]["id"];
 export type PartyResult = {
+  awardLimit?: number;
+  correctionRevision?: number;
+  originalAward?: { team: Team; points: number };
   voting?: {
     eligible: number;
     cast: number;

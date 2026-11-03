@@ -267,6 +267,9 @@ func (e *Engine) Timeout(room *Room) {
 
 // Apply routes an action to engine-level handlers or the current round.
 func (e *Engine) Apply(room *Room, act Action) error {
+	if act.Name == "amend_result" {
+		return amendResult(room, act)
+	}
 	if act.Name == "pause" || act.Name == "resume" {
 		if !act.IsHost {
 			return ErrNotHost
