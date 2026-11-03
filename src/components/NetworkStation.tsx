@@ -24,6 +24,7 @@ import {
 import type { Session, Track } from "../lib/music";
 import type { usePlayer } from "../lib/usePlayer";
 import type { PreparedSummary } from "../lib/preparedSongs";
+import { clipLength } from "../lib/roundClip";
 
 type Player = ReturnType<typeof usePlayer>;
 export default function NetworkStation({
@@ -207,6 +208,7 @@ export default function NetworkStation({
         offset: session.offset,
         aligned: session.aligned,
         target: Math.max(0, Math.min(session.target, track.cues.length - 1)),
+        leadInSeconds: clipLength(session.leadInSeconds),
       });
       prepared.current = null;
     }
@@ -221,6 +223,7 @@ export default function NetworkStation({
     session.offset,
     session.aligned,
     session.target,
+    session.leadInSeconds,
     room.send,
   ]);
   useEffect(() => {

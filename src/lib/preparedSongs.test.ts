@@ -46,6 +46,7 @@ describe("prepared songs", () => {
     expect(await refreshPreparedPreview(local, lookup)).toBe(local);
     const preview = {
       ...local,
+      leadInSeconds: 10,
       file: undefined,
       track: { ...local.track, preview: "https://example.invalid/expired.mp3" },
     };
@@ -58,6 +59,7 @@ describe("prepared songs", () => {
     expect(refreshed.track.cues).toBe(preview.track.cues);
     expect(refreshed.offset).toBe(250);
     expect(refreshed.target).toBe(1);
+    expect(refreshed.leadInSeconds).toBe(10);
     await expect(
       refreshPreparedPreview(preview, async () => ({
         ...local.track,
@@ -80,6 +82,8 @@ describe("prepared songs", () => {
     expect(JSON.stringify(preparedSummary(s))).not.toContain("Own answer");
     expect(s.track.cues[1].words?.[1].startMs).toBe(5100);
     expect(s.offset).toBe(250);
+    expect(validPrepared({ ...s, leadInSeconds: 15 })).toBe(true);
+    expect(validPrepared({ ...s, leadInSeconds: 6 })).toBe(false);
   });
   it("rejects unplayable calibration, missing media and malformed saved lyrics", () => {
     const s = song();

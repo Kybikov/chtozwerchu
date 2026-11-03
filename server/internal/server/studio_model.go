@@ -17,6 +17,7 @@ type studioHistory struct {
 	Target  int     `json:"target"`
 }
 type studioSession struct {
+	LeadInSeconds int               `json:"leadInSeconds,omitempty"`
 	Programme     *studioProgramme  `json:"programme,omitempty"`
 	MatchID       string            `json:"matchId"`
 	Scores        map[string]int    `json:"scores"`
@@ -136,8 +137,15 @@ func oneOf(n int, list ...int) bool {
 	}
 	return false
 }
+func validStudioClip(seconds int) bool { return oneOf(seconds, 0, 5, 7, 10, 15) }
+func studioClipSeconds(seconds int) int {
+	if seconds == 0 {
+		return 7
+	}
+	return seconds
+}
 func validateStudio(s studioSession, t musicTrack, a studioAudio) error {
-	if !studioTeam(s.Team) || !oneOf(s.Rounds, 4, 8, 12, 16) || !validStudioProgramme(s.Programme, s.Rounds) || s.Round < 1 || s.Round > s.Rounds || !oneOf(s.AnswerSeconds, 15, 20, 30, 45) || math.Abs(float64(s.Offset)) > 24*3600000 || len(s.History) > s.Round {
+	if !validStudioClip(s.LeadInSeconds) || !studioTeam(s.Team) || !oneOf(s.Rounds, 4, 8, 12, 16) || !validStudioProgramme(s.Programme, s.Rounds) || s.Round < 1 || s.Round > s.Rounds || !oneOf(s.AnswerSeconds, 15, 20, 30, 45) || math.Abs(float64(s.Offset)) > 24*3600000 || len(s.History) > s.Round {
 		return errors.New("Некоректні налаштування партії.")
 	}
 	for _, team := range []string{"girls", "boys"} {
@@ -231,7 +239,7 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 		s.Phase = "playing"
 		s.Awarded = nil
 		s.Notice = ""
-		s.Audio.Position = math.Max(0, s.stopAt()-7)
+		s.Audio.Position = math.Max(0, s.stopAt()-float64(studioClipSeconds(s.Session.LeadInSeconds)))
 		s.Audio.Playing = false
 		ins.Type = "start"
 		ins.Position = s.Audio.Position
@@ -385,11 +393,18 @@ func (s *studioState) apply(a studioAction, now time.Time, stationReady bool) (*
 		}
 		s.Session.Programme = nil
 		s.Notice = "Ведучий обирає наступні пісні вручну."
-	case "target", "align", "original_timeline", "seek", "load_track", "load_prepared", "config":
+	case "target", "align", "original_timeline", "seek", "load_track", "load_prepared", "config", "clip":
 		if s.Phase != "ready" {
 			return bad("Підготовка доступна перед початком раунду.")
 		}
 		switch a.Type {
+		case "clip":
+			if !oneOf(a.Index, 5, 7, 10, 15) {
+				return bad("Обери тривалість фрагмента: 5, 7, 10 або 15 секунд.")
+			}
+			s.Session.LeadInSeconds = a.Index
+			s.Audio.Playing = false
+			ins.Type = "pause"
 		case "target", "align":
 			if a.Index < 0 || a.Index >= len(s.Track.Cues) {
 				return bad("Рядок не знайдено.")

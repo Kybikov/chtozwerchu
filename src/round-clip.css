@@ -1,0 +1,152 @@
+.clip-length {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.clip-length legend {
+  color: #bfa9d1;
+  font-size: 12px;
+  letter-spacing: 0.9px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.clip-length > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.clip-length .button.specular-button {
+  min-height: 46px;
+  padding: 10px;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.host-clip {
+  display: grid;
+  gap: 12px;
+  padding: 18px 0;
+}
+.host-clip .button {
+  font-size: 15px;
+}
+.host-clip > p,
+.round-clip-note {
+  font-size: 14px;
+  color: #bfa9d1;
+  line-height: 1.7;
+}
+.round-clip-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: 24px;
+}
+.round-clip-player {
+  min-width: 0;
+  border: 1px solid #c4a1ea33;
+  background:
+    radial-gradient(ellipse at 0 0, #b490ec16, transparent 80%), #110d1a;
+  border-radius: 22px;
+  padding: 24px;
+}
+.round-clip-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.round-clip-heading > span,
+.round-clip-answer > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #ccb4e4;
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+.round-clip-heading strong {
+  white-space: nowrap;
+  flex: none;
+  color: #f0e4fa;
+  font:
+    500 46px/1.2 "Oswald Variable",
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.round-clip-heading strong small {
+  font-size: 24px;
+  color: #bfa9d1;
+}
+.round-clip-boundaries {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 22px;
+  color: #bfa9d1;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.round-clip-boundaries > span:last-child {
+  text-align: right;
+}
+.round-clip-boundaries time {
+  display: block;
+  color: #ede2f7;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.round-clip-player > .button {
+  width: 100%;
+  margin-top: 10px;
+}
+.round-clip-note {
+  margin-top: 16px;
+}
+.round-clip-answer {
+  padding: 22px;
+  border: 1px solid #dba9ff33;
+  border-radius: 18px;
+  background: #c499f509;
+}
+.round-clip-answer p {
+  color: #f0e4fa;
+  font:
+    500 clamp(25px, 3.3vw, 38px)/1.45 "Oswald Variable",
+    sans-serif;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+.round-clip-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .clip-length .button.specular-button {
+    padding-inline: 6px;
+  }
+  .round-clip-player {
+    padding: 18px;
+  }
+  .round-clip-boundaries {
+    font-size: 13px;
+    gap: 12px;
+  }
+  .round-clip-boundaries time {
+    font-size: 17px;
+  }
+  .round-clip-heading > span,
+  .round-clip-answer > span {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .round-clip-answer {
+    padding: 18px;
+  }
+  .round-clip-footer > .button {
+    flex: 1 1 120px;
+  }
+}

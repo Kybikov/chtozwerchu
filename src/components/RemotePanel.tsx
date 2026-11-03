@@ -38,6 +38,7 @@ import { matchWinner } from "../lib/match";
 import PreparedSongs from "./PreparedSongs";
 import ProgrammeOrder from "./ProgrammeOrder";
 import LyricTimingStatus from "./LyricTimingStatus";
+import ClipLengthControl from "./ClipLengthControl";
 import "../programme.css";
 
 export default function RemotePanel() {
@@ -327,6 +328,15 @@ export default function RemotePanel() {
                       Обрати інший рядок
                       <ChevronRight size={15} />
                     </Button>
+                  </div>
+                  <div className="host-clip">
+                    <ClipLengthControl
+                      value={s.session.leadInSeconds}
+                      disabled={locked}
+                      onChange={(seconds) =>
+                        room.action({ type: "clip", index: seconds })
+                      }
+                    />
                   </div>
                   <Button
                     variant="primary"

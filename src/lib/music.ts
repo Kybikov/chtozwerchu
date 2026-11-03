@@ -1,4 +1,5 @@
 import { validProgramme, type Programme } from "./programme";
+import { clipLength } from "./roundClip";
 
 export type WordCue = { startMs: number; endMs: number; text: string };
 export type Cue = {
@@ -178,6 +179,7 @@ export async function api<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export type Session = {
+  leadInSeconds?: number;
   programme?: Programme;
   matchId: string;
   ownerAccountId?: string | null;
@@ -213,6 +215,7 @@ export const freshSession = (): Session => ({
   offset: 0,
   aligned: false,
   target: 3,
+  leadInSeconds: 7,
   names: { girls: "Дівчата", boys: "Хлопці" },
   rounds: 8,
   answerSeconds: 20,
@@ -251,6 +254,7 @@ export function restoreSession(): Session {
       ownerAccountId:
         typeof s.ownerAccountId === "string" ? s.ownerAccountId : null,
       finished: s.finished === true,
+      leadInSeconds: clipLength(s.leadInSeconds),
       programme:
         validProgramme(s.programme) && s.programme.trackIds.length === s.rounds
           ? s.programme

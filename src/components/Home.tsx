@@ -305,7 +305,7 @@ export default function Home() {
         <Brand />
         <span>Зроблено для ваших вечорів.</span>
         <AppInstall />
-        <span className="home-version">СТУДІЯ 1.14.1</span>
+        <span className="home-version">СТУДІЯ 1.15.0</span>
       </footer>
       <Modal
         open={join}

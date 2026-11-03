@@ -75,6 +75,9 @@ import ProgrammeEditor from "./components/ProgrammeEditor";
 import ProgrammeOrder from "./components/ProgrammeOrder";
 import LyricTimingStatus from "./components/LyricTimingStatus";
 import CuePreparation from "./components/CuePreparation";
+import ClipLengthControl from "./components/ClipLengthControl";
+import RoundClipEditor from "./components/RoundClipEditor";
+import { clipLength, roundClip } from "./lib/roundClip";
 import { sameCueTimeline } from "./lib/lyricTimeline";
 import {
   emptyProgramme,
@@ -101,6 +104,7 @@ type Sheet =
   | "settings"
   | "help"
   | "cues"
+  | "clip"
   | "words"
   | "reset"
   | "history"
@@ -194,6 +198,12 @@ export default function App() {
   const nowMS = player.position * 1000 + session.offset;
   const current = session.aligned ? activeCue(cues, nowMS) : -1;
   const target = cues[session.target];
+  const selectedClip = roundClip(
+    target,
+    session.offset,
+    player.duration,
+    session.leadInSeconds,
+  );
   const answerClock = useAnswerClock(phase === "answer", session.answerSeconds);
   const recorded = session.history.find((r) => r.round === session.round);
   const scene: ShowState = {
@@ -358,6 +368,7 @@ export default function App() {
             trackId: id,
             offset: saved.offset,
             target: saved.target,
+            leadInSeconds: clipLength(saved.leadInSeconds),
             aligned: true,
           }));
           return true;
@@ -399,6 +410,7 @@ export default function App() {
           ...s,
           programme: preserve ? s.programme : undefined,
           trackId: id,
+          leadInSeconds: preserve ? clipLength(s.leadInSeconds) : 7,
           ...(preserve
             ? {
                 target: Math.min(s.target, Math.max(0, value.cues.length - 1)),
@@ -499,6 +511,7 @@ export default function App() {
           track,
           offset: session.offset,
           target: session.target,
+          leadInSeconds: clipLength(session.leadInSeconds),
           duration: player.duration,
           ...(localAudio ? { file: localAudio.file } : {}),
           savedAt: Date.now(),
@@ -581,6 +594,7 @@ export default function App() {
         trackId: s.trackId,
         offset: s.offset,
         target: s.target,
+        leadInSeconds: clipLength(s.leadInSeconds),
         aligned: s.aligned,
         rounds: value.trackIds.length,
         programme,
@@ -601,13 +615,11 @@ export default function App() {
       return;
     }
     if (!session.aligned || !target || !player.ready) return;
-    const start = (target.startMs - session.offset) / 1000 - 7;
-    const stop = (target.startMs - session.offset) / 1000;
-    if (stop <= 0.3 || stop > player.duration - 0.2) {
+    if (!selectedClip) {
       tell("Цей рядок поза межами аудіо. Обери інший або додай повний запис.");
       return;
     }
-    player.seek(Math.max(0, start));
+    player.seek(selectedClip.start);
     if (
       session.round === 1 &&
       session.history.length === 0 &&
@@ -1372,21 +1384,56 @@ export default function App() {
                     <ChevronRight size={16} />
                   </Button>
                   {phase === "ready" && (
-                    <Button
-                      variant="primary"
-                      className="full-width launch-button"
-                      disabled={
-                        !session.aligned ||
-                        !target ||
-                        !player.ready ||
-                        trackBusy
-                      }
-                      onClick={startRound}
-                    >
-                      <Play size={16} fill="currentColor" />
-                      Почати раунд
-                      <ArrowRight size={16} />
-                    </Button>
+                    <>
+                      <div className="host-clip">
+                        <ClipLengthControl
+                          value={session.leadInSeconds}
+                          disabled={trackBusy}
+                          onChange={(seconds) => {
+                            resetRound();
+                            setSession((s) => ({
+                              ...s,
+                              leadInSeconds: seconds,
+                            }));
+                          }}
+                        />
+                        <Button
+                          disabled={
+                            !session.aligned ||
+                            !player.ready ||
+                            !selectedClip ||
+                            trackBusy
+                          }
+                          onClick={() => {
+                            resetRound();
+                            setSheet("clip");
+                          }}
+                        >
+                          <Headphones size={17} /> Перевірити фрагмент
+                        </Button>
+                        {selectedClip && session.aligned && (
+                          <p>
+                            Гратиме {Number(selectedClip.seconds.toFixed(1))} с
+                            перед прихованим рядком.
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="primary"
+                        className="full-width launch-button"
+                        disabled={
+                          !session.aligned ||
+                          !target ||
+                          !player.ready ||
+                          trackBusy
+                        }
+                        onClick={startRound}
+                      >
+                        <Play size={16} fill="currentColor" />
+                        Почати раунд
+                        <ArrowRight size={16} />
+                      </Button>
+                    </>
                   )}
                   {phase === "playing" && (
                     <div className="action-pair">
@@ -1775,6 +1822,20 @@ export default function App() {
             )}
           </Modal>
 
+          {sheet === "clip" && target && (
+            <RoundClipEditor
+              cue={target}
+              offset={session.offset}
+              seconds={session.leadInSeconds}
+              player={player}
+              onClose={() => setSheet(null)}
+              onSave={(seconds) => {
+                setSession((s) => ({ ...s, leadInSeconds: seconds }));
+                setSheet(null);
+              }}
+            />
+          )}
+
           {sheet === "words" && cues[wordLine] && (
             <WordTimingEditor
               key={`${track?.id}:${wordLine}`}
@@ -2100,6 +2161,7 @@ export default function App() {
                     offset: s.offset,
                     aligned: s.aligned,
                     target: s.target,
+                    leadInSeconds: clipLength(s.leadInSeconds),
                     rounds: s.rounds,
                     answerSeconds: s.answerSeconds,
                   }));
@@ -2143,7 +2205,7 @@ export default function App() {
                   <strong>Загадай продовження</strong>
                   <p>
                     Обери наступний рядок кнопкою «Загадати». Раунд запустить
-                    фрагмент за 7 секунд до нього й зупинить музику.
+                    фрагмент обраної довжини перед ним і зупинить музику.
                   </p>
                 </div>
               </li>

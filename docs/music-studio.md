@@ -1,4 +1,4 @@
-# Music Studio 1.14
+# Music Studio 1.15
 
 ## Direction
 
@@ -97,7 +97,8 @@ The font files are local; the show does not fetch fonts from a third-party CDN.
 ## Follow-up scope
 
 - Account-backed room ownership, event packs and room browsing.
-- Add a supported full-track playback path and configurable round clip editing.
+- Add a supported full-track playback path; see music-playback.md for the current
+  provider capabilities. Round clip duration and private audition ship in 1.15.
 - Scenario packs, sound design, session recovery and deployment hardening.
 
 ## Network studio 1.3

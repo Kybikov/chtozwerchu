@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   ArrowDownToLine,
   AudioLines,
@@ -18,6 +18,7 @@ import WakeSlider from "./react-bits/WakeSlider";
 import { activeCue, formatTime, type Cue } from "../lib/music";
 import type { usePlayer } from "../lib/usePlayer";
 import { cueAudioRange } from "../lib/cueAudio";
+import { useAudioExcerpt } from "../lib/useAudioExcerpt";
 import { timingCount } from "../lib/wordTiming";
 import "../cue-preparation.css";
 
@@ -57,81 +58,23 @@ export default function CuePreparation({
   onProvider,
 }: Props) {
   const [query, setQuery] = useState("");
-  const [audition, setAudition] = useState<number | null>(null);
-  const range = useRef<{ start: number; end: number } | null>(null);
-  const generation = useRef(0);
+  const excerpt = useAudioExcerpt(player, `${offset}:${aligned}`);
+  const audition = excerpt.active;
   const current = aligned
     ? activeCue(cues, player.position * 1000 + offset)
     : -1;
-  const audioRef = player.ref;
-  const stop = useCallback(() => {
-    generation.current++;
-    range.current = null;
-    audioRef.current?.pause();
-    setAudition(null);
-  }, [audioRef]);
-
-  useEffect(() => {
-    stop();
-    return () => {
-      generation.current++;
-      range.current = null;
-      audioRef.current?.pause();
-    };
-  }, [offset, aligned, audioRef, stop]);
-
-  useEffect(() => {
-    if (audition === null) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    let frame = 0;
-    const tick = () => {
-      const selected = range.current;
-      if (!selected) return;
-      if (
-        audio.currentTime >= selected.end ||
-        audio.currentTime < selected.start - 0.05
-      ) {
-        stop();
-        return;
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    const paused = () => {
-      if (audio.paused) {
-        range.current = null;
-        setAudition(null);
-      }
-    };
-    audio.addEventListener("pause", paused);
-    audio.addEventListener("error", stop);
-    frame = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(frame);
-      audio.removeEventListener("pause", paused);
-      audio.removeEventListener("error", stop);
-    };
-  }, [audition, audioRef, stop]);
+  const stop = excerpt.stop;
 
   const listen = async (index: number) => {
-    if (index === audition) {
-      stop();
-      return;
-    }
     const next =
       aligned && player.ready
         ? cueAudioRange(cues[index], offset, player.duration)
         : null;
     if (!next) return;
-    stop();
-    const request = generation.current;
-    player.seek(next.start);
-    range.current = next;
-    setAudition(index);
-    if (!(await player.play()) && generation.current === request) stop();
+    await excerpt.play(index, next);
   };
   const seek = (value: number) => {
-    if (range.current) stop();
+    if (audition !== null) stop();
     player.seek(value);
   };
   const visible = cues

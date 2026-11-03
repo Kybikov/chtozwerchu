@@ -61,17 +61,18 @@ type studioPeer struct {
 	once sync.Once
 }
 type studioEnvelope struct {
-	Library []studioPrepared `json:"library"`
-	Type    string           `json:"type"`
-	Token   string           `json:"token"`
-	Role    string           `json:"role"`
-	Code    string           `json:"code"`
-	Action  studioAction     `json:"action"`
-	Audio   studioAudio      `json:"audio"`
-	Track   musicTrack       `json:"track"`
-	Offset  int64            `json:"offset"`
-	Aligned bool             `json:"aligned"`
-	Target  int              `json:"target"`
+	LeadInSeconds int              `json:"leadInSeconds,omitempty"`
+	Library       []studioPrepared `json:"library"`
+	Type          string           `json:"type"`
+	Token         string           `json:"token"`
+	Role          string           `json:"role"`
+	Code          string           `json:"code"`
+	Action        studioAction     `json:"action"`
+	Audio         studioAudio      `json:"audio"`
+	Track         musicTrack       `json:"track"`
+	Offset        int64            `json:"offset"`
+	Aligned       bool             `json:"aligned"`
+	Target        int              `json:"target"`
 }
 
 func newStudioHub(dir string, databases ...*store.DB) *studioHub {
@@ -664,7 +665,7 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 			fail(errors.New("Ця підготовка не відповідає поточному раунду програми."))
 			return
 		}
-		if !validStudioAudio(e.Audio) || e.Target < 0 || len(e.Track.Cues) > 0 && e.Target >= len(e.Track.Cues) || (e.Offset < -24*3600000 || e.Offset > 24*3600000) {
+		if !validStudioClip(e.LeadInSeconds) || !validStudioAudio(e.Audio) || e.Target < 0 || len(e.Track.Cues) > 0 && e.Target >= len(e.Track.Cues) || (e.Offset < -24*3600000 || e.Offset > 24*3600000) {
 			fail(errors.New("Некоректна підготовка аудіо."))
 			return
 		}
@@ -673,6 +674,7 @@ func (h *studioHub) receive(p *studioPeer, e studioEnvelope) {
 		room.State.Session.TrackID = e.Track.ID
 		room.State.Session.Offset = e.Offset
 		room.State.Session.Target = e.Target
+		room.State.Session.LeadInSeconds = studioClipSeconds(e.LeadInSeconds)
 		room.State.Session.Aligned = e.Aligned
 		room.State.Audio = e.Audio
 		room.State.NeedsTrack = false

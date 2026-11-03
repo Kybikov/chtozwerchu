@@ -1,5 +1,6 @@
 import type { Track } from "./music";
 import { validWordTiming } from "./wordTiming";
+import { validClipLength } from "./roundClip";
 
 export type PreparedSummary = {
   id: number;
@@ -10,6 +11,7 @@ export type PreparedSummary = {
   local: boolean;
 };
 export type PreparedSong = {
+  leadInSeconds?: number;
   schema: 1;
   track: Track;
   offset: number;
@@ -37,6 +39,8 @@ export function validPrepared(song: PreparedSong): boolean {
   const t = song?.track;
   if (
     song?.schema !== 1 ||
+    (song.leadInSeconds !== undefined &&
+      !validClipLength(song.leadInSeconds)) ||
     !t ||
     !Number.isSafeInteger(t.id) ||
     t.id <= 0 ||
