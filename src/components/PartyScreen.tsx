@@ -34,7 +34,13 @@ import { Button, Modal, Panel } from "./ui";
 import Backdrop from "./Backdrop";
 import { Brand } from "./Home";
 import { AccountButton, useIdentity } from "../lib/identity";
-import { contests, useParty, type Contest, type PartyView } from "../lib/party";
+import {
+  contests,
+  useParty,
+  pointWord,
+  type Contest,
+  type PartyView,
+} from "../lib/party";
 import { usePartyAudio } from "../lib/usePartyAudio";
 import { usePWAActivity } from "../lib/pwa";
 import { PWAUpdateControl } from "./PWAUpdate";
@@ -577,7 +583,7 @@ export default function PartyScreen() {
             {!party.watching && (
               <Button variant="ghost" onClick={() => setStageOnly(!stageOnly)}>
                 <Monitor size={17} />
-                {stageOnly ? "Показати пульт" : "Залишити сцену"}
+                {stageOnly ? "Повернути пульт" : "Екран шоу"}
               </Button>
             )}
             <Button
@@ -738,7 +744,10 @@ export default function PartyScreen() {
                       : "ЦЬОГО РАЗУ БЕЗ БАЛІВ"}
                   </span>
                   <h2>{s.result?.answer}</h2>
-                  <p>{s.result?.detail}</p>
+                  {s.result?.detail &&
+                    s.result.detail.trim() !== s.result.answer?.trim() && (
+                      <p>{s.result.detail}</p>
+                    )}
                   {s.result?.voting && (
                     <div className="vote-result-summary">
                       <span>
@@ -789,7 +798,8 @@ export default function PartyScreen() {
                       </div>
                     ) : (
                       <span className="points-chip">
-                        до {s.round?.potential || 0} балів
+                        до {s.round?.potential || 0}{" "}
+                        {pointWord(s.round?.potential || 0)}
                       </span>
                     )}
                   </div>
@@ -825,7 +835,8 @@ export default function PartyScreen() {
                         ))}
                       </div>
                       <span className="potential-caption">
-                        Зараз на кону {s.round?.potential} балів
+                        Зараз на кону {s.round?.potential}{" "}
+                        {pointWord(s.round?.potential || 0)}
                       </span>
                     </>
                   )}
@@ -883,7 +894,8 @@ export default function PartyScreen() {
                             {s.media?.output === "tv"
                               ? "Звук на TV"
                               : "Звук на пульті"}{" "}
-                            · {melodyPoints} бали · швидша відповідь дає більше
+                            · {melodyPoints} {pointWord(melodyPoints)} · швидша
+                            відповідь дає більше
                           </span>
                         </div>
                       )}
@@ -902,7 +914,8 @@ export default function PartyScreen() {
                         <p className="public-hint">{s.round.hint}</p>
                       )}
                       <span className="potential-caption">
-                        На кону {s.round?.potential} бали
+                        На кону {s.round?.potential}{" "}
+                        {pointWord(s.round?.potential || 0)}
                       </span>
                     </div>
                   )}
@@ -1140,7 +1153,8 @@ export default function PartyScreen() {
                       </h3>
                       <p>
                         Команда «{s.teams[s.result?.team || s.activeTeam].name}»
-                        отримує {s.result?.points || 0} балів.
+                        отримує {s.result?.points || 0}{" "}
+                        {pointWord(s.result?.points || 0)}.
                       </p>
                       {host ? (
                         <Button

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { watchMediaPlayback } from "./mediaPlayback";
 
 export function usePlayer(src: string, onError: (message: string) => void) {
   const ref = useRef<HTMLAudioElement>(null);
@@ -57,15 +58,12 @@ export function usePlayer(src: string, onError: (message: string) => void) {
         frame = requestAnimationFrame(tick);
       }
     };
-    const play = () => {
-      setPlaying(true);
-      startFrames();
-    };
-    const pause = () => {
-      setPlaying(false);
+    const stopWatching = watchMediaPlayback(audio, (running) => {
+      setPlaying(running);
       time();
-      stopFrames();
-    };
+      if (running) startFrames();
+      else stopFrames();
+    });
     const waiting = () => {
       setLoading(true);
       stopFrames();
@@ -85,9 +83,6 @@ export function usePlayer(src: string, onError: (message: string) => void) {
       );
     };
     audio.addEventListener("loadedmetadata", metadata);
-    audio.addEventListener("play", play);
-    audio.addEventListener("pause", pause);
-    audio.addEventListener("ended", pause);
     audio.addEventListener("timeupdate", time);
     audio.addEventListener("seeked", time);
     audio.addEventListener("waiting", waiting);
@@ -95,12 +90,10 @@ export function usePlayer(src: string, onError: (message: string) => void) {
     audio.addEventListener("playing", canplay);
     audio.addEventListener("error", error);
     return () => {
+      stopWatching();
       audio.pause();
       stopFrames();
       audio.removeEventListener("loadedmetadata", metadata);
-      audio.removeEventListener("play", play);
-      audio.removeEventListener("pause", pause);
-      audio.removeEventListener("ended", pause);
       audio.removeEventListener("timeupdate", time);
       audio.removeEventListener("seeked", time);
       audio.removeEventListener("waiting", waiting);

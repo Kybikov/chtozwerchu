@@ -154,3 +154,8 @@ export type PartyMedia = {
 };
 
 export { useParty } from "./partyConnection";
+const pointPlurals = new Intl.PluralRules("uk");
+export function pointWord(value: number) {
+  const form = pointPlurals.select(value);
+  return form === "one" ? "бал" : form === "few" ? "бали" : "балів";
+}
