@@ -1,13 +1,15 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useId,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   ArrowRight,
-  Check,
   Eye,
   EyeOff,
   LoaderCircle,
@@ -119,7 +121,33 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<{
+    message: string;
+    field?: "name" | "email" | "password";
+  } | null>(null);
+  const formId = useId();
+  const nameInput = useRef<HTMLInputElement>(null);
+  const emailInput = useRef<HTMLInputElement>(null);
+  const passwordInput = useRef<HTMLInputElement>(null);
+  const fieldError = (field: "name" | "email" | "password") =>
+    error?.field === field ? (
+      <p
+        className="account-field-error"
+        id={`${formId}-${field}-error`}
+        role="alert"
+      >
+        {error.message}
+      </p>
+    ) : null;
+  const invalidField = (
+    field: "name" | "email" | "password",
+    message: string,
+  ) => {
+    setError({ field, message });
+    ({ name: nameInput, email: emailInput, password: passwordInput })[
+      field
+    ].current?.focus();
+  };
   useEffect(() => {
     const controller = new AbortController();
     void (async () => {
@@ -154,7 +182,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, []);
   const openAccount = (next: "login" | "register" | "profile" = "login") => {
-    setError("");
+    setError(null);
     setPassword("");
     setVisible(false);
     setMode(next === "profile" && !user ? "login" : next);
@@ -163,23 +191,24 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     event.preventDefault();
     if (busy) return;
     const cleanEmail = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setError("Вкажи коректну електронну пошту.");
-      return;
-    }
     if (
       mode === "register" &&
       (Array.from(name.trim()).length < 2 ||
         Array.from(name.trim()).length > 32)
     ) {
-      setError("Ім’я має містити від 2 до 32 символів.");
+      invalidField("name", "Ім’я має містити від 2 до 32 символів.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      invalidField("email", "Вкажи коректну електронну пошту.");
       return;
     }
     if (
       !password ||
       (mode === "register" && Array.from(password).length < 10)
     ) {
-      setError(
+      invalidField(
+        "password",
         mode === "register"
           ? "Додай пароль щонайменше з 10 символів."
           : "Вкажи свій пароль.",
@@ -187,11 +216,11 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (new TextEncoder().encode(password).length > 72) {
-      setError("Пароль надто довгий. Використай до 72 байтів.");
+      invalidField("password", "Пароль надто довгий. Спробуй коротший.");
       return;
     }
     setBusy(true);
-    setError("");
+    setError(null);
     try {
       const result = await accountAPI<{ user: User }>(`/api/auth/${mode}`, {
         email: cleanEmail,
@@ -203,24 +232,33 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       setPassword("");
       setMode("profile");
     } catch (e) {
-      setError((e as Error).message);
+      setError({ message: (e as Error).message });
     } finally {
       setBusy(false);
     }
   };
   const logout = async () => {
     setBusy(true);
-    setError("");
+    setError(null);
     try {
       await accountAPI("/api/auth/logout", {});
       sessionStorage.removeItem("khz:party:access");
       sessionStorage.removeItem("khz:network-room");
       location.assign("/");
     } catch (e) {
-      setError((e as Error).message);
+      setError({ message: (e as Error).message });
       setBusy(false);
     }
   };
+  const sessionExpired = useCallback(() => {
+    setUser(null);
+    setPassword("");
+    setVisible(false);
+    setMode("login");
+    setError({
+      message: "Сеанс завершився. Увійди ще раз або продовжуй гостем.",
+    });
+  }, []);
   return (
     <Context.Provider value={{ user, checking, available, openAccount }}>
       {children}
@@ -245,6 +283,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
             : "Грати можна й без акаунта. Вхід додає особисту історію ігор."
         }
         wide={mode === "profile"}
+        className={`account-modal ${mode === "profile" ? "account-profile-modal" : ""}`}
       >
         {mode === "profile" && user ? (
           <>
@@ -265,7 +304,10 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
                 Вийти
               </Button>
             </div>
-            <ProfileHistory userId={user.id} />
+            <ProfileHistory
+              userId={user.id}
+              onSessionExpired={sessionExpired}
+            />
           </>
         ) : (
           <>
@@ -299,23 +341,39 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
             )}
             <form className="account-form" noValidate onSubmit={submit}>
               {mode === "register" && (
-                <label className="field-label">
-                  Як тебе називати
+                <div className="field-label">
+                  <label htmlFor={`${formId}-name`}>Як тебе називати</label>
                   <input
+                    id={`${formId}-name`}
+                    ref={nameInput}
+                    aria-invalid={error?.field === "name" || undefined}
+                    aria-describedby={
+                      error?.field === "name"
+                        ? `${formId}-name-error`
+                        : undefined
+                    }
                     autoComplete="nickname"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    maxLength={32}
                     placeholder="Ім’я або сценічний псевдонім"
                     disabled={busy}
                   />
-                </label>
+                  {fieldError("name")}
+                </div>
               )}
-              <label className="field-label">
-                Електронна пошта
+              <div className="field-label">
+                <label htmlFor={`${formId}-email`}>Електронна пошта</label>
                 <div className="field-with-icon">
-                  <Mail size={19} />
+                  <Mail size={19} aria-hidden="true" />
                   <input
+                    id={`${formId}-email`}
+                    ref={emailInput}
+                    aria-invalid={error?.field === "email" || undefined}
+                    aria-describedby={
+                      error?.field === "email"
+                        ? `${formId}-email-error`
+                        : undefined
+                    }
                     type="email"
                     autoComplete="email"
                     inputMode="email"
@@ -327,11 +385,22 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
                     disabled={busy}
                   />
                 </div>
-              </label>
-              <label className="field-label">
-                Пароль
+                {fieldError("email")}
+              </div>
+              <div className="field-label">
+                <label htmlFor={`${formId}-password`}>Пароль</label>
                 <div className="password-field">
                   <input
+                    id={`${formId}-password`}
+                    ref={passwordInput}
+                    aria-invalid={error?.field === "password" || undefined}
+                    aria-describedby={
+                      error?.field === "password"
+                        ? `${formId}-password-error`
+                        : mode === "register"
+                          ? `${formId}-password-hint`
+                          : undefined
+                    }
                     type={visible ? "text" : "password"}
                     autoComplete={
                       mode === "register" ? "new-password" : "current-password"
@@ -358,10 +427,19 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
                     {visible ? <EyeOff size={19} /> : <Eye size={19} />}
                   </Button>
                 </div>
-              </label>
-              {error && (
+                {fieldError("password") ||
+                  (mode === "register" && (
+                    <p
+                      className="account-field-hint"
+                      id={`${formId}-password-hint`}
+                    >
+                      Щонайменше 10 символів.
+                    </p>
+                  ))}
+              </div>
+              {error && !error.field && (
                 <p className="form-error" role="alert">
-                  {error}
+                  {error.message}
                 </p>
               )}
               <Button
@@ -382,14 +460,23 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
                     : "Увійти та продовжити"}
               </Button>
             </form>
-            <p className="account-footnote">
-              <Check size={16} /> Музичні ключі залишаються на сервері.
-            </p>
+            <Button
+              className="account-guest"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => {
+                setMode(null);
+                setPassword("");
+                setError(null);
+              }}
+            >
+              Продовжити гостем
+            </Button>
           </>
         )}
         {mode === "profile" && error && (
           <p className="form-error" role="alert">
-            {error}
+            {error.message}
           </p>
         )}
       </Modal>
@@ -412,7 +499,13 @@ type SavedMatch = {
   won: boolean;
   endedAt: string;
 };
-function ProfileHistory({ userId }: { userId: string }) {
+function ProfileHistory({
+  userId,
+  onSessionExpired,
+}: {
+  userId: string;
+  onSessionExpired: () => void;
+}) {
   const [data, setData] = useState<{
     shows: SavedShow[];
     matches: SavedMatch[];
@@ -436,14 +529,17 @@ function ProfileHistory({ userId }: { userId: string }) {
         controller.signal,
       ),
     ])
-      .then(([shows, matches]) =>
-        setData({ shows: shows.shows, matches: matches.matches || [] }),
-      )
+      .then(([shows, matches]) => {
+        if (!controller.signal.aborted)
+          setData({ shows: shows.shows, matches: matches.matches || [] });
+      })
       .catch((e: Error) => {
-        if (!controller.signal.aborted) setError(e.message);
+        if (controller.signal.aborted) return;
+        if (e instanceof AccountError && e.status === 401) onSessionExpired();
+        else setError(e.message);
       });
     return () => controller.abort();
-  }, [userId, retry]);
+  }, [userId, retry, onSessionExpired]);
   if (error)
     return (
       <div className="history-empty">
@@ -491,7 +587,7 @@ function ProfileHistory({ userId }: { userId: string }) {
         <Trophy size={17} /> ЗАВЕРШЕНІ ІГРИ <span>{items.length}</span>
       </div>
       {items.map(({ id, date, show, match }) => (
-        <div key={id} className="saved-show">
+        <Panel key={id} className="saved-show">
           <div className="saved-show-heading">
             <span className="saved-show-icon">
               {show ? <Music2 size={22} /> : <Trophy size={22} />}
@@ -518,7 +614,7 @@ function ProfileHistory({ userId }: { userId: string }) {
               </strong>
             ) : (
               <strong className="saved-score">
-                {match?.score} <small>балів</small>
+                {match?.score} <small>{pointWord(match?.score ?? 0)}</small>
               </strong>
             )}
           </div>
@@ -563,8 +659,14 @@ function ProfileHistory({ userId }: { userId: string }) {
                   : "Нічия"}
             </p>
           )}
-        </div>
+        </Panel>
       ))}
     </div>
   );
+}
+
+const pointForms = new Intl.PluralRules("uk");
+function pointWord(score: number) {
+  const form = pointForms.select(score);
+  return form === "one" ? "бал" : form === "few" ? "бали" : "балів";
 }

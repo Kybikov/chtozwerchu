@@ -1,0 +1,188 @@
+/* Account dialogs share the show's type and control scale. */
+.account-modal .modal-heading h2 {
+  font-size: 44px;
+}
+.account-modal .modal-heading p {
+  font-size: 16px;
+}
+.account-modal .modal-heading > .button {
+  min-width: 44px;
+  min-height: 44px;
+  flex: none;
+}
+.account-modal .account-tabs .button {
+  min-height: 48px;
+  font-size: 16px;
+}
+.account-modal .field-label {
+  font-size: 16px;
+  gap: 10px;
+}
+.account-modal .field-label input {
+  color-scheme: dark;
+}
+.account-modal .field-label input[aria-invalid="true"] {
+  border-color: var(--pink);
+}
+.account-field-error,
+.account-field-hint {
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.6;
+}
+.account-field-error {
+  color: var(--pink);
+}
+.account-field-hint {
+  color: var(--muted);
+}
+.account-modal .account-submit {
+  min-height: 56px;
+  font-size: 17px;
+}
+.account-modal .account-guest {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  font-size: 15px;
+}
+.account-modal .account-notice,
+.account-modal .form-error {
+  font-size: 16px;
+}
+.account-modal .profile-identity h3 {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 32px;
+  line-height: 1.3;
+}
+.account-modal .profile-identity p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.account-modal .profile-identity > .button {
+  font-size: 15px;
+  min-height: 48px;
+}
+.account-modal .profile-history > .section-label {
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.account-modal .saved-show {
+  padding: 24px;
+}
+.account-modal .saved-show-heading {
+  gap: 16px;
+}
+.account-modal .saved-show-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+.account-modal .saved-show h3 {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 26px;
+  line-height: 1.35;
+}
+.account-modal .saved-show-heading p,
+.account-modal .saved-score small,
+.account-modal .saved-team-names {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.account-modal .saved-score {
+  font-size: 40px;
+  flex: none;
+}
+.account-modal .saved-team-names {
+  flex-wrap: wrap;
+}
+.account-modal .saved-team-names .button {
+  font-size: 14px;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+.account-modal .saved-rounds li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(100px, 160px);
+  gap: 16px;
+  font-size: 14px;
+  padding: 20px 0;
+}
+.account-modal .saved-rounds li > b {
+  font-size: 24px;
+}
+.account-modal .saved-rounds strong {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.account-modal .saved-rounds li > span {
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+.account-modal .saved-match-result,
+.account-modal .history-empty p {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.account-modal .history-empty h3 {
+  font-family: "Oswald Variable", sans-serif;
+  font-size: 32px;
+  line-height: 1.3;
+}
+.account-modal .history-empty .button {
+  min-height: 48px;
+  font-size: 16px;
+}
+@media (max-width: 640px) {
+  .modal-content.account-modal {
+    width: calc(100vw - 24px);
+    max-height: calc(100svh - 24px);
+    padding: 24px 20px;
+    border-radius: 22px;
+  }
+  .account-modal .modal-heading {
+    gap: 12px;
+  }
+  .account-modal .modal-heading h2 {
+    font-size: 34px;
+  }
+  .account-modal .profile-identity {
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .account-modal .profile-identity h3 {
+    font-size: 28px;
+  }
+  .account-modal .profile-identity > .button {
+    margin-left: 0;
+  }
+  .account-modal .saved-show {
+    padding: 20px 16px;
+  }
+  .account-modal .saved-show-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .account-modal .saved-show-heading > div {
+    flex-basis: 100%;
+  }
+  .account-modal .saved-show h3 {
+    font-size: 25px;
+  }
+  .account-modal .saved-score {
+    font-size: 40px;
+  }
+  .account-modal .saved-rounds li {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .account-modal .saved-rounds li > span {
+    grid-column: 2;
+    margin-left: 0;
+    width: auto;
+    text-align: left;
+  }
+  .account-modal .history-empty {
+    padding: 28px 20px;
+  }
+}

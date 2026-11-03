@@ -56,6 +56,7 @@ export function Modal({
   description,
   children,
   wide = false,
+  className = "",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -63,13 +64,14 @@ export function Modal({
   description?: string;
   children: ReactNode;
   wide?: boolean;
+  className?: string;
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
         <Dialog.Content
-          className={`modal-content ${wide ? "modal-wide" : ""}`}
+          className={`modal-content ${wide ? "modal-wide" : ""} ${className}`}
           aria-describedby={description ? "modal-description" : undefined}
         >
           <div className="modal-heading">

@@ -16,6 +16,7 @@ import "./party.css";
 import "./party-extensions.css";
 import "./party-buzzer.css";
 import "./readability.css";
+import "./account.css";
 const screen = new URLSearchParams(location.search).get("screen");
 const root =
   import.meta.hot?.data.root ?? createRoot(document.getElementById("root")!);
