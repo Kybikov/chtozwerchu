@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowRight,
   Check,
@@ -23,7 +23,13 @@ type Props = {
 };
 const teams: Team[] = ["girls", "boys"];
 
-export function BuzzerScene({ state }: { state: PartyView }) {
+export function BuzzerScene({
+  state,
+  controls,
+}: {
+  state: PartyView;
+  controls?: ReactNode;
+}) {
   const b = state.round?.buzzer;
   if (!b) return null;
   return (
@@ -52,24 +58,26 @@ export function BuzzerScene({ state }: { state: PartyView }) {
           ? `${b.playerName} на кнопці. Назвіть пісню або виконавця.`
           : "Перший натиск — ваші 10 секунд на відповідь."}
       </p>
-      <div className="buzzer-team-status">
-        {teams.map((t) => (
-          <span
-            key={t}
-            className={`${t} ${b.blocked.includes(t) ? "exhausted" : b.team === t ? "claimed" : ""}`}
-          >
-            <i />
-            {state.teams[t].name}
-            <small>
-              {b.blocked.includes(t)
-                ? "ШАНС ВИКОРИСТАНО"
-                : b.team === t
-                  ? "ВІДПОВІДАЮТЬ"
-                  : "ГОТОВІ"}
-            </small>
-          </span>
-        ))}
-      </div>
+      {controls || (
+        <div className="buzzer-team-status">
+          {teams.map((t) => (
+            <span
+              key={t}
+              className={`${t} ${b.blocked.includes(t) ? "exhausted" : b.team === t ? "claimed" : ""}`}
+            >
+              <i />
+              {state.teams[t].name}
+              <small>
+                {b.blocked.includes(t)
+                  ? "ШАНС ВИКОРИСТАНО"
+                  : b.team === t
+                    ? "ВІДПОВІДАЮТЬ"
+                    : "ГОТОВІ"}
+              </small>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -131,6 +139,35 @@ export function useBuzzerShortcuts({
   }, [open, pending, host, b, action]);
 }
 
+export function HostBuzzButtons({ state: s, online, pending, action }: Props) {
+  const b = s.round?.buzzer;
+  if (!s.you?.host || s.stage !== "playing" || !b || b.phase === "answer")
+    return null;
+  const open =
+    online && !s.paused && b.phase === "open" && !s.round?.awaitingAudio;
+  return (
+    <div className="host-buzz-buttons">
+      {teams.map((t, i) => (
+        <Button
+          key={t}
+          className={`buzz-button ${t}`}
+          disabled={!open || pending || b.blocked.includes(t)}
+          onClick={() => action("buzz", { team: t })}
+        >
+          <Zap size={24} />
+          <span>
+            {s.teams[t].name}
+            <small>
+              {b.blocked.includes(t) ? "Шанс використано" : "Знаємо пісню"}
+            </small>
+          </span>
+          <kbd>{i + 1}</kbd>
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export default function PartyBuzzer({
   state: s,
   online,
@@ -171,27 +208,12 @@ export default function PartyBuzzer({
       )}
       {b.phase !== "answer" &&
         (host ? (
-          <div className="host-buzz-buttons">
-            {teams.map((t, i) => (
-              <Button
-                key={t}
-                className={`buzz-button ${t}`}
-                disabled={!open || pending || b.blocked.includes(t)}
-                onClick={() => action("buzz", { team: t })}
-              >
-                <Zap size={24} />
-                <span>
-                  {s.teams[t].name}
-                  <small>
-                    {b.blocked.includes(t)
-                      ? "Шанс використано"
-                      : "Знаємо пісню"}
-                  </small>
-                </span>
-                <kbd>{i + 1}</kbd>
-              </Button>
-            ))}
-          </div>
+          <HostBuzzButtons
+            state={s}
+            online={online}
+            pending={pending}
+            action={action}
+          />
         ) : b.blocked.includes(s.you?.team || "girls") ? (
           <div className="buzzer-spent">
             <Check size={19} />

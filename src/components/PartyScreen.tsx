@@ -48,6 +48,7 @@ import PartyVote, { VoteModePicker } from "./PartyVote";
 import PartySound, { TVSoundGate } from "./PartySound";
 import PartyBuzzer, {
   BuzzerScene,
+  HostBuzzButtons,
   MelodyModePicker,
   useBuzzerShortcuts,
 } from "./PartyBuzzer";
@@ -1270,7 +1271,21 @@ export default function PartyScreen() {
                       className={`melody-stage ${buzzer ? "melody-buzzer-stage" : ""}`}
                     >
                       {buzzer ? (
-                        <BuzzerScene state={s} />
+                        <BuzzerScene
+                          state={s}
+                          controls={
+                            stageOnly && host && buzzer?.phase !== "answer" ? (
+                              <div className="party-stage-buzz">
+                                <HostBuzzButtons
+                                  state={s}
+                                  online={online}
+                                  pending={party.pending}
+                                  action={party.action}
+                                />
+                              </div>
+                            ) : undefined
+                          }
+                        />
                       ) : (
                         <>
                           <img

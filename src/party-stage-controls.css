@@ -30,6 +30,50 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.party-play-shell .buzzer-scene > .party-stage-buzz {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.party-play-shell.party-stage-only .buzzer-scene:has(.party-stage-buzz) {
+  row-gap: 6px;
+}
+.party-stage-only .buzzer-scene:has(.party-stage-buzz) .music-stage-art {
+  grid-row: 1 / span 3;
+  height: clamp(100px, 18svh, 360px);
+}
+.party-stage-buzz .button.buzz-button {
+  min-height: clamp(96px, 13svh, 240px);
+  padding: clamp(16px, 2svh, 40px);
+}
+.party-stage-buzz .buzz-button .specular-button__label {
+  width: 100%;
+  gap: 12px;
+}
+.party-stage-buzz .buzz-button .specular-button__label > span {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  overflow-wrap: anywhere;
+  font:
+    550 clamp(28px, 3.4svh, 72px)/1.2 "Oswald Variable",
+    sans-serif;
+}
+.party-stage-buzz .buzz-button small {
+  font:
+    450 clamp(14px, 1.8svh, 38px)/1.5 "Onest Variable",
+    sans-serif;
+}
+.party-stage-buzz .buzz-button kbd {
+  font-size: clamp(16px, 2svh, 42px);
+}
+@media (max-width: 560px) {
+  .party-stage-only .buzzer-scene:has(.party-stage-buzz) .music-stage-art {
+    grid-row: auto;
+  }
+  .party-stage-buzz .host-buzz-buttons {
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width: 560px) {
   .party-stage-control-dialog .verdict-buttons,
   .party-stage-control-dialog .alias-host-controls {
