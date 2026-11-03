@@ -31,9 +31,14 @@ export function BuzzerScene({ state }: { state: PartyView }) {
       className={`buzzer-scene ${b.phase} ${b.team || ""}`}
       aria-live="polite"
     >
-      <div className="buzzer-emblem" aria-hidden="true">
-        <Zap size={46} fill="currentColor" />
-      </div>
+      <img
+        className="music-stage-art"
+        src="/show-vinyl.webp"
+        alt=""
+        width="1536"
+        height="1024"
+        decoding="async"
+      />
       <span className="section-label">
         {b.phase === "answer" ? "ПЕРШІ НА КНОПЦІ" : "ВПІЗНАЄШ? НЕ ВАГАЙСЯ."}
       </span>

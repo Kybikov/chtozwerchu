@@ -122,12 +122,10 @@ func fiveWordsPoints(d *fiveWordsData) int {
 }
 
 func matchesFiveWords(guess string, d *fiveWordsData) bool {
-	// Match the full phrase, the currently-hidden words, the song title or aliases.
+	// Match the phrase, hidden words, or song title (optionally with its artist).
 	full := joinWords(d.Words, nil)
 	hidden := joinWords(d.Words, d.Revealed)
-	cands := []string{full, hidden, d.Song.Title}
-	cands = append(cands, d.Song.Aliases...)
-	return matchesAny(guess, cands...)
+	return matchesAny(guess, full, hidden) || matchesSongTitle(guess, d.Song)
 }
 
 func (fiveWords) View(room *Room, viewer *Player) any {

@@ -144,7 +144,7 @@ func (melody) Action(room *Room, act Action) error {
 				return errors.New("Зараз відповідає команда, яка натиснула першою.")
 			}
 			guess := act.Str("text")
-			if matchesAny(guess, append([]string{d.Song.Title, d.Song.Artist}, d.Song.Aliases...)...) {
+			if matchesMelody(guess, d) {
 				resolveMelody(room, d, true, guess)
 			} else {
 				failMelodyClaim(room, d, false)
@@ -155,8 +155,7 @@ func (melody) Action(room *Room, act Action) error {
 			return errors.New("зараз не ваша черга")
 		}
 		guess := act.Str("text")
-		cands := append([]string{d.Song.Title, d.Song.Artist}, d.Song.Aliases...)
-		resolveMelody(room, d, matchesAny(guess, cands...), guess)
+		resolveMelody(room, d, matchesMelody(guess, d), guess)
 		return nil
 	case "force":
 		if !act.IsHost {
@@ -179,6 +178,10 @@ func (melody) Action(room *Room, act Action) error {
 		return nil
 	}
 	return errors.New("невідома дія")
+}
+
+func matchesMelody(guess string, d *melodyData) bool {
+	return matchesSongTitle(guess, d.Song) || matchesAny(guess, d.Song.Artist)
 }
 
 func resolveMelody(room *Room, d *melodyData, won bool, guess string) {

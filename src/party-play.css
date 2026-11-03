@@ -1,0 +1,545 @@
+/* Shared reading scale for rounds, pauses, results and the final. */
+.party-play-shell {
+  --party-label: 12px;
+  --party-copy: 16px;
+  --party-caption: 14px;
+  --party-action: 16px;
+  --party-heading: clamp(32px, 3.1vw, 48px);
+  --party-display: clamp(40px, 5vw, 72px);
+}
+body:has(.party-play-shell) {
+  min-width: 0;
+}
+.party-play-shell .party-main {
+  padding: 24px 40px 40px;
+}
+.party-play-shell .party-room-bar {
+  margin-bottom: 20px;
+}
+.party-play-shell .party-room-bar > div:first-child,
+.party-play-shell .party-room-bar .button {
+  font-size: 14px;
+}
+.party-play-shell .party-room-bar .button {
+  min-height: 44px;
+}
+.party-play-shell .party-scoreboard {
+  margin-bottom: 20px;
+  gap: 20px;
+}
+.party-play-shell .party-team-score {
+  padding: 18px 24px;
+  gap: 16px;
+}
+.party-play-shell .party-team-score .section-label {
+  font-size: var(--party-label);
+  color: var(--muted);
+}
+.party-play-shell .party-team-caption {
+  font-size: var(--party-caption);
+}
+.party-play-shell:not(.party-stage-only) .party-game-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.48fr);
+  gap: 20px;
+}
+.party-play-shell .party-controls > .party-buzzer-control {
+  order: -2;
+}
+.party-play-shell .party-controls > .party-control-panel {
+  order: -1;
+}
+.party-play-shell .party-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+}
+.party-play-shell .party-stage-top {
+  flex: none;
+  font-size: var(--party-label);
+  padding: 16px 24px;
+  letter-spacing: 1px;
+}
+.party-play-shell .party-live-stage,
+.party-play-shell .party-result-stage,
+.party-play-shell .party-final-stage {
+  min-height: 0;
+  height: auto;
+  flex: 1;
+  padding: 24px;
+}
+.party-play-shell .team-chip,
+.party-play-shell .points-chip {
+  font-size: var(--party-caption);
+  line-height: 1.5;
+}
+.party-play-shell .party-round-heading h2 {
+  font-size: var(--party-heading);
+  margin-top: 10px;
+}
+.party-play-shell .party-clock strong {
+  font-size: clamp(48px, 4.5vw, 68px);
+}
+.party-play-shell .party-clock span {
+  font-size: var(--party-label);
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+}
+.party-play-shell .contest-instruction {
+  font-size: var(--party-copy);
+  margin-top: 24px;
+}
+.party-play-shell .word-slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 24px 0;
+}
+.party-play-shell .word-slots .button {
+  min-width: 0;
+  min-height: 112px;
+  padding: 14px 10px;
+}
+.party-play-shell .word-slots .word-hidden > .specular-button__label {
+  flex-direction: column;
+  gap: 12px;
+  font-size: 32px;
+}
+.party-play-shell .word-slots .word-revealed {
+  font-size: 30px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.party-play-shell .potential-caption,
+.party-play-shell .public-hint {
+  font-size: var(--party-caption);
+  line-height: 1.6;
+}
+.party-play-shell .panel.party-control-panel,
+.party-play-shell .party-buzzer-control,
+.party-play-shell .panel.party-players,
+.party-play-shell .party-sound-card {
+  padding: 24px;
+  gap: 14px;
+}
+.party-play-shell .party-control-panel > .section-label,
+.party-play-shell .party-buzzer-control > .section-label,
+.party-play-shell .party-players > .section-label,
+.party-play-shell .party-sound-card > .section-label {
+  font-size: var(--party-label);
+}
+.party-play-shell .party-control-panel > h3 {
+  font-size: 32px;
+  line-height: 1.3;
+}
+.party-play-shell .party-control-panel > p,
+.party-play-shell .party-buzzer-control > p,
+.party-play-shell .buzzer-claim p,
+.party-play-shell .party-sound-card > p,
+.party-play-shell .private-card p {
+  font-size: var(--party-copy);
+  line-height: 1.65;
+}
+.party-play-shell .party-control-panel .button,
+.party-play-shell .party-buzzer-control .button,
+.party-play-shell .party-sound-card .button {
+  min-height: 48px;
+  font-size: var(--party-action);
+}
+.party-play-shell .private-card .button {
+  font-size: 14px;
+}
+.party-play-shell .private-card .section-label,
+.party-play-shell .buzzer-claim > span {
+  font-size: var(--party-label);
+}
+.party-play-shell .private-card h4 {
+  font-size: 26px;
+}
+.party-play-shell .verdict-buttons,
+.party-play-shell .alias-host-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.party-play-shell .verdict-buttons .button,
+.party-play-shell .alias-host-controls .button {
+  min-height: 64px;
+  padding: 12px;
+}
+.party-play-shell .alias-host-controls .button:last-child {
+  grid-column: 1 / -1;
+}
+.party-play-shell .party-guess > label {
+  font-size: 14px;
+}
+.party-play-shell .party-guess input {
+  font-size: 16px;
+  min-height: 50px;
+}
+.party-play-shell .party-guess > .button {
+  min-width: 48px;
+  height: 50px;
+}
+.party-play-shell .party-roster h4,
+.party-play-shell .party-roster > div {
+  font-size: 16px;
+  line-height: 1.6;
+}
+.party-play-shell .buzz-button small,
+.party-play-shell .buzzer-spent {
+  font-size: 14px;
+}
+.party-play-shell .host-buzz-buttons .buzz-button,
+.party-play-shell .button.player-buzz {
+  min-height: 112px;
+}
+.party-play-shell .melody-stage:not(.melody-buzzer-stage),
+.party-play-shell .buzzer-scene {
+  display: grid;
+  grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+  gap: 12px 24px;
+  align-items: center;
+  text-align: left;
+}
+.music-stage-art {
+  display: block;
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+}
+.party-play-shell .buzzer-scene > :not(.music-stage-art),
+.party-play-shell
+  .melody-stage:not(.melody-buzzer-stage)
+  > :not(.music-stage-art) {
+  grid-column: 2;
+}
+.party-play-shell .buzzer-scene h3 {
+  font-size: clamp(32px, 3.4vw, 50px);
+  line-height: 1.2;
+}
+.party-play-shell .emoji-stage h3,
+.party-play-shell .melody-stage > h3 {
+  font-size: var(--party-heading);
+  line-height: 1.3;
+}
+.party-play-shell .buzzer-scene .section-label {
+  font-size: var(--party-label);
+  letter-spacing: 1px;
+}
+.party-play-shell .buzzer-scene > p,
+.party-play-shell .melody-stage > p,
+.party-play-shell .emoji-stage > p {
+  font-size: var(--party-copy);
+  line-height: 1.6;
+}
+.party-play-shell .buzzer-team-status {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.party-play-shell .buzzer-team-status > span {
+  font-size: var(--party-caption);
+}
+.party-play-shell .buzzer-team-status small {
+  font-size: var(--party-label);
+  letter-spacing: 0.3px;
+}
+.melody-playback-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.party-play-shell .melody-playback-controls .button {
+  min-height: 48px;
+  font-size: var(--party-action);
+}
+.party-play-shell .melody-playback-controls .potential-caption {
+  flex: 1;
+  min-width: 150px;
+  text-align: left;
+}
+.party-play-shell .alias-stage > .section-label,
+.party-play-shell .alias-progress strong > span {
+  font-size: var(--party-label);
+  line-height: 1.5;
+}
+.party-play-shell .alias-stage > p,
+.party-play-shell .truth-stage > p,
+.party-play-shell .team-voting > p,
+.party-play-shell .vote-result-summary > p,
+.party-play-shell .vote-received {
+  font-size: var(--party-copy);
+  line-height: 1.65;
+}
+.party-play-shell .truth-stage h3 {
+  font-size: clamp(26px, 2.8vw, 40px);
+  line-height: 1.5;
+}
+.party-play-shell .truth-options .button {
+  font-size: var(--party-action);
+}
+.party-play-shell .poll-progress > span {
+  font-size: var(--party-label);
+}
+.party-play-shell .vote-result-summary > span {
+  font-size: var(--party-copy);
+}
+.party-play-shell .vote-result-summary b {
+  font-size: clamp(27px, 3.5svh, 76px);
+}
+.party-play-shell .party-pause-overlay h3,
+.party-play-shell .party-result-stage h2,
+.party-play-shell .party-final-stage h2 {
+  font-size: var(--party-display);
+}
+.party-play-shell .party-pause-overlay p,
+.party-play-shell .party-result-stage > p,
+.party-play-shell .party-final-stage > p,
+.party-play-shell .party-result-points > span {
+  font-size: var(--party-copy);
+  line-height: 1.65;
+}
+.party-play-shell .party-match-history li > div > span {
+  font-size: 14px;
+}
+.party-play-shell .party-match-history li > div > strong {
+  font-size: 18px;
+}
+.party-play-shell.party-stage-only {
+  --party-label: clamp(14px, 1.8svh, 34px);
+  --party-copy: clamp(20px, 2.5svh, 44px);
+  --party-caption: clamp(16px, 2svh, 36px);
+  --party-action: clamp(18px, 2.5svh, 44px);
+  --party-heading: clamp(32px, 4.4svh, 88px);
+  --party-display: clamp(44px, 7svh, 140px);
+}
+.party-play-shell.party-stage-only .party-main {
+  padding: clamp(16px, 2vw, 40px);
+}
+.party-play-shell.party-stage-only .party-stage {
+  min-height: 0;
+}
+.party-play-shell.party-stage-only .party-live-stage,
+.party-play-shell.party-stage-only .party-result-stage,
+.party-play-shell.party-stage-only .party-final-stage {
+  padding: clamp(16px, 2svh, 48px);
+  height: auto;
+}
+.party-play-shell.party-stage-only .party-room-bar > div:first-child,
+.party-play-shell.party-stage-only .party-room-bar .button {
+  font-size: var(--party-label);
+}
+.party-play-shell.party-stage-only .party-team-score h2 {
+  font-size: clamp(30px, 4svh, 80px);
+}
+.party-play-shell.party-stage-only .party-team-score > strong {
+  font-size: clamp(62px, 8svh, 160px);
+}
+.party-play-shell.party-stage-only .party-clock strong {
+  font-size: clamp(48px, 7svh, 140px);
+}
+.party-play-shell.party-stage-only .word-slots {
+  flex: 1;
+  min-height: 0;
+  align-content: center;
+  margin: clamp(16px, 3svh, 64px) 0;
+}
+.party-play-shell.party-stage-only .word-slots .button {
+  min-height: clamp(96px, 18svh, 300px);
+}
+.party-play-shell.party-stage-only .word-slots .word-revealed,
+.party-play-shell.party-stage-only
+  .word-slots
+  .word-hidden
+  > .specular-button__label {
+  font-size: clamp(32px, 5svh, 104px);
+}
+.party-play-shell.party-stage-only .word-slots .button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.party-play-shell.party-stage-only .music-stage-art {
+  height: clamp(120px, 24svh, 460px);
+}
+.party-play-shell.party-stage-only .buzzer-scene h3,
+.party-play-shell.party-stage-only .alias-stage h3 {
+  font-size: var(--party-display);
+}
+.party-play-shell.party-stage-only .alias-stage {
+  padding: 10px 0;
+}
+.party-play-shell.party-stage-only .alias-stage h3 {
+  margin: 12px 0;
+}
+.party-play-shell.party-stage-only .alias-stage h3 br,
+.party-play-shell.party-stage-only .alias-stage > p br {
+  display: none;
+}
+.party-play-shell.party-stage-only .alias-progress {
+  margin-top: 14px;
+}
+.party-play-shell.party-stage-only .melody-stage {
+  gap: 12px;
+  padding: 10px 0;
+}
+.party-play-shell.party-stage-only .truth-stage h3 {
+  font-size: clamp(26px, 4svh, 86px);
+}
+.party-play-shell.party-stage-only .emoji-stage > div {
+  font-size: clamp(54px, 10svh, 180px);
+}
+.party-play-shell.party-stage-only .alias-progress strong,
+.party-play-shell.party-stage-only .party-result-points,
+.party-play-shell.party-stage-only .party-final-stage > strong {
+  font-size: clamp(48px, 8svh, 170px);
+}
+.party-play-shell.party-stage-only
+  .party-result-stage:has(.vote-result-summary)
+  .party-result-symbol {
+  width: clamp(40px, 5svh, 90px);
+  height: clamp(40px, 5svh, 90px);
+  margin-bottom: 8px;
+}
+.party-play-shell.party-stage-only
+  .party-result-stage:has(.vote-result-summary)
+  h2 {
+  margin: 8px 0;
+}
+.party-play-shell.party-stage-only .vote-result-summary {
+  margin-top: 8px;
+  gap: 8px;
+}
+.party-play-shell.party-stage-only .vote-result-summary > span {
+  padding: 6px 12px;
+}
+.party-play-shell.party-stage-only .vote-result-summary > p {
+  margin-top: 0;
+}
+.party-play-shell.party-stage-only
+  .party-result-stage:has(.vote-result-summary)
+  .party-result-points {
+  margin-top: 8px;
+}
+.party-play-shell.party-stage-only
+  .party-result-stage:has(.vote-result-summary)
+  .party-result-points
+  > span {
+  margin-top: 6px;
+}
+@media (max-width: 1000px) {
+  .party-play-shell:not(.party-stage-only) .party-main {
+    padding-inline: 24px;
+  }
+  .party-play-shell:not(.party-stage-only) .party-game-grid {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+  .party-play-shell:not(.party-stage-only) .word-slots {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .party-play-shell {
+    --party-heading: 30px;
+    --party-display: 42px;
+  }
+  .party-play-shell:not(.party-stage-only) .party-main {
+    padding: 16px 14px 40px;
+  }
+  .party-play-shell .party-room-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .party-play-shell .party-room-bar .button {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .party-play-shell .party-team-score {
+    padding: 14px;
+    gap: 10px;
+  }
+  .party-play-shell .party-team-score h2 {
+    font-size: 25px;
+  }
+  .party-play-shell .party-team-score .section-label {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .party-play-shell .party-team-caption {
+    font-size: 12px;
+  }
+  .party-play-shell:not(.party-stage-only) .party-game-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .party-play-shell.party-remote-host .party-controls {
+    order: -1;
+  }
+  .party-play-shell .party-live-stage,
+  .party-play-shell .party-result-stage,
+  .party-play-shell .party-final-stage,
+  .party-play-shell .panel.party-control-panel,
+  .party-play-shell .party-buzzer-control,
+  .party-play-shell .party-sound-card {
+    padding: 20px;
+  }
+  .party-play-shell .word-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .party-play-shell .word-slots .button:last-child {
+    grid-column: 1 / -1;
+  }
+  .party-play-shell .word-slots .button {
+    min-height: 88px;
+  }
+  .party-play-shell .word-slots .word-revealed {
+    font-size: 26px;
+  }
+  .party-play-shell .buzzer-scene,
+  .party-play-shell .melody-stage:not(.melody-buzzer-stage) {
+    grid-template-columns: minmax(0, 1fr);
+    text-align: center;
+  }
+  .party-play-shell .music-stage-art {
+    grid-column: 1;
+    grid-row: auto;
+    height: 140px;
+  }
+  .party-play-shell .buzzer-scene > :not(.music-stage-art),
+  .party-play-shell
+    .melody-stage:not(.melody-buzzer-stage)
+    > :not(.music-stage-art) {
+    grid-column: 1;
+  }
+  .party-play-shell .buzzer-team-status {
+    justify-content: center;
+  }
+  .party-play-shell .party-round-heading {
+    gap: 12px;
+  }
+  .party-play-shell .points-chip {
+    white-space: normal;
+    text-align: center;
+  }
+  .party-play-shell.party-stage-only {
+    height: auto;
+    min-height: 100svh;
+    overflow: clip;
+    --party-label: 12px;
+    --party-copy: 16px;
+    --party-caption: 14px;
+    --party-heading: 30px;
+    --party-display: 42px;
+  }
+  .party-play-shell.party-stage-only .party-main {
+    height: auto;
+    min-height: 100svh;
+    padding: 16px;
+  }
+  .party-play-shell.party-stage-only .party-stage {
+    min-height: 460px;
+  }
+}

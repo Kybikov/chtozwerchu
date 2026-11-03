@@ -44,6 +44,7 @@ import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
 import "../party-setup.css";
 import "../party-lobby.css";
+import "../party-play.css";
 
 export default function PartyScreen() {
   const { user, openAccount } = useIdentity();
@@ -217,7 +218,7 @@ export default function PartyScreen() {
     );
   return (
     <div
-      className={`app-shell party-shell ${s?.stage === "lobby" ? "party-lobby-shell" : ""} ${buzzer ? "party-buzzer-round" : ""} ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
+      className={`app-shell party-shell ${s ? (s.stage === "lobby" ? "party-lobby-shell" : "party-play-shell") : ""} ${buzzer ? "party-buzzer-round" : ""} ${host && s?.media?.output === "tv" ? "party-remote-host" : ""} ${stageOnly || party.watching ? "party-stage-only" : ""}`}
     >
       <Backdrop effects={localStorage.getItem("khz:effects") !== "off"} />
       <audio ref={player.ref} preload="metadata" />
@@ -785,7 +786,7 @@ export default function PartyScreen() {
                                 ? slot.word
                                 : `Відкрити слово ${i + 1}`
                             }
-                            disabled={slot.revealed || !canAct}
+                            disabled={slot.revealed || !canAct || party.pending}
                             onClick={() => party.action("reveal", { index: i })}
                           >
                             {slot.revealed ? (
@@ -812,18 +813,20 @@ export default function PartyScreen() {
                         <BuzzerScene state={s} />
                       ) : (
                         <>
-                          <div
-                            className={`melody-disc ${s.media?.playing ? "spinning" : ""}`}
-                            aria-hidden="true"
-                          >
-                            <DiscIcon />
-                          </div>
+                          <img
+                            className="music-stage-art"
+                            src="/show-vinyl.webp"
+                            alt=""
+                            width="1536"
+                            height="1024"
+                            decoding="async"
+                          />
                           <h3>Знайомий мотив?</h3>
                           <p>Назвіть пісню та виконавця.</p>
                         </>
                       )}
                       {host && (
-                        <>
+                        <div className="melody-playback-controls">
                           <Button
                             variant="primary"
                             disabled={
@@ -858,7 +861,7 @@ export default function PartyScreen() {
                               : "Звук на пульті"}{" "}
                             · {melodyPoints} бали · швидша відповідь дає більше
                           </span>
-                        </>
+                        </div>
                       )}
                       {s.round?.hints?.map((hint) => (
                         <p className="public-hint" key={hint}>
@@ -897,13 +900,11 @@ export default function PartyScreen() {
                         ПОЯСНЮЄ {s.round?.explainerName || "ВЕДУЧИЙ"}
                       </span>
                       <h3>
-                        Те саме.
-                        <br />
+                        Те саме. <br />
                         <span>Іншими словами.</span>
                       </h3>
                       <p>
-                        Пояснюй уголос. Команда відгадує.
-                        <br />
+                        Пояснюй уголос. Команда відгадує. <br />
                         Приватна картка — на пульті того, хто пояснює.
                       </p>
                       <div className="alias-progress">
@@ -1149,10 +1150,7 @@ export default function PartyScreen() {
                             "Хто впізнає першим?"
                           )
                         ) : (
-                          <>
-                            {s.teams[s.activeTeam].name},<br />
-                            ваш вихід
-                          </>
+                          <>{s.teams[s.activeTeam].name}, ваш вихід</>
                         )}
                       </h3>
                       <p>{metadata?.description}</p>
@@ -1225,8 +1223,11 @@ export default function PartyScreen() {
                               <Button
                                 variant="primary"
                                 disabled={
-                                  s.roundType === "five_words" &&
-                                  !s.round?.slots?.some((slot) => slot.revealed)
+                                  party.pending ||
+                                  (s.roundType === "five_words" &&
+                                    !s.round?.slots?.some(
+                                      (slot) => slot.revealed,
+                                    ))
                                 }
                                 onClick={() =>
                                   party.action("force", { won: true })
@@ -1236,6 +1237,7 @@ export default function PartyScreen() {
                                 Відгадали
                               </Button>
                               <Button
+                                disabled={party.pending}
                                 onClick={() =>
                                   party.action("force", { won: false })
                                 }
@@ -1283,9 +1285,10 @@ export default function PartyScreen() {
                             s.roundType === "crocodile") && (
                             <Button
                               disabled={
-                                s.roundType === "melody"
+                                party.pending ||
+                                (s.roundType === "melody"
                                   ? (s.round?.hints?.length || 0) >= 2
-                                  : !!s.round?.hint
+                                  : !!s.round?.hint)
                               }
                               onClick={() => party.action("hint")}
                             >
@@ -1463,6 +1466,7 @@ export default function PartyScreen() {
           <Button onClick={() => setSheet(null)}>Ще граємо</Button>
           <Button
             variant="primary"
+            disabled={!online || party.pending}
             onClick={() => {
               if (party.action("finish")) setSheet(null);
             }}
@@ -1515,6 +1519,7 @@ export default function PartyScreen() {
           </div>
           <Button
             variant="primary"
+            disabled={!online || party.pending}
             onClick={() => {
               if (
                 party.send("set_config", {
@@ -1534,14 +1539,5 @@ export default function PartyScreen() {
         </div>
       </Modal>
     </div>
-  );
-}
-function DiscIcon() {
-  return (
-    <>
-      <span />
-      <i />
-      <Music2 size={35} />
-    </>
   );
 }
