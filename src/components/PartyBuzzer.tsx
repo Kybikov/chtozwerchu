@@ -74,19 +74,21 @@ export function BuzzerScene({ state }: { state: PartyView }) {
   );
 }
 
-export default function PartyBuzzer({
+export function useBuzzerShortcuts({
   state: s,
   online,
   pending,
   action,
-}: Props) {
-  const b = s.round?.buzzer;
-  const [guess, setGuess] = useState("");
-  useEffect(() => setGuess(""), [s.roundIndex, b?.attempt, b?.phase]);
-  const host = !!s.you?.host;
+}: Omit<Props, "state"> & { state: PartyView | null }) {
+  const b = s?.round?.buzzer;
+  const host = !!s?.you?.host;
   const open =
-    !!b && online && !s.paused && b.phase === "open" && !s.round?.awaitingAudio;
-  const answer = !!b && online && !s.paused && b.canAnswer;
+    !!b &&
+    s?.stage === "playing" &&
+    online &&
+    !s.paused &&
+    b.phase === "open" &&
+    !s.round?.awaitingAudio;
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (
@@ -127,6 +129,22 @@ export default function PartyBuzzer({
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, [open, pending, host, b, action]);
+}
+
+export default function PartyBuzzer({
+  state: s,
+  online,
+  pending,
+  action,
+}: Props) {
+  const b = s.round?.buzzer;
+  const [guess, setGuess] = useState("");
+  useEffect(() => setGuess(""), [s.roundIndex, b?.attempt, b?.phase]);
+  const host = !!s.you?.host;
+  const open =
+    !!b && online && !s.paused && b.phase === "open" && !s.round?.awaitingAudio;
+  const answer = !!b && online && !s.paused && b.canAnswer;
+
   if (!b) return null;
   return (
     <div className={`party-buzzer-control ${s.you?.team || ""}`}>

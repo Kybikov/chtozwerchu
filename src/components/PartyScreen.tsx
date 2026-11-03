@@ -46,13 +46,18 @@ import { usePWAActivity } from "../lib/pwa";
 import { PWAUpdateControl } from "./PWAUpdate";
 import PartyVote, { VoteModePicker } from "./PartyVote";
 import PartySound, { TVSoundGate } from "./PartySound";
-import PartyBuzzer, { BuzzerScene, MelodyModePicker } from "./PartyBuzzer";
+import PartyBuzzer, {
+  BuzzerScene,
+  MelodyModePicker,
+  useBuzzerShortcuts,
+} from "./PartyBuzzer";
 import WakeSlider from "./react-bits/WakeSlider";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
 import "../party-setup.css";
 import "../party-lobby.css";
 import "../party-play.css";
+import "../party-stage-controls.css";
 
 export default function PartyScreen() {
   const { user, openAccount } = useIdentity();
@@ -72,7 +77,7 @@ export default function PartyScreen() {
   const [melodyMode, setMelodyMode] = useState<"team" | "buzzer">("buzzer");
   const [types, setTypes] = useState<Contest[]>(contests.map((c) => c.id));
   const [sheet, setSheet] = useState<
-    "invite" | "leave" | "settings" | "finish" | null
+    "invite" | "leave" | "settings" | "finish" | "controls" | null
   >(null);
   const [guess, setGuess] = useState("");
   const [privateOpen, setPrivateOpen] = useState(false);
@@ -92,6 +97,12 @@ export default function PartyScreen() {
   const [notice, setNotice] = useState("");
   const sound = usePartyAudio(party, setNotice);
   const player = sound.player;
+  useBuzzerShortcuts({
+    state: s,
+    online,
+    pending: party.pending,
+    action: party.action,
+  });
   usePWAActivity(
     busy ||
       party.pending ||
@@ -108,6 +119,7 @@ export default function PartyScreen() {
   useEffect(() => {
     setGuess("");
     setPrivateOpen(false);
+    setSheet((current) => (current === "controls" ? null : current));
     setNotice("");
   }, [s?.roundIndex, s?.stage]);
   useEffect(() => {
@@ -212,6 +224,396 @@ export default function PartyScreen() {
     } catch {
       setNotice("Повноекранний режим недоступний у цьому браузері.");
     }
+  };
+  const stageControlTitle =
+    s?.stage === "final" ? "Підсумки вечора" : "Керування грою";
+  const renderHistory = () => {
+    if (!s || s.stage !== "final" || !s.history?.length) return null;
+    return (
+      <Panel className="party-match-history">
+        <span className="section-label">ЯК ЦЕ БУЛО</span>
+        <h3>Кожен бал має історію</h3>
+        <ol>
+          {s.history.map((r) => (
+            <li key={r.round}>
+              <b>{String(r.round).padStart(2, "0")}</b>
+              <div>
+                <span>
+                  {contests.find((c) => c.id === r.type)?.title} ·{" "}
+                  {s.teams[r.result.team].name}
+                </span>
+                <strong>{r.result.answer}</strong>
+              </div>
+              <span>+{r.result.points}</span>
+            </li>
+          ))}
+        </ol>
+      </Panel>
+    );
+  };
+  const renderControls = (shared = false) => {
+    if (!s || party.watching) return null;
+    return (
+      <aside className="party-controls">
+        {host &&
+          s.stage === "playing" &&
+          s.paused &&
+          s.roundType === "melody" &&
+          s.round?.previewStatus === "unavailable" &&
+          buzzer?.phase !== "answer" && (
+            <Button
+              variant="primary"
+              disabled={!online || party.pending}
+              onClick={() => party.action("retry_melody")}
+            >
+              <RotateCcw size={18} />
+              Завантажити фрагмент ще раз
+            </Button>
+          )}
+        {buzzer && s.stage === "playing" && (
+          <PartyBuzzer
+            state={s}
+            online={online}
+            pending={party.pending}
+            action={party.action}
+          />
+        )}
+        {host &&
+          s.config.roundTypes.includes("melody") &&
+          (!shared || s.stage !== "final") && (
+            <PartySound
+              state={s}
+              tvToken={party.tvToken}
+              sharedScreen={shared}
+              online={online}
+              pending={party.pending}
+              armed={sound.armed}
+              ownerHere={sound.ownerHere}
+              allowSound={sound.allowSound}
+              action={party.action}
+              onNotice={setNotice}
+            />
+          )}
+        <Panel className="party-control-panel">
+          <div className="section-label">
+            {host ? <ShieldCheck size={17} /> : <Users size={17} />}
+            {host ? "ТВОЯ ГРА. ТВІЙ ТЕМП." : "ТВОЯ КОМАНДА. ТВІЙ ВИХІД."}
+          </div>
+          {s.stage === "lobby" ? (
+            <>
+              <h3>{host ? "Усі зібралися?" : "Вже майже починаємо"}</h3>
+              <p>
+                {host
+                  ? "Запроси друзів або веди гру для двох команд із цього пристрою."
+                  : "Можеш змінити команду, поки ведучий не почав гру."}
+              </p>
+              {lobbyStartButton}
+              <Button onClick={() => setSheet("invite")}>
+                <Smartphone size={19} />
+                Запросити компанію
+              </Button>
+              {!host && (
+                <div className="team-choice">
+                  {(["girls", "boys"] as Team[]).map((t) => (
+                    <Button
+                      key={t}
+                      className={`${t} ${s.you?.team === t ? "selected" : ""}`}
+                      disabled={!online || party.pending}
+                      onClick={() => party.send("set_team", { team: t })}
+                    >
+                      {s.teams[t].name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              {host && (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setRounds(s.rounds);
+                      setTypes(s.config.roundTypes);
+                      setVoteMode(s.config.voteMode || "team");
+                      setMelodyMode(s.config.melodyMode || "team");
+                      setSheet("settings");
+                    }}
+                  >
+                    <Settings2 size={17} />
+                    Конкурси та раунди
+                  </Button>
+                </>
+              )}
+            </>
+          ) : s.stage === "final" ? (
+            <>
+              <Trophy size={31} />
+              <h3>Було гаряче!</h3>
+              <p>
+                {s.you?.registered
+                  ? "Результат акаунта зберігається в історії після завершення."
+                  : "Ця гра була гостьовою. Увійди перед наступною, щоб зберігати результати."}
+              </p>
+              {user ? (
+                <Button onClick={() => openAccount("profile")}>
+                  Мій профіль
+                  <ArrowRight size={18} />
+                </Button>
+              ) : (
+                <Button onClick={() => openAccount("register")}>
+                  Створити акаунт
+                  <ArrowRight size={18} />
+                </Button>
+              )}
+              {host && (
+                <Button
+                  variant="primary"
+                  disabled={!online || party.pending}
+                  onClick={() => party.action("lobby")}
+                >
+                  <RotateCcw size={18} />
+                  Граємо ще
+                </Button>
+              )}
+            </>
+          ) : s.stage === "result" ? (
+            <>
+              <h3>{s.result?.won ? "Є контакт!" : "Буває. Рухаємось далі."}</h3>
+              <p>
+                Команда «{s.teams[s.result?.team || s.activeTeam].name}» отримує{" "}
+                {s.result?.points || 0} {pointWord(s.result?.points || 0)}.
+              </p>
+              {host ? (
+                <Button
+                  variant="primary"
+                  className="party-primary-action"
+                  disabled={!online || party.pending}
+                  onClick={() => party.action("next")}
+                >
+                  {s.roundIndex >= s.rounds ? (
+                    <Trophy size={19} />
+                  ) : (
+                    <ArrowRight size={19} />
+                  )}
+                  {s.roundIndex >= s.rounds
+                    ? "Показати фінал"
+                    : "Наступний конкурс"}
+                </Button>
+              ) : (
+                <p className="waiting-note">
+                  Чекаємо, поки ведучий продовжить.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <h3>
+                {buzzer ? (
+                  buzzer.team ? (
+                    `${s.teams[buzzer.team].name}, ваші 10 секунд`
+                  ) : (
+                    "Хто впізнає першим?"
+                  )
+                ) : (
+                  <>{s.teams[s.activeTeam].name}, ваш вихід</>
+                )}
+              </h3>
+              <p>{metadata?.description}</p>
+              {shared && s.roundType === "alias" && s.round?.current && (
+                <p className="party-shared-note">
+                  Приватна картка — на особистому пульті того, хто пояснює.
+                </p>
+              )}
+              {!shared && (s.round?.hostAnswer || s.round?.current) && (
+                <div className="private-card">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setPrivateOpen(!privateOpen)}
+                    aria-expanded={privateOpen}
+                  >
+                    {privateOpen ? <EyeOff size={17} /> : <Eye size={17} />}
+                    {privateOpen
+                      ? "Приховати картку"
+                      : "Показати приватну картку"}
+                  </Button>
+                  {privateOpen && (
+                    <div>
+                      <span className="section-label">
+                        ЛИШЕ ДЛЯ{" "}
+                        {s.round.current ? "ТОГО, ХТО ПОЯСНЮЄ" : "ВЕДУЧОГО"}
+                      </span>
+                      <h4>{s.round.current?.word || s.round.hostAnswer}</h4>
+                      {!!s.round.current?.taboo?.length && (
+                        <p>
+                          Не можна казати:{" "}
+                          <b>{s.round.current.taboo.join(", ")}</b>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              {s.roundType === "alias" && s.round?.current ? (
+                <div className="alias-host-controls">
+                  <Button
+                    variant="primary"
+                    disabled={!canAct || party.pending}
+                    onClick={() => party.action("correct")}
+                  >
+                    <Check size={21} />
+                    Відгадали
+                  </Button>
+                  <Button
+                    disabled={!canAct || party.pending}
+                    onClick={() => party.action("skip")}
+                  >
+                    <SkipForward size={19} />
+                    Пропустити слово
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={!canAct || party.pending}
+                    onClick={() => party.action("end")}
+                  >
+                    Завершити пояснення
+                  </Button>
+                </div>
+              ) : s.roundType !== "truth_lie" && !buzzer && canAct ? (
+                <>
+                  {host && (
+                    <div className="verdict-buttons">
+                      <Button
+                        variant="primary"
+                        disabled={
+                          party.pending ||
+                          (s.roundType === "five_words" &&
+                            !s.round?.slots?.some((slot) => slot.revealed))
+                        }
+                        onClick={() => party.action("force", { won: true })}
+                      >
+                        <Check size={20} />
+                        Відгадали
+                      </Button>
+                      <Button
+                        disabled={party.pending}
+                        onClick={() => party.action("force", { won: false })}
+                      >
+                        <X size={20} />
+                        Не цього разу
+                      </Button>
+                    </div>
+                  )}
+                  {s.roundType !== "alias" && (
+                    <form
+                      noValidate
+                      className="party-guess"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (guess.trim()) {
+                          if (
+                            party.action("guess", {
+                              text: guess.trim(),
+                            })
+                          )
+                            setGuess("");
+                        }
+                      }}
+                    >
+                      <label className="field-label">
+                        Або введіть відповідь
+                        <input
+                          value={guess}
+                          onChange={(e) => setGuess(e.target.value)}
+                          placeholder="Ваша версія…"
+                          maxLength={200}
+                        />
+                      </label>
+                      <Button
+                        type="submit"
+                        disabled={!guess.trim() || party.pending}
+                        aria-label="Надіслати відповідь"
+                      >
+                        <ArrowRight size={20} />
+                      </Button>
+                    </form>
+                  )}
+                  {(s.roundType === "melody" ||
+                    s.roundType === "crocodile") && (
+                    <Button
+                      disabled={
+                        party.pending ||
+                        (s.roundType === "melody"
+                          ? (s.round?.hints?.length || 0) >= 2
+                          : !!s.round?.hint)
+                      }
+                      onClick={() => party.action("hint")}
+                    >
+                      <Lightbulb size={18} />
+                      Підказка · менше балів
+                    </Button>
+                  )}
+                </>
+              ) : null}
+              {host &&
+                s.roundType === "truth_lie" &&
+                s.round?.voting?.mode === "players" && (
+                  <Button
+                    disabled={!online || s.paused || party.pending}
+                    onClick={() => party.action("close_vote")}
+                  >
+                    <CheckCheck size={18} />
+                    Підбити голоси
+                  </Button>
+                )}
+              {host && !buzzer && !s.round?.awaitingAudio && (
+                <div className="party-pause-control">
+                  <Button
+                    disabled={!online || party.pending}
+                    onClick={() => party.action(s.paused ? "resume" : "pause")}
+                  >
+                    {s.paused ? <Play size={18} /> : <Pause size={18} />}
+                    {s.paused ? "Продовжити гру" : "Пауза гри"}
+                  </Button>
+                </div>
+              )}
+              {host && (
+                <Button
+                  variant="ghost"
+                  className="finish-link"
+                  onClick={() => setSheet("finish")}
+                >
+                  Завершити вечір достроково
+                </Button>
+              )}
+            </>
+          )}
+        </Panel>
+        {!shared && (
+          <Panel className="party-players">
+            <div className="section-label">
+              <Users size={16} />
+              КОМПАНІЯ{" "}
+              <span>{s.players.filter((p) => p.connected).length}</span>
+            </div>
+            {(["girls", "boys"] as Team[]).map((t) => (
+              <div className={`party-roster ${t}`} key={t}>
+                <h4>{s.teams[t].name}</h4>
+                {s.players
+                  .filter((p) => p.team === t)
+                  .map((p) => (
+                    <div key={p.id}>
+                      <span
+                        className={`connection-dot ${p.connected ? "online" : ""}`}
+                      />
+                      <span>{p.name}</span>
+                      {p.host && <ShieldCheck size={14} />}
+                    </div>
+                  ))}
+              </div>
+            ))}
+          </Panel>
+        )}
+      </aside>
+    );
   };
   if (!s && party.watching)
     return (
@@ -581,9 +983,32 @@ export default function PartyScreen() {
               <Copy size={14} />
             </Button>
             {!party.watching && (
-              <Button variant="ghost" onClick={() => setStageOnly(!stageOnly)}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setPrivateOpen(false);
+                  setSheet(null);
+                  setStageOnly(!stageOnly);
+                }}
+              >
                 <Monitor size={17} />
                 {stageOnly ? "Повернути пульт" : "Екран шоу"}
+              </Button>
+            )}
+            {stageOnly && !party.watching && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setPrivateOpen(false);
+                  setSheet("controls");
+                }}
+              >
+                {s.stage === "final" ? (
+                  <Trophy size={18} />
+                ) : (
+                  <Settings2 size={18} />
+                )}{" "}
+                {stageControlTitle}
               </Button>
             )}
             <Button
@@ -1021,408 +1446,9 @@ export default function PartyScreen() {
                 />
               )}
             </Panel>
-            {!party.watching && (
-              <aside className="party-controls">
-                {host &&
-                  s.stage === "playing" &&
-                  s.paused &&
-                  s.roundType === "melody" &&
-                  s.round?.previewStatus === "unavailable" &&
-                  buzzer?.phase !== "answer" && (
-                    <Button
-                      variant="primary"
-                      disabled={!online || party.pending}
-                      onClick={() => party.action("retry_melody")}
-                    >
-                      <RotateCcw size={18} />
-                      Завантажити фрагмент ще раз
-                    </Button>
-                  )}
-                {buzzer && s.stage === "playing" && (
-                  <PartyBuzzer
-                    state={s}
-                    online={online}
-                    pending={party.pending}
-                    action={party.action}
-                  />
-                )}
-                {host && s.config.roundTypes.includes("melody") && (
-                  <PartySound
-                    state={s}
-                    tvToken={party.tvToken}
-                    online={online}
-                    pending={party.pending}
-                    armed={sound.armed}
-                    ownerHere={sound.ownerHere}
-                    allowSound={sound.allowSound}
-                    action={party.action}
-                    onNotice={setNotice}
-                  />
-                )}
-                <Panel className="party-control-panel">
-                  <div className="section-label">
-                    {host ? <ShieldCheck size={17} /> : <Users size={17} />}
-                    {host
-                      ? "ТВОЯ ГРА. ТВІЙ ТЕМП."
-                      : "ТВОЯ КОМАНДА. ТВІЙ ВИХІД."}
-                  </div>
-                  {s.stage === "lobby" ? (
-                    <>
-                      <h3>{host ? "Усі зібралися?" : "Вже майже починаємо"}</h3>
-                      <p>
-                        {host
-                          ? "Запроси друзів або веди гру для двох команд із цього пристрою."
-                          : "Можеш змінити команду, поки ведучий не почав гру."}
-                      </p>
-                      {lobbyStartButton}
-                      <Button onClick={() => setSheet("invite")}>
-                        <Smartphone size={19} />
-                        Запросити компанію
-                      </Button>
-                      {!host && (
-                        <div className="team-choice">
-                          {(["girls", "boys"] as Team[]).map((t) => (
-                            <Button
-                              key={t}
-                              className={`${t} ${s.you?.team === t ? "selected" : ""}`}
-                              disabled={!online || party.pending}
-                              onClick={() =>
-                                party.send("set_team", { team: t })
-                              }
-                            >
-                              {s.teams[t].name}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                      {host && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              setRounds(s.rounds);
-                              setTypes(s.config.roundTypes);
-                              setVoteMode(s.config.voteMode || "team");
-                              setMelodyMode(s.config.melodyMode || "team");
-                              setSheet("settings");
-                            }}
-                          >
-                            <Settings2 size={17} />
-                            Конкурси та раунди
-                          </Button>
-                        </>
-                      )}
-                    </>
-                  ) : s.stage === "final" ? (
-                    <>
-                      <Trophy size={31} />
-                      <h3>Було гаряче!</h3>
-                      <p>
-                        {s.you?.registered
-                          ? "Результат акаунта зберігається в історії після завершення."
-                          : "Ця гра була гостьовою. Увійди перед наступною, щоб зберігати результати."}
-                      </p>
-                      {user ? (
-                        <Button onClick={() => openAccount("profile")}>
-                          Мій профіль
-                          <ArrowRight size={18} />
-                        </Button>
-                      ) : (
-                        <Button onClick={() => openAccount("register")}>
-                          Створити акаунт
-                          <ArrowRight size={18} />
-                        </Button>
-                      )}
-                      {host && (
-                        <Button
-                          variant="primary"
-                          disabled={!online || party.pending}
-                          onClick={() => party.action("lobby")}
-                        >
-                          <RotateCcw size={18} />
-                          Граємо ще
-                        </Button>
-                      )}
-                    </>
-                  ) : s.stage === "result" ? (
-                    <>
-                      <h3>
-                        {s.result?.won
-                          ? "Є контакт!"
-                          : "Буває. Рухаємось далі."}
-                      </h3>
-                      <p>
-                        Команда «{s.teams[s.result?.team || s.activeTeam].name}»
-                        отримує {s.result?.points || 0}{" "}
-                        {pointWord(s.result?.points || 0)}.
-                      </p>
-                      {host ? (
-                        <Button
-                          variant="primary"
-                          className="party-primary-action"
-                          disabled={!online || party.pending}
-                          onClick={() => party.action("next")}
-                        >
-                          {s.roundIndex >= s.rounds ? (
-                            <Trophy size={19} />
-                          ) : (
-                            <ArrowRight size={19} />
-                          )}
-                          {s.roundIndex >= s.rounds
-                            ? "Показати фінал"
-                            : "Наступний конкурс"}
-                        </Button>
-                      ) : (
-                        <p className="waiting-note">
-                          Чекаємо, поки ведучий продовжить.
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <h3>
-                        {buzzer ? (
-                          buzzer.team ? (
-                            `${s.teams[buzzer.team].name}, ваші 10 секунд`
-                          ) : (
-                            "Хто впізнає першим?"
-                          )
-                        ) : (
-                          <>{s.teams[s.activeTeam].name}, ваш вихід</>
-                        )}
-                      </h3>
-                      <p>{metadata?.description}</p>
-                      {(s.round?.hostAnswer || s.round?.current) && (
-                        <div className="private-card">
-                          <Button
-                            variant="ghost"
-                            onClick={() => setPrivateOpen(!privateOpen)}
-                            aria-expanded={privateOpen}
-                          >
-                            {privateOpen ? (
-                              <EyeOff size={17} />
-                            ) : (
-                              <Eye size={17} />
-                            )}
-                            {privateOpen
-                              ? "Приховати картку"
-                              : "Показати приватну картку"}
-                          </Button>
-                          {privateOpen && (
-                            <div>
-                              <span className="section-label">
-                                ЛИШЕ ДЛЯ{" "}
-                                {s.round.current
-                                  ? "ТОГО, ХТО ПОЯСНЮЄ"
-                                  : "ВЕДУЧОГО"}
-                              </span>
-                              <h4>
-                                {s.round.current?.word || s.round.hostAnswer}
-                              </h4>
-                              {!!s.round.current?.taboo?.length && (
-                                <p>
-                                  Не можна казати:{" "}
-                                  <b>{s.round.current.taboo.join(", ")}</b>
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {s.roundType === "alias" && s.round?.current ? (
-                        <div className="alias-host-controls">
-                          <Button
-                            variant="primary"
-                            disabled={!canAct || party.pending}
-                            onClick={() => party.action("correct")}
-                          >
-                            <Check size={21} />
-                            Відгадали
-                          </Button>
-                          <Button
-                            disabled={!canAct || party.pending}
-                            onClick={() => party.action("skip")}
-                          >
-                            <SkipForward size={19} />
-                            Пропустити слово
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            disabled={!canAct || party.pending}
-                            onClick={() => party.action("end")}
-                          >
-                            Завершити пояснення
-                          </Button>
-                        </div>
-                      ) : s.roundType !== "truth_lie" && !buzzer && canAct ? (
-                        <>
-                          {host && (
-                            <div className="verdict-buttons">
-                              <Button
-                                variant="primary"
-                                disabled={
-                                  party.pending ||
-                                  (s.roundType === "five_words" &&
-                                    !s.round?.slots?.some(
-                                      (slot) => slot.revealed,
-                                    ))
-                                }
-                                onClick={() =>
-                                  party.action("force", { won: true })
-                                }
-                              >
-                                <Check size={20} />
-                                Відгадали
-                              </Button>
-                              <Button
-                                disabled={party.pending}
-                                onClick={() =>
-                                  party.action("force", { won: false })
-                                }
-                              >
-                                <X size={20} />
-                                Не цього разу
-                              </Button>
-                            </div>
-                          )}
-                          {s.roundType !== "alias" && (
-                            <form
-                              noValidate
-                              className="party-guess"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                if (guess.trim()) {
-                                  if (
-                                    party.action("guess", {
-                                      text: guess.trim(),
-                                    })
-                                  )
-                                    setGuess("");
-                                }
-                              }}
-                            >
-                              <label className="field-label">
-                                Або введіть відповідь
-                                <input
-                                  value={guess}
-                                  onChange={(e) => setGuess(e.target.value)}
-                                  placeholder="Ваша версія…"
-                                  maxLength={200}
-                                />
-                              </label>
-                              <Button
-                                type="submit"
-                                disabled={!guess.trim() || party.pending}
-                                aria-label="Надіслати відповідь"
-                              >
-                                <ArrowRight size={20} />
-                              </Button>
-                            </form>
-                          )}
-                          {(s.roundType === "melody" ||
-                            s.roundType === "crocodile") && (
-                            <Button
-                              disabled={
-                                party.pending ||
-                                (s.roundType === "melody"
-                                  ? (s.round?.hints?.length || 0) >= 2
-                                  : !!s.round?.hint)
-                              }
-                              onClick={() => party.action("hint")}
-                            >
-                              <Lightbulb size={18} />
-                              Підказка · менше балів
-                            </Button>
-                          )}
-                        </>
-                      ) : null}
-                      {host &&
-                        s.roundType === "truth_lie" &&
-                        s.round?.voting?.mode === "players" && (
-                          <Button
-                            disabled={!online || s.paused || party.pending}
-                            onClick={() => party.action("close_vote")}
-                          >
-                            <CheckCheck size={18} />
-                            Підбити голоси
-                          </Button>
-                        )}
-                      {host && !buzzer && !s.round?.awaitingAudio && (
-                        <div className="party-pause-control">
-                          <Button
-                            disabled={!online || party.pending}
-                            onClick={() =>
-                              party.action(s.paused ? "resume" : "pause")
-                            }
-                          >
-                            {s.paused ? (
-                              <Play size={18} />
-                            ) : (
-                              <Pause size={18} />
-                            )}
-                            {s.paused ? "Продовжити гру" : "Пауза гри"}
-                          </Button>
-                        </div>
-                      )}
-                      {host && (
-                        <Button
-                          variant="ghost"
-                          className="finish-link"
-                          onClick={() => setSheet("finish")}
-                        >
-                          Завершити вечір достроково
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </Panel>
-                <Panel className="party-players">
-                  <div className="section-label">
-                    <Users size={16} />
-                    КОМПАНІЯ{" "}
-                    <span>{s.players.filter((p) => p.connected).length}</span>
-                  </div>
-                  {(["girls", "boys"] as Team[]).map((t) => (
-                    <div className={`party-roster ${t}`} key={t}>
-                      <h4>{s.teams[t].name}</h4>
-                      {s.players
-                        .filter((p) => p.team === t)
-                        .map((p) => (
-                          <div key={p.id}>
-                            <span
-                              className={`connection-dot ${p.connected ? "online" : ""}`}
-                            />
-                            <span>{p.name}</span>
-                            {p.host && <ShieldCheck size={14} />}
-                          </div>
-                        ))}
-                    </div>
-                  ))}
-                </Panel>
-              </aside>
-            )}
+            {!stageOnly && renderControls()}
           </div>
-          {s.stage === "final" && !!s.history?.length && (
-            <Panel className="party-match-history">
-              <span className="section-label">ЯК ЦЕ БУЛО</span>
-              <h3>Кожен бал має історію</h3>
-              <ol>
-                {s.history.map((r) => (
-                  <li key={r.round}>
-                    <b>{String(r.round).padStart(2, "0")}</b>
-                    <div>
-                      <span>
-                        {contests.find((c) => c.id === r.type)?.title} ·{" "}
-                        {s.teams[r.result.team].name}
-                      </span>
-                      <strong>{r.result.answer}</strong>
-                    </div>
-                    <span>+{r.result.points}</span>
-                  </li>
-                ))}
-              </ol>
-            </Panel>
-          )}
+          {renderHistory()}
         </main>
       )}
       {lobbyStartButton && !stageOnly && !party.watching && (
@@ -1433,6 +1459,20 @@ export default function PartyScreen() {
           {notice}
         </div>
       )}
+      <Modal
+        open={sheet === "controls" && stageOnly && !party.watching}
+        onOpenChange={(open) => !open && setSheet(null)}
+        title={stageControlTitle}
+        description={
+          s?.stage === "final"
+            ? "Результати завершених конкурсів. Команди можуть зіграти реванш із тими самими налаштуваннями."
+            : "Пауза, відповіді й наступний конкурс. Приватні картки відкриваються лише в особистому пульті."
+        }
+        className="party-stage-control-dialog party-play-shell"
+      >
+        {sheet === "controls" && stageOnly && renderHistory()}
+        {sheet === "controls" && stageOnly && renderControls(true)}
+      </Modal>
       <Modal
         open={sheet === "invite"}
         onOpenChange={(open) => !open && setSheet(null)}

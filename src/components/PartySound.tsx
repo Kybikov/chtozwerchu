@@ -24,6 +24,7 @@ export default function PartySound({
   allowSound,
   action,
   onNotice,
+  sharedScreen = false,
 }: {
   state: PartyView;
   tvToken: string;
@@ -34,6 +35,7 @@ export default function PartySound({
   allowSound: () => Promise<void>;
   action: (name: string, payload?: Record<string, unknown>) => boolean;
   onNotice: (m: string) => void;
+  sharedScreen?: boolean;
 }) {
   const [open, setOpen] = useState(false),
     [copied, setCopied] = useState(false),
@@ -56,36 +58,40 @@ export default function PartySound({
           <Headphones size={16} />
           ДЕ ЗВУЧИТЬ ШОУ
         </div>
-        <div className="sound-output-options">
-          <Button
-            className={m?.output !== "tv" ? "selected" : ""}
-            aria-pressed={m?.output !== "tv"}
-            disabled={!online || pending}
-            onClick={() => action("audio_output", { output: "host" })}
-          >
-            <Smartphone size={18} />
-            Тут
-          </Button>
-          <Button
-            className={m?.output === "tv" ? "selected" : ""}
-            aria-pressed={m?.output === "tv"}
-            disabled={!online || pending}
-            onClick={() => {
-              action("audio_output", { output: "tv" });
-              setOpen(true);
-            }}
-          >
-            <Monitor size={18} />
-            На TV
-          </Button>
-        </div>
+        {!sharedScreen && (
+          <div className="sound-output-options">
+            <Button
+              className={m?.output !== "tv" ? "selected" : ""}
+              aria-pressed={m?.output !== "tv"}
+              disabled={!online || pending}
+              onClick={() => action("audio_output", { output: "host" })}
+            >
+              <Smartphone size={18} />
+              Тут
+            </Button>
+            <Button
+              className={m?.output === "tv" ? "selected" : ""}
+              aria-pressed={m?.output === "tv"}
+              disabled={!online || pending}
+              onClick={() => {
+                action("audio_output", { output: "tv" });
+                setOpen(true);
+              }}
+            >
+              <Monitor size={18} />
+              На TV
+            </Button>
+          </div>
+        )}
         <p>
           {m?.output === "tv"
             ? m.tvConnected
               ? m.enabled
                 ? "TV підключений. Звук дозволено."
                 : "TV підключений. Натисни на ньому «Дозволити звук»."
-              : "Відкрий посилання TV на екрані зі звуком."
+              : sharedScreen
+                ? "Підключи TV з особистого пульта ведучого."
+                : "Відкрий посилання TV на екрані зі звуком."
             : armed
               ? "Звук на цьому пристрої дозволено."
               : "Дозволь звук один раз перед початком музики."}
@@ -104,7 +110,7 @@ export default function PartySound({
             Дозволити звук
           </Button>
         )}
-        {m?.output === "tv" && (
+        {!sharedScreen && m?.output === "tv" && (
           <Button
             variant="ghost"
             onClick={() => setOpen(true)}
@@ -137,7 +143,7 @@ export default function PartySound({
         )}
       </div>
       <Modal
-        open={open}
+        open={open && !sharedScreen}
         onOpenChange={setOpen}
         title="Великий екран. Великий звук."
         description="Відкрий це посилання на TV або ноутбуці з колонками. Потім один раз дозволь звук на тому екрані."
