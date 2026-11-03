@@ -10,7 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { requestPWAUpdate, type UpdateResult } from "./pwaUpdate";
+import {
+  requestPWAUpdate,
+  watchPWAController,
+  type UpdateResult,
+} from "./pwaUpdate";
 
 type PWA = {
   needsUpdate: boolean;
@@ -26,7 +30,6 @@ type PWA = {
 };
 const Context = createContext<PWA | null>(null);
 export function PWAProvider({ children }: { children: ReactNode }) {
-  const current = useRef<ServiceWorkerRegistration | undefined>(undefined);
   const activities = useRef(
     new Map<string, { busy: boolean; screen: boolean }>(),
   );
@@ -36,9 +39,6 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   const [reloadPending, setReloadPending] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
   const registration = useRegisterSW({
-    onRegisteredSW: (_url, worker) => {
-      current.current = worker;
-    },
     onNeedReload: () => {
       // Older windows can still activate a worker without our new guard.
       if (busyNow.current) setReloadPending(true);
@@ -67,12 +67,13 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   const openUpdate = useCallback(() => setUpdateOpen(true), []);
   const checkForUpdate = useCallback(async () => {
     if (!("serviceWorker" in navigator)) return false;
-    const worker =
-      current.current || (await navigator.serviceWorker.getRegistration());
-    if (!worker) return false;
-    current.current = worker;
+    const worker = await navigator.serviceWorker.getRegistration();
+    if (!worker) {
+      setNeedsUpdate(false);
+      return false;
+    }
     await worker.update();
-    if (worker.waiting) setNeedsUpdate(true);
+    setNeedsUpdate(!!worker.waiting);
     return true;
   }, [setNeedsUpdate]);
   useEffect(() => {
@@ -92,6 +93,9 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       event.ports[0].close();
     };
     navigator.serviceWorker.addEventListener("message", respond);
+    const stopWatching = watchPWAController(navigator.serviceWorker, () =>
+      setReloadPending(true),
+    );
     let lastCheck = Date.now();
     const check = () => {
       if (
@@ -110,6 +114,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     return () => {
       clearInterval(timer);
       navigator.serviceWorker.removeEventListener("message", respond);
+      stopWatching();
       window.removeEventListener("online", check);
       window.removeEventListener("focus", check);
       document.removeEventListener("visibilitychange", check);
@@ -124,16 +129,18 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       return null;
     }
     if (!("serviceWorker" in navigator)) return null;
-    const worker =
-      current.current || (await navigator.serviceWorker.getRegistration());
-    if (!worker?.waiting) return null;
+    const worker = await navigator.serviceWorker.getRegistration();
+    if (!worker?.waiting) {
+      setNeedsUpdate(false);
+      return null;
+    }
     applying.current = true;
     try {
       return await requestPWAUpdate(worker.waiting);
     } finally {
       applying.current = false;
     }
-  }, [reloadPending]);
+  }, [reloadPending, setNeedsUpdate]);
   return (
     <Context.Provider
       value={{

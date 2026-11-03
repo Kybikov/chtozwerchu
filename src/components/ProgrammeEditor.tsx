@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { Button, Panel } from "./ui";
+import AlbumCover from "./AlbumCover";
 import type { PreparedSummary } from "../lib/preparedSongs";
 import {
   validProgramme,
@@ -192,7 +193,7 @@ export default function ProgrammeEditor({
             >
               <span className="programme-cover" aria-hidden="true">
                 {song.cover ? (
-                  <img src={song.cover} alt="" loading="lazy" />
+                  <AlbumCover src={song.cover} loading="lazy" size={24} />
                 ) : (
                   <Disc3 size={24} />
                 )}

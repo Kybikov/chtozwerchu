@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Check, Disc3, Trash2 } from "lucide-react";
 import { Button, Panel } from "./ui";
+import AlbumCover from "./AlbumCover";
 import { formatTime } from "../lib/music";
 import type { PreparedSummary } from "../lib/preparedSongs";
 import "../prepared-songs.css";
@@ -36,7 +37,7 @@ export default function PreparedSongs({
           <Panel className="prepared-card" key={song.id}>
             <div className="prepared-art" aria-hidden="true">
               {song.cover ? (
-                <img src={song.cover} alt="" loading="lazy" />
+                <AlbumCover src={song.cover} loading="lazy" size={28} />
               ) : (
                 <Disc3 size={28} />
               )}

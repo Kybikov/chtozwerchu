@@ -57,6 +57,7 @@ export function Modal({
   children,
   wide = false,
   className = "",
+  closeDisabled = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -65,10 +66,16 @@ export function Modal({
   children: ReactNode;
   wide?: boolean;
   className?: string;
+  closeDisabled?: boolean;
 }) {
   const descriptionId = useId();
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (next || !closeDisabled) onOpenChange(next);
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
         <Dialog.Content
@@ -89,6 +96,7 @@ export function Modal({
                 variant="ghost"
                 className="icon-button"
                 aria-label="Закрити"
+                disabled={closeDisabled}
               >
                 <X size={20} />
               </Button>

@@ -1,6 +1,12 @@
 .prepared-songs {
   margin: 24px 0 32px;
 }
+.library-pack-open.button {
+  width: 100%;
+  min-height: 48px;
+  margin: 10px 0 0;
+  font-size: 16px;
+}
 .prepared-heading {
   display: flex;
   justify-content: space-between;

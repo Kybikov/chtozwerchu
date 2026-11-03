@@ -145,6 +145,10 @@ function database() {
 }
 
 export async function listPrepared(): Promise<PreparedSummary[]> {
+  return (await readPreparedCollection()).map(preparedSummary);
+}
+
+export async function readPreparedCollection(): Promise<PreparedSong[]> {
   const db = await database();
   return new Promise((resolve, reject) => {
     const request = db.transaction("songs").objectStore("songs").getAll();
@@ -154,9 +158,85 @@ export async function listPrepared(): Promise<PreparedSummary[]> {
       resolve(
         (request.result as PreparedSong[])
           .filter(validPrepared)
-          .sort((a, b) => b.savedAt - a.savedAt)
-          .map(preparedSummary),
+          .sort((a, b) => b.savedAt - a.savedAt),
       );
+  });
+}
+
+// One transaction for the entire reviewed import. An error or a changed
+// replacement aborts every write, keeping the existing library intact.
+export async function importPreparedBatch(
+  songs: PreparedSong[],
+  replacements: ReadonlyMap<number, number> = new Map(),
+) {
+  if (
+    !songs.length ||
+    songs.length > preparedLimit ||
+    !songs.every(validPrepared) ||
+    new Set(songs.map((s) => s.track.id)).size !== songs.length
+  )
+    throw new Error("Пакет містить некоректні підготовки.");
+  const db = await database();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction("songs", "readwrite"),
+      store = tx.objectStore("songs");
+    let message = "Пакет не збережено. Перевір вільне місце на пристрої.";
+    let stopped = false;
+    const stop = (reason: string) => {
+      if (stopped) return;
+      stopped = true;
+      message = reason;
+      tx.abort();
+    };
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(new Error(message));
+    tx.onerror = () => {};
+    const keys = store.getAllKeys();
+    keys.onsuccess = () => {
+      const existing = new Set(keys.result);
+      const conflicts = songs.filter((s) => existing.has(s.track.id));
+      if (
+        conflicts.length !== replacements.size ||
+        conflicts.some((s) => !replacements.has(s.track.id))
+      ) {
+        stop(
+          "Бібліотека змінилася. Переглянь оновлений список і повтори імпорт.",
+        );
+        return;
+      }
+      if (existing.size + songs.length - conflicts.length > preparedLimit) {
+        stop(
+          `У бібліотеці може бути до ${preparedLimit} пісень. Звільни місце перед імпортом.`,
+        );
+        return;
+      }
+      const write = () => {
+        if (stopped) return;
+        try {
+          for (const song of songs) store.put(song);
+        } catch {
+          stop(message);
+        }
+      };
+      if (!conflicts.length) {
+        write();
+        return;
+      }
+      let pending = conflicts.length;
+      for (const song of conflicts) {
+        const request = store.get(song.track.id);
+        request.onsuccess = () => {
+          if (stopped) return;
+          if (request.result?.savedAt !== replacements.get(song.track.id)) {
+            stop(
+              "Бібліотека змінилася. Переглянь оновлений список і повтори імпорт.",
+            );
+            return;
+          }
+          if (--pending === 0) write();
+        };
+      }
+    };
   });
 }
 

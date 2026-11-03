@@ -29,6 +29,7 @@ import {
   Minus,
   Monitor,
   Pause,
+  Package,
   Play,
   Plus,
   RotateCcw,
@@ -47,6 +48,7 @@ import {
 } from "lucide-react";
 import { Button, Modal, Panel } from "./components/ui";
 import Backdrop from "./components/Backdrop";
+import AlbumCover from "./components/AlbumCover";
 import WakeSlider from "./components/react-bits/WakeSlider";
 import SquishSwitch from "./components/react-bits/SquishSwitch";
 import ShowStage, { Scoreboard } from "./components/ShowStage";
@@ -106,15 +108,18 @@ import {
   removePrepared,
   validPrepared,
   refreshPreparedPreview,
+  preparedSummary,
   type PreparedSummary,
 } from "./lib/preparedSongs";
 
 const WordTimingEditor = lazy(() => import("./components/WordTimingEditor"));
+const ShowPackDialog = lazy(() => import("./components/ShowPackDialog"));
 
 type Sheet =
   | "library"
   | "programme"
   | "programme_order"
+  | "pack"
   | "settings"
   | "help"
   | "cues"
@@ -215,7 +220,7 @@ export default function App() {
           phase === "answer" ||
           player.playing ||
           trackBusy ||
-          ["words", "clip", "programme"].includes(sheet ?? ""))),
+          ["words", "clip", "programme", "pack"].includes(sheet ?? ""))),
     true,
   );
   const [installEvent, setInstallEvent] = useState<
@@ -609,7 +614,6 @@ export default function App() {
     if (
       !validProgramme(value) ||
       preparedBusy ||
-      trackBusy ||
       !["ready", "result", "final"].includes(phase)
     )
       return;
@@ -1275,7 +1279,10 @@ export default function App() {
                       className={`track-art ${player.playing ? "spinning" : ""}`}
                     >
                       {track?.cover ? (
-                        <img src={track.cover} alt="Обкладинка альбому" />
+                        <AlbumCover
+                          src={track.cover}
+                          alt="Обкладинка альбому"
+                        />
                       ) : (
                         <Disc3 size={30} />
                       )}
@@ -1763,7 +1770,6 @@ export default function App() {
                 songs={preparedSongs}
                 busy={
                   preparedBusy ||
-                  trackBusy ||
                   !["ready", "result", "final"].includes(phase)
                 }
                 replacing={
@@ -1789,6 +1795,12 @@ export default function App() {
             >
               <ListMusic size={18} /> Зібрати програму вечора{" "}
               <ArrowRight size={18} />
+            </Button>
+            <Button
+              className="library-pack-open"
+              onClick={() => setSheet("pack")}
+            >
+              <Package size={18} /> Перенести вечір на інший пристрій
             </Button>
             <PreparedSongs
               songs={preparedSongs}
@@ -1842,7 +1854,7 @@ export default function App() {
                         setSheet(null);
                       }}
                     >
-                      <img src={t.cover} alt="" />
+                      <AlbumCover src={t.cover} />
                       <span>
                         <strong>{t.title}</strong>
                         <small>
@@ -1987,6 +1999,43 @@ export default function App() {
                 }
                 onSave={saveWordTiming}
                 onClose={() => setSheet("cues")}
+              />
+            </Suspense>
+          )}
+
+          {sheet === "pack" && (
+            <Suspense
+              fallback={
+                <Modal
+                  open
+                  onOpenChange={(open) => !open && setSheet("library")}
+                  title="Пакет вечора"
+                >
+                  <p className="host-note" role="status">
+                    Готуємо пакет…
+                  </p>
+                </Modal>
+              }
+            >
+              <ShowPackDialog
+                programme={programmeDraft}
+                allowed={
+                  !preparedBusy &&
+                  ["ready", "result", "final"].includes(phase)
+                }
+                onClose={() => setSheet("library")}
+                onProgramme={() => setSheet("programme")}
+                onImported={async (songs, programme) => {
+                  const ids = new Set(songs.map((song) => song.track.id));
+                  setPreparedSongs((current) => [
+                    ...songs.map(preparedSummary),
+                    ...current.filter((song) => !ids.has(song.id)),
+                  ]);
+                  if (programme) {
+                    setProgrammeDraft(programme);
+                    await saveProgramme(programme);
+                  }
+                }}
               />
             </Suspense>
           )}

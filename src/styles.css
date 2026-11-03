@@ -1464,7 +1464,8 @@ kbd {
   justify-content: flex-start;
   gap: 14px;
 }
-.library-result img {
+.library-result img,
+.library-result .album-cover-fallback {
   width: 58px;
   height: 58px;
   border-radius: 10px;
@@ -3094,7 +3095,8 @@ kbd {
     padding: 10px;
     min-height: 76px;
   }
-  .library-result img {
+  .library-result img,
+  .library-result .album-cover-fallback {
     width: 48px;
     height: 48px;
   }

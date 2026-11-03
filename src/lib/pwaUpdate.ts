@@ -4,6 +4,26 @@ export type UpdateResult = {
   busy: number;
   unknown: number;
 };
+
+// A worker can take control through another window. Do not depend on the
+// registration helper classifying that event as its own update.
+export function watchPWAController(
+  container: Pick<
+    ServiceWorkerContainer,
+    "controller" | "addEventListener" | "removeEventListener"
+  >,
+  onReplacement: () => void,
+) {
+  let previous = container.controller;
+  const change = () => {
+    const current = container.controller;
+    if (!current) return;
+    if (previous && current !== previous) onReplacement();
+    previous = current;
+  };
+  container.addEventListener("controllerchange", change);
+  return () => container.removeEventListener("controllerchange", change);
+}
 export function requestPWAUpdate(worker: ServiceWorker): Promise<UpdateResult> {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();

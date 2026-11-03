@@ -1,0 +1,249 @@
+.show-pack {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.pack-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  min-width: 0;
+  align-items: start;
+}
+.pack-columns-review {
+  grid-template-columns: minmax(0, 1fr);
+}
+.show-pack > .pack-progress {
+  grid-row: 2;
+}
+.pack-hero.panel {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: 12px;
+  background:
+    radial-gradient(ellipse at 100% 0%, #ad62cd29, transparent 70%), #ffffff04;
+  overflow: hidden;
+}
+.pack-hero h3 {
+  font:
+    600 clamp(32px, 4vw, 46px)/1.12 "Oswald Variable",
+    sans-serif;
+  letter-spacing: -0.02em;
+  margin: 16px 0;
+}
+.pack-hero h3 span {
+  color: var(--pink);
+}
+.pack-hero p,
+.pack-section > p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: #cbbbda;
+}
+.pack-hero img {
+  width: 180px;
+  max-width: none;
+  transform: rotate(-10deg);
+}
+.pack-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.pack-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pack-section-title > span {
+  font:
+    500 25px/1 "Oswald Variable",
+    sans-serif;
+  color: var(--pink);
+}
+.pack-section-title h3 {
+  font:
+    600 25px/1.2 "Oswald Variable",
+    sans-serif;
+}
+.pack-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.pack-modes .button[aria-pressed="true"] {
+  background: #b188e326;
+  border-color: #c9a5f25c;
+}
+.pack-section .button,
+.show-pack > .button {
+  min-height: 48px;
+  font-size: 16px;
+}
+.pack-preview-note {
+  color: #e3c69c !important;
+}
+.pack-review {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid #b994df40;
+  background: #b68bd409;
+  border-radius: 20px;
+  min-width: 0;
+}
+.pack-review h4 {
+  font:
+    600 27px/1.25 "Oswald Variable",
+    sans-serif;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.pack-review p {
+  color: #d4c6e0;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+.pack-review ol {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  max-height: 340px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #76528c transparent;
+}
+.pack-review li {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.pack-review li > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.pack-review li strong {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.pack-review li span,
+.pack-review li small {
+  color: #bcaacb;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.pack-review li small {
+  flex: 0 0 100px;
+  text-align: right;
+}
+.pack-replacement {
+  color: #edbbcc !important;
+}
+.pack-progress {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #af7adb0c;
+}
+.pack-progress > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+.pack-progress strong {
+  font-size: 16px;
+}
+.pack-progress span {
+  font-size: 14px;
+  color: #c6b6d3;
+}
+.pack-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff12;
+}
+.pack-progress-track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b1a0ff, #ed8bbd);
+  border-radius: inherit;
+}
+.pack-footnote {
+  color: #b9acc7;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.pack-error {
+  padding: 16px;
+  border: 1px solid #ec9aba40;
+  background: #b5557f0d;
+  color: #f0b6cc;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.pack-notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: #d4eab5;
+  background: #c9e59c0a;
+  border: 1px solid #b8d18738;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.pack-notice svg {
+  margin-top: 3px;
+}
+@media (max-width: 850px) {
+  .pack-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .pack-hero.panel {
+    padding: 18px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pack-hero img {
+    display: none;
+  }
+  .pack-hero p {
+    display: none;
+  }
+  .pack-modes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pack-review {
+    padding: 14px;
+  }
+  .pack-review li {
+    display: grid;
+    gap: 6px;
+  }
+  .pack-review li small {
+    text-align: left;
+  }
+  .pack-progress {
+    flex-wrap: wrap;
+  }
+  .pack-progress > .button {
+    width: 100%;
+  }
+}

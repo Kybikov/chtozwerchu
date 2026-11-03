@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button, Modal, Panel } from "./ui";
+import AlbumCover from "./AlbumCover";
 import { usePWAActivity } from "../lib/pwa";
 import { PWAUpdateControl } from "./PWAUpdate";
 import Backdrop from "./Backdrop";
@@ -285,7 +286,7 @@ export default function RemotePanel() {
                   <div className="remote-track">
                     <div className="track-art">
                       {s.track.cover ? (
-                        <img src={s.track.cover} alt="" />
+                        <AlbumCover src={s.track.cover} />
                       ) : (
                         <Disc3 size={30} />
                       )}
@@ -764,7 +765,7 @@ export default function RemotePanel() {
                   disabled={locked}
                   onClick={() => selectTrack(t.id)}
                 >
-                  <img src={t.cover} alt="" />
+                  <AlbumCover src={t.cover} />
                   <span>
                     <strong>{t.title}</strong>
                     <small>{t.artist}</small>
