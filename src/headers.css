@@ -137,3 +137,7 @@
     gap: 10px;
   }
 }
+.button.screen-awake-button[aria-pressed="true"] {
+  color: var(--lime, #d9f77b);
+  border-color: color-mix(in srgb, var(--lime, #d9f77b) 35%, transparent);
+}

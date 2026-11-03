@@ -53,6 +53,7 @@ import PartyBuzzer, {
   useBuzzerShortcuts,
 } from "./PartyBuzzer";
 import WakeSlider from "./react-bits/WakeSlider";
+import ScreenAwakeButton from "./ScreenAwakeButton";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
 import "../party-setup.css";
@@ -966,6 +967,7 @@ export default function PartyScreen() {
         <main className="party-main">
           <div className="party-room-bar">
             {(stageOnly || party.watching) && <PWAUpdateControl />}
+            {(stageOnly || party.watching) && <ScreenAwakeButton />}
             <div>
               <span className={`connection-dot ${online ? "online" : ""}`} />
               <span>

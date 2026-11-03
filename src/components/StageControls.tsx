@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import ScreenAwakeButton from "./ScreenAwakeButton";
 
 /** Keep scene utilities reachable without leaving them over the show. */
 export default function StageControls({
@@ -77,6 +78,7 @@ export default function StageControls({
       data-visible={visible}
     >
       {children}
+      <ScreenAwakeButton />
     </div>
   );
 }
