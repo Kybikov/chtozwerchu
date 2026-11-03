@@ -1,0 +1,164 @@
+.final-showcase-shell {
+  --final-display: clamp(40px, 5svh, 72px);
+  --final-name: clamp(28px, 3.6svh, 48px);
+  --final-score: clamp(60px, 8svh, 100px);
+  --final-copy: 16px;
+  --final-label: 13px;
+  --final-accent: var(--lime);
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  align-content: center;
+}
+.finale-girls { --final-accent: var(--pink); }
+.finale-boys { --final-accent: var(--blue); }
+.final-showcase {
+  display: grid;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+  padding: 24px;
+  min-width: 0;
+}
+.finale-art {
+  position: relative;
+  width: clamp(96px, 17svh, 180px);
+  aspect-ratio: 1;
+  justify-self: center;
+  isolation: isolate;
+}
+.finale-art::before {
+  content: "";
+  position: absolute;
+  inset: 5%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--final-accent) 18%, transparent), transparent 70%);
+}
+.finale-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.finale-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  gap: 12px;
+}
+.finale-copy .finale-eyebrow {
+  font-size: var(--final-label);
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  color: #ccbddb;
+}
+/* The shared finale owns its display scale instead of the old stage h2 rule. */
+.show-stage .final-showcase .finale-title,
+.final-showcase .finale-title {
+  margin: 0;
+  font: 580 var(--final-display)/1.1 "Oswald Variable", sans-serif;
+  letter-spacing: -0.02em;
+  color: #fcf4ff;
+}
+.finale-title > span { justify-content: center; }
+.finale-copy .finale-winner {
+  margin: 0;
+  font: 550 var(--final-name)/1.2 "Oswald Variable", sans-serif;
+  color: var(--final-accent);
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  text-wrap: balance;
+}
+.finale-scores {
+  --final-score-fit: min(var(--final-score), calc((100cqw - 80px) / (var(--final-digits) * 1.3)));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 4cqw, 72px);
+  width: min(100%, 680px);
+  margin: 6px 0;
+  position: relative;
+}
+.finale-scores::after {
+  content: ":";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  color: #9988ad;
+  font: 400 var(--final-score-fit)/1.2 "Oswald Variable", sans-serif;
+}
+.finale-score {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+.finale-score dd {
+  order: -1;
+  margin: 0;
+  font: 550 var(--final-score-fit)/1.2 "Oswald Variable", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.finale-score-girls dd { color: var(--pink); }
+.finale-score-boys dd { color: var(--blue); }
+.finale-score dt {
+  font-size: var(--final-label);
+  line-height: 1.5;
+  font-weight: 550;
+  color: #d9cde6;
+  overflow-wrap: anywhere;
+}
+.finale-copy .finale-caption {
+  margin: 0;
+  max-width: 36em;
+  color: #c8b9d6;
+  font-size: var(--final-copy);
+  line-height: 1.6;
+  text-wrap: balance;
+}
+.party-stage .final-showcase-shell { flex: 1; }
+.show-stage.phase-final .stage-content:has(.final-showcase-shell) {
+  padding: 0;
+  gap: 0;
+}
+@container (min-width: 720px) {
+  .final-showcase {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    padding: clamp(24px, 3cqw, 64px);
+    gap: clamp(20px, 3cqw, 64px);
+  }
+  .finale-copy { grid-area: 1 / 1; }
+  .finale-art {
+    grid-area: 1 / 2;
+    width: min(100%, 520px);
+  }
+}
+@media (min-width: 850px) and (min-height: 540px) {
+  :is(.stage-only, .party-stage-only) .final-showcase-shell {
+    --final-display: clamp(44px, 6svh, 128px);
+    --final-name: clamp(40px, 6.5svh, 140px);
+    --final-score: clamp(60px, 9svh, 190px);
+    --final-copy: clamp(18px, 2.1svh, 44px);
+    --final-label: clamp(14px, 1.65svh, 34px);
+  }
+  :is(.stage-only, .party-stage-only) .finale-copy {
+    gap: clamp(10px, 1.3svh, 28px);
+  }
+  :is(.stage-only, .party-stage-only) .finale-art {
+    width: min(100%, 48svh);
+    max-width: 1040px;
+  }
+  :is(.stage-only, .party-stage-only) .finale-scores {
+    width: min(100%, clamp(680px, 70svh, 1400px));
+  }
+}
+@media (max-width: 560px) {
+  .final-showcase { padding: 20px 16px; }
+  .final-showcase-shell { --final-copy: 16px; }
+}

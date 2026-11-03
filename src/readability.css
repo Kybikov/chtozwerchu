@@ -156,8 +156,7 @@
   .stage-only .phase-ready .stage-content h2:not(.stage-blur) {
     font-size: clamp(54px, 9.5vmin, 208px);
   }
-  .stage-only .phase-answer h2,
-  .stage-only .phase-final h2 {
+  .stage-only .phase-answer h2 {
     font-size: clamp(54px, 9vmin, 208px) !important;
   }
   .stage-only .phase-result h2 {

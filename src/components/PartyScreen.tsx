@@ -55,6 +55,7 @@ import PartyBuzzer, {
 import WakeSlider from "./react-bits/WakeSlider";
 import ScreenAwakeButton from "./ScreenAwakeButton";
 import PartyScoreCorrection from "./PartyScoreCorrection";
+import FinalShowcase from "./FinalShowcase";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
 import { appEntryURL } from "../lib/appEntry";
@@ -1158,34 +1159,14 @@ export default function PartyScreen() {
                   </span>
                 </div>
               ) : s.stage === "final" ? (
-                <div className="party-final-stage">
-                  <Trophy size={55} />
-                  <span className="section-label">ОЦЕ БУВ ВЕЧІР</span>
-                  <h2>
-                    {s.winner ? (
-                      <>
-                        ЗВЕРХУ —<br />
-                        <span className={s.winner}>
-                          {s.teams[s.winner].name}!
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        ПЕРЕМОГЛА
-                        <br />
-                        <span>ДРУЖБА!</span>
-                      </>
-                    )}
-                  </h2>
-                  <p>
-                    {s.winner
-                      ? "А реванш завжди починається з наступної гри."
-                      : "Нічия. Здається, потрібен ще один вечір."}
-                  </p>
-                  <strong>
-                    {s.teams.girls.score} <i>:</i> {s.teams.boys.score}
-                  </strong>
-                </div>
+                <FinalShowcase
+                  names={{ girls: s.teams.girls.name, boys: s.teams.boys.name }}
+                  scores={{ girls: s.teams.girls.score, boys: s.teams.boys.score }}
+                  winner={s.winner || null}
+                  caption={s.winner
+                    ? "А реванш завжди починається з наступної гри."
+                    : "Нічия. Здається, потрібен ще один вечір."}
+                />
               ) : s.stage === "result" ? (
                 <div
                   className={`party-result-stage ${s.result?.won ? "result-won" : ""}`}

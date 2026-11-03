@@ -1980,7 +1980,7 @@ kbd {
 .stage-only .ready-copy h2 {
   font-size: clamp(70px, 7.5vw, 144px);
 }
-.stage-only .stage-content h2:not(.stage-blur) {
+.stage-only .stage-content h2:not(.stage-blur, .finale-title) {
   font-size: clamp(64px, 7vw, 130px);
 }
 .stage-only .stage-content .lyric-live {
@@ -2627,7 +2627,7 @@ kbd {
   .stage-only .team-turn {
     font-size: 12px;
   }
-  .stage-only .stage-content h2:not(.stage-blur) {
+  .stage-only .stage-content h2:not(.stage-blur, .finale-title) {
     font-size: 80px;
   }
   .stage-only .round-tag {
@@ -3326,7 +3326,7 @@ kbd {
     max-width: 100%;
   }
   .stage-only .ready-copy h2,
-  .stage-only .stage-content h2:not(.stage-blur) {
+  .stage-only .stage-content h2:not(.stage-blur, .finale-title) {
     font-size: clamp(50px, 13.2vw, 70px);
   }
   .stage-only .ready-copy .stage-kicker,
@@ -3704,7 +3704,6 @@ kbd {
   padding-block: 20px;
   gap: clamp(10px, 1.5vh, 20px);
 }
-.stage-only .phase-final h2,
 .stage-only .phase-answer h2 {
   font-size: clamp(50px, 9vh, 120px) !important;
 }

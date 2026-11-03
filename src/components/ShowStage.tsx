@@ -6,6 +6,7 @@ import BlurText from "./react-bits/BlurText/BlurText";
 import type { ShowState } from "../lib/show";
 import type { Team } from "../lib/music";
 import { matchWinner } from "../lib/match";
+import FinalShowcase from "./FinalShowcase";
 
 export function Scoreboard({ state }: { state: ShowState }) {
   return (
@@ -214,29 +215,12 @@ export default function ShowStage({
             </>
           )}
           {state.phase === "final" && (
-            <>
-              <div className="final-stars" aria-hidden="true">
-                ✦
-              </div>
-              <p className="stage-kicker">ЦЕЙ ВЕЧІР ВИ ЗРОБИЛИ</p>
-              <h2>
-                <span className="gradient-type">
-                  {winner ? "ПЕРЕМОГА!" : "НІЧИЯ!"}
-                </span>
-                <span className="winner-name">
-                  {winner ? state.names[winner] : "Сьогодні зверху всі."}
-                </span>
-              </h2>
-              <div className="final-score">
-                {state.scores.girls}
-                <span>:</span>
-                {state.scores.boys}
-              </div>
-              <p className="stage-caption">
-                {state.rounds} {state.rounds === 4 ? "раунди" : "раундів"}. Одна
-                незабутня компанія.
-              </p>
-            </>
+            <FinalShowcase
+              names={state.names}
+              scores={state.scores}
+              winner={winner}
+              caption="А реванш завжди починається з наступної гри."
+            />
           )}
         </motion.div>
       </AnimatePresence>
