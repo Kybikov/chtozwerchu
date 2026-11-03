@@ -42,11 +42,14 @@ import PartyBuzzer, { BuzzerScene, MelodyModePicker } from "./PartyBuzzer";
 import WakeSlider from "./react-bits/WakeSlider";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
+import "../party-setup.css";
 
 export default function PartyScreen() {
   const { user, openAccount } = useIdentity();
   const party = useParty();
   const s = party.state;
+  const setupNameInput = useRef<HTMLInputElement>(null);
+  const setupCodeInput = useRef<HTMLInputElement>(null);
   const [setup, setSetup] = useState(party.initialCode ? "join" : "create");
   const [name, setName] = useState(
     () => user?.displayName || localStorage.getItem("khz:guest-name") || "",
@@ -97,6 +100,7 @@ export default function PartyScreen() {
     const nickname = name.trim() || user?.displayName || "";
     if (nickname.length < 2 || Array.from(nickname).length > 32) {
       party.setError("Додай ім’я від 2 до 32 символів.");
+      setupNameInput.current?.focus();
       return;
     }
     localStorage.setItem("khz:guest-name", nickname);
@@ -104,6 +108,7 @@ export default function PartyScreen() {
       const roomCode = code.trim().toUpperCase();
       if (!/^[A-Z2-9]{5}$/.test(roomCode)) {
         party.setError("Потрібен код із 5 латинських літер і цифр.");
+        setupCodeInput.current?.focus();
         return;
       }
       party.enter("join", { code: roomCode, name: nickname, team });
@@ -250,155 +255,236 @@ export default function PartyScreen() {
               <br />
               та веди свій вечір у власному темпі.
             </p>
-            <div className="setup-decor" aria-hidden="true">
-              <span>А</span>
-              <AudioLines size={55} />
-              <span>?</span>
-            </div>
+            <img
+              className="party-setup-art"
+              src="/party-game-kit.webp"
+              alt=""
+              width="1536"
+              height="1024"
+              decoding="async"
+            />
           </div>
-          <Panel className="party-setup-panel">
-            <div
-              className="account-tabs"
-              role="group"
-              aria-label="Участь у грі"
-            >
-              <Button
-                className={setup === "create" ? "selected" : ""}
-                onClick={() => {
-                  setSetup("create");
-                  party.setError("");
-                }}
-                disabled={busy}
-                aria-pressed={setup === "create"}
+          <form
+            className={`account-form party-setup-form ${setup === "join" ? "is-joining" : ""}`}
+            noValidate
+            onSubmit={configure}
+          >
+            <Panel className="party-setup-panel">
+              <div
+                className="account-tabs"
+                role="group"
+                aria-label="Участь у грі"
               >
-                Створити гру
-              </Button>
-              <Button
-                className={setup === "join" ? "selected" : ""}
-                onClick={() => {
-                  setSetup("join");
-                  party.setError("");
-                }}
-                disabled={busy}
-                aria-pressed={setup === "join"}
-              >
-                Маю код
-              </Button>
-            </div>
-            <form className="account-form" noValidate onSubmit={configure}>
-              <label className="field-label">
-                {setup === "create" ? "Ім’я ведучого" : "Твоє ім’я"}
-                <input
-                  autoComplete="nickname"
-                  placeholder="Як тебе називати?"
-                  maxLength={32}
-                  value={name}
+                <Button
+                  className={setup === "create" ? "selected" : ""}
+                  onClick={() => {
+                    setSetup("create");
+                    party.setError("");
+                  }}
                   disabled={busy}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </label>
-              {setup === "join" ? (
-                <label className="field-label">
-                  Код кімнати
-                  <input
-                    className="room-code-input"
-                    value={code}
-                    onChange={(e) =>
-                      setCode(
-                        e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""),
-                      )
-                    }
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck={false}
-                    placeholder="КОД ГРИ"
-                    maxLength={5}
-                    disabled={busy}
-                  />
-                </label>
-              ) : (
-                <>
-                  <div className="setup-team-names">
-                    {(["girls", "boys"] as Team[]).map((t) => (
-                      <label key={t} className={`field-label field-${t}`}>
-                        {t === "girls" ? "Команда 01" : "Команда 02"}
+                  aria-pressed={setup === "create"}
+                >
+                  Створити гру
+                </Button>
+                <Button
+                  className={setup === "join" ? "selected" : ""}
+                  onClick={() => {
+                    setSetup("join");
+                    party.setError("");
+                  }}
+                  disabled={busy}
+                  aria-pressed={setup === "join"}
+                >
+                  Маю код
+                </Button>
+              </div>
+
+              <div className="party-setup-fields">
+                {setup === "create" ? (
+                  <>
+                    <section
+                      className="party-setup-section"
+                      aria-labelledby="party-company-title"
+                    >
+                      <h2 id="party-company-title">
+                        <span>01</span> Твоя компанія
+                      </h2>
+                      <label className="field-label">
+                        {setup === "create" ? "Ім’я ведучого" : "Твоє ім’я"}
                         <input
-                          value={names[t]}
-                          onChange={(e) =>
-                            setNames({ ...names, [t]: e.target.value })
-                          }
+                          ref={setupNameInput}
+                          autoComplete="nickname"
+                          placeholder="Як тебе називати?"
                           maxLength={32}
+                          value={name}
                           disabled={busy}
+                          onChange={(e) => setName(e.target.value)}
                         />
                       </label>
-                    ))}
-                  </div>
-                  <VoteModePicker
-                    value={voteMode}
-                    onChange={setVoteMode}
-                    disabled={busy}
-                  />
-                  {types.includes("melody") && (
-                    <MelodyModePicker
-                      value={melodyMode}
-                      onChange={setMelodyMode}
-                      disabled={busy}
-                    />
-                  )}
-                  <div className="field-label">
-                    Скільки раундів?
-                    <div className="choice-row">
-                      {[5, 10, 15, 20].map((n) => (
-                        <Button
-                          key={n}
-                          className={rounds === n ? "selected" : ""}
-                          aria-pressed={rounds === n}
-                          disabled={busy}
-                          onClick={() => setRounds(n)}
-                        >
-                          {n}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="field-label">
-                    Конкурси у грі
-                    <div className="contest-options">
-                      {contests.map((c) => (
-                        <Button
-                          key={c.id}
-                          className={types.includes(c.id) ? "selected" : ""}
-                          aria-pressed={types.includes(c.id)}
-                          disabled={busy}
-                          onClick={() => toggleType(c.id)}
-                        >
-                          <span className="custom-check">
-                            {types.includes(c.id) && <Check size={13} />}
-                          </span>
-                          {c.title}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-              <div className="field-label">
-                {setup === "create" ? "Хто починає?" : "Твоя команда"}
-                <div className="team-choice">
-                  {(["girls", "boys"] as Team[]).map((t) => (
-                    <Button
-                      key={t}
-                      className={`${t} ${team === t ? "selected" : ""}`}
-                      aria-pressed={team === t}
-                      disabled={busy}
-                      onClick={() => setTeam(t)}
+
+                      <div className="setup-team-names">
+                        {(["girls", "boys"] as Team[]).map((t) => (
+                          <label key={t} className={`field-label field-${t}`}>
+                            {t === "girls" ? "Команда 01" : "Команда 02"}
+                            <input
+                              value={names[t]}
+                              onChange={(e) =>
+                                setNames({ ...names, [t]: e.target.value })
+                              }
+                              maxLength={32}
+                              disabled={busy}
+                            />
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="field-label">
+                        {setup === "create" ? "Хто починає?" : "Твоя команда"}
+                        <div className="team-choice">
+                          {(["girls", "boys"] as Team[]).map((t) => (
+                            <Button
+                              key={t}
+                              className={`${t} ${team === t ? "selected" : ""}`}
+                              aria-pressed={team === t}
+                              disabled={busy}
+                              onClick={() => setTeam(t)}
+                            >
+                              {t === "girls" ? names.girls : names.boys}
+                              {team === t && <Check size={17} />}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+                    <section
+                      className="party-setup-section"
+                      aria-labelledby="party-programme-title"
                     >
-                      {t === "girls" ? names.girls : names.boys}
-                      {team === t && <Check size={17} />}
-                    </Button>
-                  ))}
-                </div>
+                      <h2 id="party-programme-title">
+                        <span>02</span> Програма вечора
+                      </h2>
+                      <div className="field-label">
+                        Скільки раундів?
+                        <div className="choice-row">
+                          {[5, 10, 15, 20].map((n) => (
+                            <Button
+                              key={n}
+                              className={rounds === n ? "selected" : ""}
+                              aria-pressed={rounds === n}
+                              disabled={busy}
+                              onClick={() => setRounds(n)}
+                            >
+                              {n}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="field-label">
+                        Конкурси у грі
+                        <div className="contest-options">
+                          {contests.map((c) => (
+                            <Button
+                              key={c.id}
+                              className={types.includes(c.id) ? "selected" : ""}
+                              aria-pressed={types.includes(c.id)}
+                              disabled={busy}
+                              onClick={() => toggleType(c.id)}
+                            >
+                              <span className="custom-check">
+                                {types.includes(c.id) && <Check size={13} />}
+                              </span>
+                              {c.title}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+                    <section
+                      className="party-setup-section"
+                      aria-labelledby="party-rules-title"
+                    >
+                      <h2 id="party-rules-title">
+                        <span>03</span> Правила гри
+                      </h2>
+                      <VoteModePicker
+                        value={voteMode}
+                        onChange={setVoteMode}
+                        disabled={busy}
+                      />
+                      {types.includes("melody") && (
+                        <MelodyModePicker
+                          value={melodyMode}
+                          onChange={setMelodyMode}
+                          disabled={busy}
+                        />
+                      )}
+                    </section>
+                  </>
+                ) : (
+                  <div className="party-join-fields">
+                    <label className="field-label">
+                      {setup === "create" ? "Ім’я ведучого" : "Твоє ім’я"}
+                      <input
+                        ref={setupNameInput}
+                        autoComplete="nickname"
+                        placeholder="Як тебе називати?"
+                        maxLength={32}
+                        value={name}
+                        disabled={busy}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </label>
+
+                    <label className="field-label">
+                      Код кімнати
+                      <input
+                        ref={setupCodeInput}
+                        className="room-code-input"
+                        value={code}
+                        onChange={(e) =>
+                          setCode(
+                            e.target.value
+                              .toUpperCase()
+                              .replace(/[^A-Z2-9]/g, ""),
+                          )
+                        }
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        placeholder="КОД ГРИ"
+                        maxLength={5}
+                        disabled={busy}
+                      />
+                    </label>
+
+                    <div className="field-label">
+                      {setup === "create" ? "Хто починає?" : "Твоя команда"}
+                      <div className="team-choice">
+                        {(["girls", "boys"] as Team[]).map((t) => (
+                          <Button
+                            key={t}
+                            className={`${t} ${team === t ? "selected" : ""}`}
+                            aria-pressed={team === t}
+                            disabled={busy}
+                            onClick={() => setTeam(t)}
+                          >
+                            {t === "girls" ? names.girls : names.boys}
+                            {team === t && <Check size={17} />}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+            </Panel>
+            <div className="party-setup-submit">
+              {setup === "create" && (
+                <p className="party-setup-summary">
+                  Раунди: <strong>{rounds}</strong>
+                  <span>·</span> Конкурси: <strong>{types.length}</strong>
+                </p>
+              )}
               {party.error && (
                 <p className="form-error" role="alert">
                   {party.error}
@@ -427,8 +513,8 @@ export default function PartyScreen() {
                   ? `Граєш як ${user.displayName}. Результат збережеться в історії.`
                   : "Граєш гостем. Акаунт не потрібен."}
               </p>
-            </form>
-          </Panel>
+            </div>
+          </form>
         </main>
       ) : (
         <main className="party-main">
