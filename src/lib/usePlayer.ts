@@ -35,12 +35,47 @@ export function usePlayer(src: string, onError: (message: string) => void) {
       setReady(true);
       setLoading(false);
     };
-    const play = () => setPlaying(true),
-      pause = () => setPlaying(false);
-    const waiting = () => setLoading(true),
-      canplay = () => setLoading(false);
     const time = () => setPosition(audio.currentTime);
+    let frame = 0,
+      last = 0;
+    const stopFrames = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    };
+    const tick = (now: number) => {
+      frame = 0;
+      if (audio.paused || audio.ended) return;
+      if (now - last > 60) {
+        time();
+        last = now;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    const startFrames = () => {
+      if (!frame && !audio.paused && !audio.ended) {
+        last = 0;
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    const play = () => {
+      setPlaying(true);
+      startFrames();
+    };
+    const pause = () => {
+      setPlaying(false);
+      time();
+      stopFrames();
+    };
+    const waiting = () => {
+      setLoading(true);
+      stopFrames();
+    };
+    const canplay = () => {
+      setLoading(false);
+      startFrames();
+    };
     const error = () => {
+      stopFrames();
       setFailed(true);
       setLoading(false);
       setReady(false);
@@ -57,20 +92,11 @@ export function usePlayer(src: string, onError: (message: string) => void) {
     audio.addEventListener("seeked", time);
     audio.addEventListener("waiting", waiting);
     audio.addEventListener("canplay", canplay);
+    audio.addEventListener("playing", canplay);
     audio.addEventListener("error", error);
-    let frame = 0,
-      last = 0;
-    const tick = (now: number) => {
-      if (!audio.paused && now - last > 60) {
-        setPosition(audio.currentTime);
-        last = now;
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
     return () => {
       audio.pause();
-      cancelAnimationFrame(frame);
+      stopFrames();
       audio.removeEventListener("loadedmetadata", metadata);
       audio.removeEventListener("play", play);
       audio.removeEventListener("pause", pause);
@@ -79,6 +105,7 @@ export function usePlayer(src: string, onError: (message: string) => void) {
       audio.removeEventListener("seeked", time);
       audio.removeEventListener("waiting", waiting);
       audio.removeEventListener("canplay", canplay);
+      audio.removeEventListener("playing", canplay);
       audio.removeEventListener("error", error);
     };
   }, [src]);

@@ -25,6 +25,7 @@ import type { Session, Track } from "../lib/music";
 import type { usePlayer } from "../lib/usePlayer";
 import type { PreparedSummary } from "../lib/preparedSongs";
 import { clipLength } from "../lib/roundClip";
+import { useAudioBoundary } from "../lib/useAudioBoundary";
 
 type Player = ReturnType<typeof usePlayer>;
 export default function NetworkStation({
@@ -177,16 +178,16 @@ export default function NetworkStation({
       setArmed(false);
     }
   }, [room.connected]);
-  useEffect(() => {
-    if (room.state?.phase === "playing" && player.playing) {
-      const stop = room.state.track.cues[room.state.session.target]?.startMs;
-      if (
-        stop !== undefined &&
-        player.position * 1000 + room.state.session.offset >= stop
-      )
-        player.pause();
-    }
-  }, [player.position, player.playing, room.state]);
+  const answerStart =
+    room.state?.track.cues[room.state.session.target]?.startMs;
+  useAudioBoundary(
+    player.ref,
+    room.connected && room.state?.phase === "playing" && player.playing,
+    answerStart === undefined
+      ? undefined
+      : (answerStart - room.state!.session.offset) / 1000,
+    () => {}, // The final audio position is reported to the authoritative room.
+  );
   useEffect(() => {
     if (
       prepared.current === track?.id &&

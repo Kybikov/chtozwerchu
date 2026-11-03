@@ -63,6 +63,7 @@ import {
   type Track,
 } from "./lib/music";
 import { usePlayer } from "./lib/usePlayer";
+import { useAudioBoundary } from "./lib/useAudioBoundary";
 import NetworkStation from "./components/NetworkStation";
 import { savedRoom, rememberRoom, type RoomAccess } from "./lib/studioRoom";
 import { AccountButton, useIdentity } from "./lib/identity";
@@ -448,20 +449,16 @@ export default function App() {
     };
   }, [loadTrack]); // restore once; future track changes are explicit
 
-  useEffect(() => {
-    if (
-      phase !== "playing" ||
-      !session.aligned ||
-      !target ||
-      targetLock.current
-    )
-      return;
-    if (nowMS >= target.startMs) {
+  useAudioBoundary(
+    player.ref,
+    !network && phase === "playing" && session.aligned,
+    selectedClip?.end,
+    () => {
+      if (targetLock.current) return;
       targetLock.current = true;
-      player.pause();
       setPhase("answer");
-    }
-  }, [phase, nowMS, session.aligned, target, player.pause]);
+    },
+  );
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);

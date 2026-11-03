@@ -1,5 +1,11 @@
 # Network music studio 1.3
 
+This document records the original 1.3 implementation and its checks. Current
+rooms use the Redis coordination and recovery shipped in [1.9](release-1.9.md),
+and accounts and private history are implemented. The old per-instance and
+account limitations below are historical. Current operation is in [DEPLOY.md](../DEPLOY.md);
+audio-clock cutoffs are described in [1.20](release-1.20.md).
+
 ## Devices and authority
 
 The prepared main app becomes a media station. It owns the local audio file or

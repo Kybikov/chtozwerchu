@@ -96,10 +96,14 @@ The font files are local; the show does not fetch fonts from a third-party CDN.
 
 ## Follow-up scope
 
-- Account-backed room ownership, event packs and room browsing.
+Account-owned network shows and private result history are implemented; see
+[accounts](release-1.4.md) and [profile](release-1.19.md). Current room recovery
+uses [Redis coordination](release-1.9.md). [Audio-clock cutoffs](release-1.20.md)
+apply to both local play and the network media station.
+
 - Add a supported full-track playback path; see music-playback.md for the current
   provider capabilities. Round clip duration and private audition ship in 1.15.
-- Scenario packs, sound design, session recovery and deployment hardening.
+- Additional event packs, room browsing and broader show sound cues remain extensions.
 
 ## Network studio 1.3
 
