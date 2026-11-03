@@ -3,6 +3,7 @@ import { Expand, Monitor, Radio } from "lucide-react";
 import Backdrop from "./Backdrop";
 import ShowStage, { Scoreboard } from "./ShowStage";
 import { Button } from "./ui";
+import StageControls from "./StageControls";
 import type { ShowState } from "../lib/show";
 
 export default function AudienceScreen() {
@@ -57,7 +58,7 @@ export default function AudienceScreen() {
           Пульт на паузі. Поверніться до вікна ведучого.
         </div>
       )}
-      <div className="stage-exit">
+      <StageControls>
         <Button
           onClick={() =>
             void document.documentElement.requestFullscreen().catch(() => {})
@@ -66,7 +67,7 @@ export default function AudienceScreen() {
           <Expand size={20} />
           Повний екран
         </Button>
-      </div>
+      </StageControls>
     </div>
   );
 }

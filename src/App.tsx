@@ -47,6 +47,7 @@ import Backdrop from "./components/Backdrop";
 import WakeSlider from "./components/react-bits/WakeSlider";
 import SquishSwitch from "./components/react-bits/SquishSwitch";
 import ShowStage, { Scoreboard } from "./components/ShowStage";
+import StageControls from "./components/StageControls";
 import { useShowBroadcast, type ShowState } from "./lib/show";
 import { useAnswerClock } from "./lib/useAnswerClock";
 import { scoreRound, undoRound, nextPlayableTarget } from "./lib/match";
@@ -1579,7 +1580,7 @@ export default function App() {
             </Button>
           </footer>
           {stageOnly && (
-            <div className="stage-exit">
+            <StageControls>
               <Button onClick={() => setStageOnly(false)}>
                 <ArrowLeft size={17} />
                 Повернути пульт
@@ -1605,7 +1606,7 @@ export default function App() {
               >
                 <Expand size={17} />
               </Button>
-            </div>
+            </StageControls>
           )}
 
           <Modal
@@ -1969,11 +1970,15 @@ export default function App() {
           >
             <div className="settings-teams">
               {(["girls", "boys"] as Team[]).map((team) => (
-                <label key={team} className={team}>
-                  <span>
+                <div key={team} className={team}>
+                  <label
+                    className="team-name-label"
+                    htmlFor={`studio-name-${team}`}
+                  >
                     Назва {team === "girls" ? "рожевої" : "синьої"} команди
-                  </span>
+                  </label>
                   <input
+                    id={`studio-name-${team}`}
                     maxLength={32}
                     value={session.names[team]}
                     onChange={(e) =>
@@ -2000,7 +2005,10 @@ export default function App() {
                     >
                       <Minus size={15} />
                     </Button>
-                    <span>{session.scores[team]} балів</span>
+                    <output aria-label={`Рахунок: ${session.names[team]}`}>
+                      {session.scores[team]}
+                      <span>Рахунок</span>
+                    </output>
                     <Button
                       className="icon-button"
                       aria-label={`Збільшити рахунок: ${session.names[team]}`}
@@ -2014,7 +2022,7 @@ export default function App() {
                       <Plus size={15} />
                     </Button>
                   </div>
-                </label>
+                </div>
               ))}
             </div>
             <div className="setting-row">

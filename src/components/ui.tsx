@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import { useId, type ComponentProps, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import SpecularButton from "./react-bits/SpecularButton";
@@ -66,19 +66,20 @@ export function Modal({
   wide?: boolean;
   className?: string;
 }) {
+  const descriptionId = useId();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
         <Dialog.Content
           className={`modal-content ${wide ? "modal-wide" : ""} ${className}`}
-          aria-describedby={description ? "modal-description" : undefined}
+          aria-describedby={description ? descriptionId : undefined}
         >
           <div className="modal-heading">
             <div>
               <Dialog.Title>{title}</Dialog.Title>
               {description && (
-                <Dialog.Description id="modal-description">
+                <Dialog.Description id={descriptionId}>
                   {description}
                 </Dialog.Description>
               )}

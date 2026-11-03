@@ -1,0 +1,219 @@
+/* Shared dialogue scale. Account-specific treatments load after this file. */
+.modal-content:not(:where(.account-modal)) .modal-heading h2 {
+  font-size: 44px;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.modal-content:not(:where(.account-modal)) .modal-heading > div {
+  min-width: 0;
+}
+.modal-content:not(:where(.account-modal)) .modal-heading p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #cebbdf;
+}
+.modal-content:not(:where(.account-modal)) .button.specular-button {
+  font-size: 16px;
+  min-height: 48px;
+}
+.modal-content:not(:where(.account-modal)) .button.icon-button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 10px;
+  flex-shrink: 0;
+}
+.modal-content:not(:where(.account-modal)) .modal-heading > .button {
+  margin: 0 -6px 0 0;
+}
+.modal-content:not(:where(.account-modal)) .settings-teams > div,
+.modal-content:not(:where(.account-modal)) .settings-teams > label {
+  min-width: 0;
+}
+.modal-content:not(:where(.account-modal)) .settings-teams label > span,
+.modal-content:not(:where(.account-modal))
+  .settings-teams
+  label.team-name-label {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d5bddf;
+  margin-bottom: 10px;
+  min-height: 0;
+}
+.modal-content:not(:where(.account-modal)) .settings-teams input {
+  font-size: 18px;
+  min-height: 54px;
+  padding: 14px;
+}
+.modal-content:not(:where(.account-modal)) .score-edit {
+  gap: 8px;
+  padding: 14px 0 18px;
+}
+.modal-content:not(:where(.account-modal)) .score-edit > output {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #f5e8ff;
+  font:
+    500 32px/1.1 "Oswald Variable",
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.modal-content:not(:where(.account-modal)) .score-edit > output > span {
+  color: #bfa6d1;
+  font:
+    400 12px/1.5 "Onest Variable",
+    sans-serif;
+  margin-top: 4px;
+}
+.modal-content:not(:where(.account-modal)) .setting-row {
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.modal-content:not(:where(.account-modal)) .setting-row > span {
+  flex: 1 1 200px;
+}
+.modal-content:not(:where(.account-modal)) .setting-row > .squish-switch-root {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding-block: 8px;
+}
+.modal-content:not(:where(.account-modal)) .setting-row strong {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.modal-content:not(:where(.account-modal)) .setting-row small,
+.modal-content:not(:where(.account-modal)) .modal-footnote {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #bfa9d0;
+}
+.modal-content:not(:where(.account-modal)) .option-grid {
+  gap: 6px;
+}
+.modal-content:not(:where(.account-modal)) .option-grid .button {
+  min-width: 48px;
+  padding-inline: 12px;
+}
+.modal-content:not(:where(.account-modal)) .help-steps strong {
+  font-size: 20px;
+}
+.modal-content:not(:where(.account-modal)) .help-steps p,
+.modal-content:not(:where(.account-modal)) .notice {
+  font-size: 16px;
+  line-height: 1.65;
+}
+.modal-content:not(:where(.account-modal)) .field-label,
+.modal-content:not(:where(.account-modal)) .vote-mode-options .button span {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.modal-content:not(:where(.account-modal)) .vote-mode-options .button small,
+.modal-content:not(:where(.account-modal)) .melody-mode-note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #bfa9d0;
+}
+
+.stage-exit.stage-controls {
+  opacity: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+  transition: opacity 180ms ease;
+}
+.stage-exit.stage-controls[data-visible="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+.stage-exit.stage-controls:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: auto;
+}
+.stage-exit.stage-controls .button {
+  min-height: 44px;
+  font-size: clamp(14px, 1.5vmin, 32px);
+}
+
+@media (max-width: 560px) {
+  .modal-content:not(:where(.account-modal)) .modal-heading h2 {
+    font-size: 34px;
+  }
+  .modal-content:not(:where(.account-modal)) .settings-teams {
+    gap: 16px;
+  }
+  .modal-content:not(:where(.account-modal)) .settings-teams input {
+    font-size: 16px;
+    padding: 12px;
+  }
+  .modal-content:not(:where(.account-modal)) .settings-teams label > span,
+  .modal-content:not(:where(.account-modal))
+    .settings-teams
+    label.team-name-label {
+    min-height: 42px;
+    margin-bottom: 8px;
+  }
+  .modal-content:not(:where(.account-modal)) .option-grid {
+    width: 100%;
+  }
+  .modal-content:not(:where(.account-modal)) .vote-mode-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .modal-content:not(:where(.account-modal)) .setting-row > span {
+    flex-basis: 160px;
+  }
+  .modal-content:not(:where(.account-modal)) .setting-row .action-pair {
+    width: 100%;
+  }
+  .modal-content:not(:where(.account-modal))
+    .setting-row
+    .action-pair
+    > .button {
+    flex: 1;
+  }
+  .modal-content:not(:where(.account-modal)) .cue-preparation-transport {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 6px;
+  }
+  .modal-content:not(:where(.account-modal)) .cue-preparation-transport > span {
+    grid-column: 1 / -1;
+  }
+  .modal-content:not(:where(.account-modal))
+    .cue-preparation-transport
+    > .button-primary {
+    padding-inline: 6px;
+  }
+  .modal-content:not(:where(.account-modal))
+    .cue-preparation-transport
+    .specular-button__label {
+    gap: 6px;
+  }
+  .stage-exit.stage-controls {
+    width: max-content;
+    gap: 6px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .stage-exit.stage-controls .button {
+    padding: 10px 12px;
+  }
+}
+@media (max-width: 359px) {
+  .modal-content:not(:where(.account-modal)) .settings-teams {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .modal-content:not(:where(.account-modal)) .settings-teams label > span,
+  .modal-content:not(:where(.account-modal))
+    .settings-teams
+    label.team-name-label {
+    min-height: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-exit.stage-controls {
+    transition: none;
+  }
+}

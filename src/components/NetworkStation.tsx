@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { Button, Modal } from "./ui";
+import StageControls from "./StageControls";
 import Backdrop from "./Backdrop";
 import ShowStage, { Scoreboard } from "./ShowStage";
 import {
@@ -333,7 +334,7 @@ export default function NetworkStation({
           Пульт ведучого від’єднано. Очікуємо підключення.
         </div>
       )}
-      <div className="stage-exit station-tools">
+      <StageControls className="station-tools">
         <Button onClick={() => setPairing(true)}>
           <Smartphone size={18} />
           Пульт · {access.code}
@@ -350,7 +351,7 @@ export default function NetworkStation({
           <ArrowLeft size={18} />
           Локальна гра
         </Button>
-      </div>
+      </StageControls>
       <Modal
         open={pairing}
         onOpenChange={setPairing}

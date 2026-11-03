@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Expand, Monitor } from "lucide-react";
 import { Button } from "./ui";
+import StageControls from "./StageControls";
 import Backdrop from "./Backdrop";
 import ShowStage, { Scoreboard } from "./ShowStage";
 import { linkConnection, useStudioConnection } from "../lib/studioRoom";
@@ -31,7 +32,7 @@ export default function RoomAudience() {
           {room.error || "Екран зі звуком від’єднано. Гру призупинено."}
         </div>
       )}
-      <div className="stage-exit">
+      <StageControls>
         <Button
           onClick={() =>
             void document.documentElement.requestFullscreen().catch(() => {})
@@ -40,7 +41,7 @@ export default function RoomAudience() {
           <Expand size={18} />
           Повний екран
         </Button>
-      </div>
+      </StageControls>
     </div>
   );
 }
