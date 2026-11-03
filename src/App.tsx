@@ -29,11 +29,9 @@ import {
   Minus,
   Monitor,
   Pause,
-  Package,
   Play,
   Plus,
   RotateCcw,
-  Search,
   Settings2,
   ShieldCheck,
   SkipBack,
@@ -60,7 +58,6 @@ import { scoreRound, undoRound, nextPlayableTarget } from "./lib/match";
 import {
   activeCue,
   api,
-  curated,
   formatTime,
   freshSession,
   parseLRC,
@@ -77,7 +74,7 @@ import { AccountButton, useIdentity } from "./lib/identity";
 import LocalArchive from "./components/LocalArchive";
 import { serializeLyrics } from "./lib/wordTiming";
 import type { WordCue } from "./lib/music";
-import PreparedSongs from "./components/PreparedSongs";
+import TrackLibrary from "./components/TrackLibrary";
 import ProgrammeEditor from "./components/ProgrammeEditor";
 import ProgrammeOrder from "./components/ProgrammeOrder";
 import LyricTimingStatus from "./components/LyricTimingStatus";
@@ -171,10 +168,6 @@ export default function App() {
     () =>
       session.history.find((r) => r.round === session.round)?.awarded ?? null,
   );
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Track[]>([]);
-  const [searchBusy, setSearchBusy] = useState(false);
-  const [searchError, setSearchError] = useState("");
   const [wordLine, setWordLine] = useState(0);
   const [lyricsConfigured, setLyricsConfigured] = useState<boolean | null>(
     null,
@@ -509,40 +502,6 @@ export default function App() {
       setPhase("answer");
     },
   );
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setSearchBusy(false);
-      setSearchError("");
-      return;
-    }
-    const ctrl = new AbortController();
-    setSearchBusy(true);
-    setSearchError("");
-    const timeout = setTimeout(
-      () =>
-        api<{ tracks: Track[] }>(
-          `/api/music/search?q=${encodeURIComponent(query)}`,
-          ctrl.signal,
-        )
-          .then((v) => {
-            setResults(v.tracks);
-            setSearchBusy(false);
-          })
-          .catch((e) => {
-            if (!ctrl.signal.aborted) {
-              setSearchError(e.message);
-              setSearchBusy(false);
-            }
-          }),
-      350,
-    );
-    return () => {
-      clearTimeout(timeout);
-      ctrl.abort();
-    };
-  }, [query]);
-
   const resetRound = (cancelSource = true) => {
     setSourceError("");
     if (cancelSource && sourceRequest.current) {
@@ -1823,118 +1782,24 @@ export default function App() {
             description="Знайди трек або обери знайомий хіт. Конкретну версію запису перевіряємо перед грою."
             wide
           >
-            <Button
-              className="programme-open"
-              onClick={() => setSheet("programme")}
-            >
-              <ListMusic size={18} /> Зібрати програму вечора{" "}
-              <ArrowRight size={18} />
-            </Button>
-            <Button
-              className="library-pack-open"
-              onClick={() => setSheet("pack")}
-            >
-              <Package size={18} /> Перенести вечір на інший пристрій
-            </Button>
-            <PreparedSongs
-              songs={preparedSongs}
-              busy={trackBusy || preparedBusy || phase !== "ready"}
-              onLoad={(id) => {
-                void loadTrack(id, false, true);
-                setSheet(null);
-              }}
-              onRemove={deletePreparation}
-            />
-            <label className="search-field">
-              <Search size={20} />
-              <input
-                autoComplete="off"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Пісня або виконавець"
-                aria-label="Пошук треку"
+            {sheet === "library" && (
+              <TrackLibrary
+                songs={preparedSongs}
+                loaded={preparedLoaded}
+                busy={trackBusy || preparedBusy || phase !== "ready"}
+                onLoad={(id) => {
+                  void loadTrack(id);
+                  setSheet(null);
+                }}
+                onLoadPrepared={(id) => {
+                  void loadTrack(id, false, true);
+                  setSheet(null);
+                }}
+                onRemove={deletePreparation}
+                onProgramme={() => setSheet("programme")}
+                onPack={() => setSheet("pack")}
               />
-              {query && (
-                <Button
-                  variant="ghost"
-                  className="icon-button"
-                  onClick={() => setQuery("")}
-                  aria-label="Очистити пошук"
-                >
-                  <X size={16} />
-                </Button>
-              )}
-            </label>
-            <div className="library-caption">
-              <span>
-                {query ? "РЕЗУЛЬТАТИ ПОШУКУ" : "З ЦЬОГО МОЖНА ПОЧАТИ"}
-              </span>
-              {searchBusy && <LoaderCircle size={16} className="spin" />}
-            </div>
-            {searchError && (
-              <p className="inline-error" role="alert">
-                {searchError}
-              </p>
             )}
-            <div className="track-library">
-              {query
-                ? results.map((t) => (
-                    <Button
-                      key={t.id}
-                      variant="ghost"
-                      className="library-result"
-                      onClick={() => {
-                        void loadTrack(t.id);
-                        setSheet(null);
-                      }}
-                    >
-                      <AlbumCover src={t.cover} />
-                      <span>
-                        <strong>{t.title}</strong>
-                        <small>
-                          {t.artist} · {t.album}
-                        </small>
-                      </span>
-                      <span className="library-duration">
-                        {formatTime(t.duration)}
-                      </span>
-                      <Plus size={17} />
-                    </Button>
-                  ))
-                : curated.map((t, i) => (
-                    <Panel className="curated-card" key={t.id}>
-                      <div className={`curated-art art-${i}`}>
-                        <Disc3 size={72} strokeWidth={0.7} />
-                        <span>{String(i + 1).padStart(2, "0")}</span>
-                      </div>
-                      <span className="curated-mood">{t.mood}</span>
-                      <h3>{t.title}</h3>
-                      <p>{t.artist}</p>
-                      <Button
-                        className="full-width"
-                        onClick={() => {
-                          void loadTrack(t.id);
-                          setSheet(null);
-                        }}
-                      >
-                        Обрати трек
-                        <ArrowRight size={15} />
-                      </Button>
-                    </Panel>
-                  ))}
-            </div>
-            {query && !searchBusy && !searchError && !results.length && (
-              <p className="empty-state">
-                Не знайшли збігів. Спробуй іншу назву або виконавця.
-              </p>
-            )}
-            <div className="library-footnote">
-              <Disc3 size={16} />
-              <span>
-                Треки з Deezer. У прототипі доступні прев’ю; повний аудіофайл
-                можна додати з пристрою.
-              </span>
-            </div>
           </Modal>
 
           <Modal

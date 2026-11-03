@@ -1,4 +1,4 @@
-# Music Studio 1.15
+# Music Studio 1.30
 
 ## Direction
 
@@ -38,6 +38,13 @@ The components are adapted source, not recreated from memory. Preserve their
 upstream licensing. No registry credentials belong in components.json or Git.
 
 ## Backend boundary
+
+The library uses separate Prepared and Deezer sources, with search before the
+list. Prepared search runs locally over titles and artists. Provider search
+exists only while the library is mounted in Deezer mode; changing the query,
+source or closing the library aborts its request. Source tabs support arrow
+keys, Home and End. Full version titles and album metadata wrap on phones.
+See [library 1.30](release-1.30.md) for the design references and verification.
 
 Read-only routes: `GET /api/music/status`, `/search?q=...`, `/track?id=...`.
 The adapter accepts server environment credentials, renews ARL-based JWT under

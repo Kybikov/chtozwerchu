@@ -3,22 +3,26 @@ import { ArrowRight, Check, Disc3, Trash2 } from "lucide-react";
 import { Button, Panel } from "./ui";
 import AlbumCover from "./AlbumCover";
 import { formatTime } from "../lib/music";
-import type { PreparedSummary } from "../lib/preparedSongs";
+import { preparedLimit, type PreparedSummary } from "../lib/preparedSongs";
 import "../prepared-songs.css";
 
 export default function PreparedSongs({
   songs,
+  total = songs.length,
   busy = false,
   onLoad,
   onRemove,
+  onClearSearch,
 }: {
   songs: PreparedSummary[];
+  total?: number;
   busy?: boolean;
   onLoad: (id: number) => void;
   onRemove?: (id: number) => Promise<void>;
+  onClearSearch?: () => void;
 }) {
   const [removing, setRemoving] = useState<number | null>(null);
-  if (!songs.length) return null;
+  if (!total) return null;
   return (
     <section className="prepared-songs" aria-label="Підготовлені пісні">
       <div className="prepared-heading">
@@ -26,7 +30,11 @@ export default function PreparedSongs({
           <Check size={16} />
           ГОТОВІ ДО ГРИ
         </span>
-        <span>{songs.length} / 40</span>
+        <span role="status">
+          {songs.length === total
+            ? `${total} / ${preparedLimit}`
+            : `${songs.length} з ${total}`}
+        </span>
       </div>
       <p className="prepared-description">
         Власне аудіо й текст відкриваються з цього пристрою без мережі. Для
@@ -100,6 +108,17 @@ export default function PreparedSongs({
           </Panel>
         ))}
       </div>
+      {!songs.length && (
+        <div className="empty-state">
+          <p>
+            Серед підготовлених пісень збігів немає. Спробуй іншу назву або
+            виконавця.
+          </p>
+          {onClearSearch && (
+            <Button onClick={onClearSearch}>Показати всі підготовлені</Button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
