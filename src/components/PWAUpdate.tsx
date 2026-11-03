@@ -37,12 +37,17 @@ export function PWAUpdateDialog() {
     setUpdateOpen,
     checkForUpdate,
     applyUpdate,
+    recoverWindow,
   } = usePWA();
   const [checking, setChecking] = useState(false);
   const [applying, setApplying] = useState(false);
   const [notice, setNotice] = useState("");
+  const [recoveryAvailable, setRecoveryAvailable] = useState(false);
   useEffect(() => {
-    if (updateOpen) setNotice("");
+    if (updateOpen) {
+      setNotice("");
+      setRecoveryAvailable(false);
+    }
   }, [updateOpen]);
   return (
     <Modal
@@ -93,19 +98,23 @@ export function PWAUpdateDialog() {
             onClick={async () => {
               setApplying(true);
               setNotice("");
+              setRecoveryAvailable(false);
               try {
                 const result = await applyUpdate();
                 if (!result)
                   setNotice(
                     "Готового оновлення ще немає. Перевір ще раз за кілька секунд.",
                   );
-                else if (result.status === "blocked")
+                else if (result.status === "blocked") {
+                  setRecoveryAvailable(result.busy === 0);
                   setNotice(
                     result.busy
                       ? "В іншому вікні ще триває гра, музика або редагування. Заверши дію там і спробуй знову."
                       : "Не всі вікна гри відповіли. Закрий зайві вкладки цього сайту й спробуй ще раз.",
                   );
+                }
               } catch (error) {
+                setRecoveryAvailable(true);
                 setNotice(
                   error instanceof Error
                     ? error.message
@@ -153,6 +162,24 @@ export function PWAUpdateDialog() {
             <RefreshCw size={18} className={checking ? "spin" : ""} />
             {checking ? "Перевіряємо…" : "Перевірити оновлення"}
           </Button>
+        )}
+        {recoveryAvailable && (
+          <div className="pwa-recovery">
+            <p>
+              Можна завантажити свіжий інтерфейс тільки для цього вікна.
+              Рахунок і підготовлені пісні залишаться на пристрої, інші екрани
+              продовжать працювати. Потрібне з’єднання з інтернетом.
+            </p>
+            <Button
+              disabled={busy || applying || checking}
+              onClick={() => {
+                if (!recoverWindow())
+                  setNotice("Заверши дію в цьому вікні перед відновленням.");
+              }}
+            >
+              <RefreshCw size={18} /> Відновити це вікно
+            </Button>
+          </div>
         )}
         <Button disabled={applying} onClick={() => setUpdateOpen(false)}>
           Повернутися до шоу

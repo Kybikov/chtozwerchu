@@ -70,6 +70,22 @@
   gap: 10px;
   margin-top: 24px;
 }
+.pwa-recovery {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #be97f408;
+}
+.pwa-recovery p {
+  color: #bfa9d0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.pwa-recovery .button {
+  width: 100%;
+}
 .remote-header-actions {
   display: flex;
   gap: 8px;

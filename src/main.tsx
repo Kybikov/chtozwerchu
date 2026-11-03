@@ -21,6 +21,11 @@ import "./headers.css";
 import "./dialogs.css";
 import "./pwa.css";
 import "./account.css";
+// Return to the normal app URL after the network-only recovery entry point
+// has loaded. This also keeps the window in the existing PWA activity guard.
+if (location.pathname === "/api/app-shell") {
+  history.replaceState(history.state, "", "/" + location.search + location.hash);
+}
 const screen = new URLSearchParams(location.search).get("screen");
 const root =
   import.meta.hot?.data.root ?? createRoot(document.getElementById("root")!);

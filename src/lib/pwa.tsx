@@ -26,6 +26,7 @@ type PWA = {
   openUpdate: () => void;
   checkForUpdate: () => Promise<boolean>;
   applyUpdate: () => Promise<UpdateResult | null>;
+  recoverWindow: () => boolean;
   activity: (id: string, busy: boolean, screen: boolean) => () => void;
 };
 const Context = createContext<PWA | null>(null);
@@ -141,6 +142,11 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       applying.current = false;
     }
   }, [reloadPending, setNeedsUpdate]);
+  const recoverWindow = useCallback(() => {
+    if (busyNow.current || applying.current) return false;
+    location.replace("/api/app-shell" + location.search + location.hash);
+    return true;
+  }, []);
   return (
     <Context.Provider
       value={{
@@ -153,6 +159,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
         openUpdate,
         checkForUpdate,
         applyUpdate,
+        recoverWindow,
         activity,
       }}
     >

@@ -51,6 +51,7 @@ func (s *Server) Handler() http.Handler {
 		mux.HandleFunc("/api/health", s.health)
 		mux.HandleFunc("/api/meta", s.meta)
 		mux.HandleFunc("/api/presets", s.presets)
+		mux.HandleFunc("/api/app-shell", s.appShell)
 		s.registerAuthRoutes(mux)
 		s.registerMusicRoutes(mux)
 		s.registerStudioRoutes(mux)
@@ -102,7 +103,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 			transport = "redis"
 		}
 	}
-	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.27.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
+	writeJSON(w, status, map[string]any{"ok": ok, "version": "1.28.0", "commit": os.Getenv("SOURCE_COMMIT"), "accounts": s.db != nil, "roomTransport": transport})
 }
 
 // roundTypeName maps round types to Ukrainian display names.
@@ -139,6 +140,19 @@ func (s *Server) meta(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) presets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"presets": s.catalog.Presets()})
+}
+
+// The API navigation denylist lets an idle window fetch the deployed shell
+// even when an older offline worker cannot complete an update handshake.
+func (s *Server) appShell(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+	w.Header().Set("X-Robots-Tag", "noindex, noarchive")
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	http.ServeFile(w, r, filepath.Join(s.cfg.WebDir, "index.html"))
 }
 
 // static serves the web directory with an index.html SPA fallback.
