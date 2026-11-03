@@ -3,6 +3,8 @@ import {
   useEffect,
   useRef,
   useState,
+  lazy,
+  Suspense,
   type ChangeEvent,
 } from "react";
 import { AnimatePresence, motion } from "motion/react";
@@ -70,7 +72,6 @@ import NetworkStation from "./components/NetworkStation";
 import { savedRoom, rememberRoom, type RoomAccess } from "./lib/studioRoom";
 import { AccountButton, useIdentity } from "./lib/identity";
 import LocalArchive from "./components/LocalArchive";
-import WordTimingEditor from "./components/WordTimingEditor";
 import { serializeLyrics } from "./lib/wordTiming";
 import type { WordCue } from "./lib/music";
 import PreparedSongs from "./components/PreparedSongs";
@@ -81,7 +82,15 @@ import CuePreparation from "./components/CuePreparation";
 import ClipLengthControl from "./components/ClipLengthControl";
 import RoundClipEditor from "./components/RoundClipEditor";
 import { clipLength, roundClip } from "./lib/roundClip";
-import { resolveStudioTrack, type LocalAudio } from "./lib/studioCache";
+import {
+  resolveStudioTrack,
+  cachedOwnAudio,
+  canRestoreStudioTrack,
+  type AudioSource,
+  type LocalAudio,
+} from "./lib/studioCache";
+import { preparePreview } from "./lib/audioSource";
+import AudioSourcePicker from "./components/AudioSourcePicker";
 import {
   emptyProgramme,
   readProgramme,
@@ -99,6 +108,8 @@ import {
   refreshPreparedPreview,
   type PreparedSummary,
 } from "./lib/preparedSongs";
+
+const WordTimingEditor = lazy(() => import("./components/WordTimingEditor"));
 
 type Sheet =
   | "library"
@@ -138,6 +149,11 @@ export default function App() {
   const [stageOnly, setStageOnly] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const [localAudio, setLocalAudio] = useState<LocalAudio | null>(null);
+  const [savedAudio, setSavedAudio] = useState<LocalAudio | null>(null);
+  const [source, setSource] = useState<AudioSource>("preview");
+  const [sourceBusy, setSourceBusy] = useState(false);
+  const [sourceError, setSourceError] = useState("");
+  const sourceRequest = useRef<AbortController | null>(null);
   const [preparedSongs, setPreparedSongs] = useState<PreparedSummary[]>([]);
   const [preparedBusy, setPreparedBusy] = useState(false);
   const [preparedLoaded, setPreparedLoaded] = useState(false);
@@ -193,6 +209,7 @@ export default function App() {
   usePWAActivity(
     networkBusy ||
       preparedBusy ||
+      sourceBusy ||
       (!network &&
         (phase === "playing" ||
           phase === "answer" ||
@@ -248,6 +265,8 @@ export default function App() {
     if (
       !track ||
       !player.ready ||
+      sourceBusy ||
+      trackBusy ||
       !["ready", "result", "final"].includes(phase)
     )
       return;
@@ -319,16 +338,30 @@ export default function App() {
       if (audioURL.startsWith("blob:")) URL.revokeObjectURL(audioURL);
     };
   }, [audioURL]);
+  useEffect(() => () => sourceRequest.current?.abort(), []);
   const loadTrack = useCallback(
     async (id: number, preserve = false, prepared = false) => {
       const version = ++requestVersion.current;
+      sourceRequest.current?.abort();
+      sourceRequest.current = null;
+      setSourceBusy(false);
+      setSourceError("");
       setTrackBusy(true);
       const completed = latestSession.current.history.find(
         (r) => r.round === latestSession.current.round,
       );
       try {
-        let preparation = prepared ? await readPrepared(id) : null;
-        if (prepared && !preparation)
+        const snapshot = await getMany<unknown>([
+          `khz:track:${id}`,
+          "khz:audio",
+          `khz:lrc:${id}`,
+          `khz:source:${id}`,
+        ]).catch(() => []);
+        if (version !== requestVersion.current) return false;
+        const openPrepared =
+          prepared && (!preserve || !canRestoreStudioTrack(id, snapshot));
+        let preparation = openPrepared ? await readPrepared(id) : null;
+        if (openPrepared && !preparation)
           throw new Error(
             "Підготовку не знайдено на цьому пристрої. Обери іншу пісню.",
           );
@@ -350,6 +383,7 @@ export default function App() {
         setTrack(null);
         setAudioURL("");
         setLocalAudio(null);
+        setSavedAudio(null);
         if (preparation) {
           const saved = preparation;
           if (version !== requestVersion.current) return false;
@@ -358,7 +392,8 @@ export default function App() {
             await setMany([
               [`khz:track:${id}`, saved.track],
               [`khz:lrc:${id}`, saved.track.cues],
-              ["khz:audio", audio ?? undefined],
+              [`khz:source:${id}`, audio ? "local" : "preview"],
+              ...(audio ? [["khz:audio", audio] as [string, LocalAudio]] : []),
             ]);
           } catch {
             if (version === requestVersion.current)
@@ -369,6 +404,8 @@ export default function App() {
           if (version !== requestVersion.current) return false;
           setTrack(saved.track);
           setLocalAudio(audio);
+          setSavedAudio(audio ?? cachedOwnAudio(id, snapshot[1]) ?? null);
+          setSource(audio ? "local" : "preview");
           setAudioURL(
             audio ? URL.createObjectURL(audio.file) : saved.track.preview,
           );
@@ -383,15 +420,12 @@ export default function App() {
           }));
           return true;
         }
-        const snapshot = await getMany<unknown>([
-          `khz:track:${id}`,
-          "khz:audio",
-          `khz:lrc:${id}`,
-        ]).catch(() => []);
-        if (version !== requestVersion.current) return false;
         const {
           track: value,
           audio: saved,
+          savedAudio: retained,
+          source: selectedSource,
+          sourceUnavailable,
           fromDevice,
           retimed,
         } = await resolveStudioTrack(id, preserve, snapshot, (trackId) =>
@@ -399,13 +433,21 @@ export default function App() {
         );
         if (version !== requestVersion.current) return false;
         setTrack(value);
+        setSavedAudio(retained ?? null);
+        setSource(selectedSource);
         if (!fromDevice)
           void setMany([[`khz:track:${id}`, value]]).catch(() => {});
         if (saved) {
           setLocalAudio(saved);
           setAudioURL(URL.createObjectURL(saved.file));
-        } else setAudioURL(value.preview);
-        if (fromDevice) tell("Власне аудіо відкрито з пристрою.");
+        } else setAudioURL(sourceUnavailable ? "" : value.preview);
+        if (sourceUnavailable)
+          setSourceError(
+            selectedSource === "local"
+              ? "Власний файл не знайдено. Додай його знову або обери прев’ю."
+              : "Прев’ю зараз недоступне. Спробуй ще раз або повернися до збереженого файлу.",
+          );
+        else if (fromDevice && saved) tell("Власне аудіо відкрито з пристрою.");
         setSession((s) => ({
           ...s,
           programme: preserve ? s.programme : undefined,
@@ -492,7 +534,13 @@ export default function App() {
     };
   }, [query]);
 
-  const resetRound = () => {
+  const resetRound = (cancelSource = true) => {
+    setSourceError("");
+    if (cancelSource && sourceRequest.current) {
+      sourceRequest.current.abort();
+      sourceRequest.current = null;
+      setSourceBusy(false);
+    }
     player.pause();
     const completed = session.history.find((r) => r.round === session.round);
     setPhase(session.finished ? "final" : completed ? "result" : "ready");
@@ -516,6 +564,7 @@ export default function App() {
   const canPrepare =
     phase === "ready" &&
     !trackBusy &&
+    !sourceBusy &&
     !!currentPreparation &&
     validPrepared(currentPreparation);
   const savePreparation = async () => {
@@ -606,6 +655,7 @@ export default function App() {
     }
   };
   const startRound = () => {
+    if (sourceBusy || trackBusy) return;
     if (session.history.some((r) => r.round === session.round)) {
       setPhase("result");
       return;
@@ -654,7 +704,7 @@ export default function App() {
     );
   };
   const nextRound = async (event?: { detail: number }) => {
-    if (trackBusy || !player.ready || advancing.current) return;
+    if (trackBusy || sourceBusy || !player.ready || advancing.current) return;
     if (
       phase !== "result" ||
       (event && event.detail > 1) ||
@@ -739,6 +789,7 @@ export default function App() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    if (trackBusy || sourceBusy || !["ready", "result"].includes(phase)) return;
     if (file.size > 150 * 1024 * 1024) {
       tell("Обери аудіофайл до 150 МБ.");
       return;
@@ -756,6 +807,9 @@ export default function App() {
     }
     resetRound();
     setLocalAudio({ file, trackId: track.id });
+    setSavedAudio({ file, trackId: track.id });
+    setSource("local");
+    setSourceError("");
     setAudioURL(URL.createObjectURL(file));
     // Full-track timelines are absolute; matching edition must be checked by the host.
     setSession((s) => ({ ...s, offset: 0, aligned: false }));
@@ -763,12 +817,85 @@ export default function App() {
       await setMany([
         ["khz:audio", { file, trackId: track.id }],
         [`khz:track:${track.id}`, track],
+        [`khz:source:${track.id}`, "local"],
       ]);
       tell(
         "Аудіо збережено на цьому пристрої. Перевір синхронізацію й підтвердь прив’язку.",
       );
     } catch {
       tell("Файл відкрито. Бракує місця для його збереження між сеансами.");
+    }
+  };
+  const changeSource = async (next: AudioSource) => {
+    if (
+      !track ||
+      trackBusy ||
+      sourceBusy ||
+      !["ready", "result"].includes(phase)
+    )
+      return;
+    if (next === "local" && savedAudio?.trackId !== track.id) return;
+    const controller = new AbortController();
+    sourceRequest.current?.abort();
+    sourceRequest.current = controller;
+    const version = requestVersion.current;
+    const current = () =>
+      !controller.signal.aborted &&
+      sourceRequest.current === controller &&
+      requestVersion.current === version;
+    setSourceBusy(true);
+    setSourceError("");
+    player.pause();
+    try {
+      const value =
+        next === "preview"
+          ? await preparePreview(
+              track,
+              (id) =>
+                api<Track>(`/api/music/track?id=${id}`, controller.signal),
+              controller.signal,
+            )
+          : track;
+      if (!current()) return;
+      resetRound(false);
+      setTrack(value);
+      setSource(next);
+      setLocalAudio(next === "local" ? savedAudio : null);
+      setAudioURL(
+        next === "local"
+          ? URL.createObjectURL(savedAudio!.file)
+          : value.preview,
+      );
+      setSession((s) => ({ ...s, aligned: false, offset: 0 }));
+      // Commit the visible source before awaiting storage: an editor opened
+      // during that write must work on this source, never be overwritten later.
+      let persisted = true;
+      try {
+        await setMany([
+          [`khz:track:${track.id}`, value],
+          [`khz:source:${track.id}`, next],
+        ]);
+      } catch {
+        persisted = false;
+      }
+      if (!current()) return;
+      tell(
+        persisted
+          ? "Джерело змінено. Перевір прив’язку тексту перед раундом."
+          : "Джерело відкрито. Вибір не зберігся між сеансами. Перевір прив’язку тексту.",
+      );
+    } catch (error) {
+      if (current())
+        setSourceError(
+          error instanceof Error
+            ? error.message
+            : "Джерело недоступне. Спробуй ще раз.",
+        );
+    } finally {
+      if (current()) {
+        sourceRequest.current = null;
+        setSourceBusy(false);
+      }
     }
   };
   const uploadLRC = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -855,7 +982,7 @@ export default function App() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const liveActions = useRef({
-    network: !!network,
+    network: !!network || sourceBusy,
     toggle: player.toggle,
     answerToggle: answerClock.toggle,
     start: startRound,
@@ -864,7 +991,7 @@ export default function App() {
     stageOnly,
   });
   liveActions.current = {
-    network: !!network,
+    network: !!network || sourceBusy,
     toggle: player.toggle,
     answerToggle: answerClock.toggle,
     start: startRound,
@@ -1161,7 +1288,9 @@ export default function App() {
                       </strong>
                       <span>{track?.artist || "Твоя музична бібліотека"}</span>
                       <small>
-                        {localAudio ? "ВЛАСНЕ АУДІО" : "DEEZER · ПРЕВ’Ю 30 С"}
+                        {source === "local"
+                          ? "ВЛАСНЕ АУДІО"
+                          : "DEEZER · ПРЕВ’Ю 30 С"}
                       </small>
                     </div>
                     <Button
@@ -1173,34 +1302,21 @@ export default function App() {
                       <ChevronRight size={20} />
                     </Button>
                   </div>
-                  <div className="source-options">
-                    <Button
-                      className={!localAudio ? "selected" : ""}
-                      onClick={() => {
-                        if (!track) return;
-                        resetRound();
-                        setLocalAudio(null);
-                        setAudioURL(track.preview);
-                        setSession((s) => ({
-                          ...s,
-                          aligned: false,
-                          offset: 0,
-                        }));
-                        void del("khz:audio");
-                      }}
-                    >
-                      <Disc3 size={14} />
-                      Прев’ю
-                    </Button>
-                    <Button
-                      className={localAudio ? "selected" : ""}
-                      disabled={!track}
-                      onClick={() => audioFile.current?.click()}
-                    >
-                      <Upload size={14} />
-                      Мій аудіофайл
-                    </Button>
-                  </div>
+                  <AudioSourcePicker
+                    local={source === "local"}
+                    ownFile={savedAudio?.file}
+                    busy={sourceBusy}
+                    disabled={
+                      !track ||
+                      trackBusy ||
+                      !["ready", "result"].includes(phase)
+                    }
+                    previewReady={player.ready}
+                    error={sourceError}
+                    onPreview={() => void changeSource("preview")}
+                    onLocal={() => void changeSource("local")}
+                    onUpload={() => audioFile.current?.click()}
+                  />
                   <Button
                     className="save-prepared"
                     disabled={!canPrepare || preparedBusy}
@@ -1230,6 +1346,7 @@ export default function App() {
                       disabled={
                         !player.ready ||
                         trackBusy ||
+                        sourceBusy ||
                         phase === "answer" ||
                         phase === "final"
                       }
@@ -1404,7 +1521,8 @@ export default function App() {
                             !session.aligned ||
                             !player.ready ||
                             !selectedClip ||
-                            trackBusy
+                            trackBusy ||
+                            sourceBusy
                           }
                           onClick={() => {
                             resetRound();
@@ -1427,7 +1545,8 @@ export default function App() {
                           !session.aligned ||
                           !target ||
                           !player.ready ||
-                          trackBusy
+                          trackBusy ||
+                          sourceBusy
                         }
                         onClick={startRound}
                       >
@@ -1508,7 +1627,7 @@ export default function App() {
                         variant="primary"
                         className="full-width launch-button"
                         onClick={nextRound}
-                        disabled={trackBusy || !player.ready}
+                        disabled={trackBusy || sourceBusy || !player.ready}
                       >
                         {session.round >= session.rounds
                           ? "Показати фінал"
@@ -1592,7 +1711,9 @@ export default function App() {
               </Button>
               {phase === "ready" && (
                 <Button
-                  disabled={!session.aligned || !player.ready}
+                  disabled={
+                    !session.aligned || !player.ready || sourceBusy || trackBusy
+                  }
                   onClick={startRound}
                 >
                   <Play size={15} />
@@ -1840,20 +1961,34 @@ export default function App() {
           )}
 
           {sheet === "words" && cues[wordLine] && (
-            <WordTimingEditor
-              key={`${track?.id}:${wordLine}`}
-              cue={cues[wordLine]}
-              line={wordLine}
-              offset={session.offset}
-              aligned={session.aligned}
-              player={player}
-              providerWords={
-                track?.lyricsStatus === "ready" &&
-                !!cues[wordLine].words?.length
+            <Suspense
+              fallback={
+                <Modal
+                  open
+                  onOpenChange={(open) => !open && setSheet("cues")}
+                  title="Мітки слів"
+                >
+                  <p className="host-note" role="status">
+                    Готуємо редактор…
+                  </p>
+                </Modal>
               }
-              onSave={saveWordTiming}
-              onClose={() => setSheet("cues")}
-            />
+            >
+              <WordTimingEditor
+                key={`${track?.id}:${wordLine}`}
+                cue={cues[wordLine]}
+                line={wordLine}
+                offset={session.offset}
+                aligned={session.aligned}
+                player={player}
+                providerWords={
+                  track?.lyricsStatus === "ready" &&
+                  !!cues[wordLine].words?.length
+                }
+                onSave={saveWordTiming}
+                onClose={() => setSheet("cues")}
+              />
+            </Suspense>
           )}
 
           <Modal
@@ -1899,6 +2034,8 @@ export default function App() {
               className="full-width"
               disabled={
                 networkBusy ||
+                sourceBusy ||
+                trackBusy ||
                 !track?.cues.length ||
                 !player.ready ||
                 !["ready", "result", "final"].includes(phase)

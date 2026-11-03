@@ -3,6 +3,7 @@ import { sameCueTimeline } from "./lyricTimeline";
 import { validWordTiming } from "./wordTiming";
 
 export type LocalAudio = { file: Blob; trackId: number };
+export type AudioSource = "local" | "preview";
 
 const record = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === "object";
@@ -86,35 +87,62 @@ function cachedTrack(value: unknown, id: number): Track | undefined {
   };
 }
 
-// All three entries are read in one IndexedDB transaction. A provider preview
+export function cachedOwnAudio(
+  id: number,
+  value: unknown,
+): LocalAudio | undefined {
+  return record(value) &&
+    value.trackId === id &&
+    value.file instanceof Blob &&
+    value.file.size > 0 &&
+    value.file.size <= 150 * 1024 * 1024
+    ? { trackId: id, file: value.file }
+    : undefined;
+}
+
+export function canRestoreStudioTrack(
+  id: number,
+  snapshot: readonly unknown[],
+) {
+  return (
+    !!cachedTrack(snapshot[0], id) &&
+    (snapshot[3] === "preview" || !!cachedOwnAudio(id, snapshot[1]))
+  );
+}
+
+// All entries are read in one IndexedDB transaction. A provider preview
 // alone is never an offline source: its signed URL may already have expired.
 export async function resolveStudioTrack(
   id: number,
   preserve: boolean,
-  [rawTrack, rawAudio, rawLyrics]: readonly unknown[],
+  [rawTrack, rawAudio, rawLyrics, rawSource]: readonly unknown[],
   lookup: (id: number) => Promise<Track>,
 ) {
   const previous = cachedTrack(rawTrack, id);
-  const audio: LocalAudio | undefined =
-    record(rawAudio) &&
-    rawAudio.trackId === id &&
-    rawAudio.file instanceof Blob &&
-    rawAudio.file.size > 0 &&
-    rawAudio.file.size <= 150 * 1024 * 1024
-      ? { trackId: id, file: rawAudio.file }
-      : undefined;
+  const savedAudio = cachedOwnAudio(id, rawAudio);
+  const source: AudioSource =
+    rawSource === "preview"
+      ? "preview"
+      : rawSource === "local" || savedAudio
+        ? "local"
+        : "preview";
   let track: Track;
   let fromDevice = false;
-  if (preserve && previous && audio) {
+  let sourceUnavailable = source === "local" && !savedAudio;
+  const audio = source === "local" ? savedAudio : undefined;
+  if (preserve && previous && source === "local") {
     track = previous;
     fromDevice = true;
   } else {
     try {
       track = await lookup(id);
     } catch (error) {
-      if (!previous || !audio) throw error;
+      if (!previous || !savedAudio) throw error;
       track = previous;
       fromDevice = true;
+      // Keep the chosen source explicit. Preview calibration must never be
+      // silently applied to the full recording when the provider is offline.
+      sourceUnavailable = source === "preview";
     }
   }
   if (validCues(rawLyrics) && rawLyrics.length)
@@ -122,6 +150,9 @@ export async function resolveStudioTrack(
   return {
     track,
     audio,
+    savedAudio,
+    source,
+    sourceUnavailable,
     fromDevice,
     retimed: preserve && !sameCueTimeline(previous?.cues, track.cues),
   };

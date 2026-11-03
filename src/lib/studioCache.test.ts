@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Track } from "./music";
-import { resolveStudioTrack } from "./studioCache";
+import { resolveStudioTrack, canRestoreStudioTrack } from "./studioCache";
 
 const track = (): Track => ({
   id: 1,
@@ -27,6 +27,52 @@ const track = (): Track => ({
 const audio = () => ({ trackId: 1, file: new Blob(["original audio"]) });
 
 describe("studio restoration", () => {
+  it("remembers preview selection without deleting the own file or silently switching sources offline", async () => {
+    const saved = track(),
+      file = audio();
+    const snapshot = [saved, file, saved.cues, "preview"];
+    const lookup = vi.fn(async () => ({
+      ...saved,
+      preview: "https://example.invalid/fresh.mp3",
+    }));
+    const restored = await resolveStudioTrack(1, true, snapshot, lookup);
+    expect(lookup).toHaveBeenCalledTimes(1);
+    expect(restored.source).toBe("preview");
+    expect(restored.audio).toBeUndefined();
+    expect(restored.savedAudio?.file).toBe(file.file);
+    expect(restored.track.preview).toContain("fresh");
+    expect(restored.sourceUnavailable).toBe(false);
+    const offline = await resolveStudioTrack(1, true, snapshot, async () => {
+      throw new Error("Offline");
+    });
+    expect(offline.source).toBe("preview");
+    expect(offline.sourceUnavailable).toBe(true);
+    expect(offline.audio).toBeUndefined();
+    expect(offline.savedAudio?.file).toBe(file.file);
+    expect(canRestoreStudioTrack(1, snapshot)).toBe(true);
+    expect(
+      canRestoreStudioTrack(1, [
+        saved,
+        { ...file, trackId: 2 },
+        undefined,
+        "local",
+      ]),
+    ).toBe(false);
+  });
+  it("never applies full-file calibration to a preview if a selected local file is missing", async () => {
+    const saved = track(),
+      lookup = vi.fn(async () => saved);
+    const restored = await resolveStudioTrack(
+      1,
+      true,
+      [saved, undefined, undefined, "local"],
+      lookup,
+    );
+    expect(restored.source).toBe("local");
+    expect(restored.audio).toBeUndefined();
+    expect(restored.sourceUnavailable).toBe(true);
+    expect(lookup).not.toHaveBeenCalled();
+  });
   it("restores own audio immediately without starting a provider request, preserving word gaps", async () => {
     const saved = track(),
       file = audio();

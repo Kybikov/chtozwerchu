@@ -1,0 +1,56 @@
+.audio-source {
+  min-width: 0;
+}
+.audio-source .source-options > .button {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.audio-source .source-options > .button.selected:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.audio-source-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.audio-source-file > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.audio-source-file strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2d9ed;
+}
+.audio-source-file span,
+.audio-source-note {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #b9adca;
+}
+.audio-source-file .icon-button {
+  flex: 0 0 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+.audio-source-note {
+  margin: 0 0 16px;
+}
+.audio-source-error {
+  margin: -4px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #bd789745;
+  border-radius: 14px;
+  background: #5b294533;
+  color: #f0b6cc;
+  font-size: 15px;
+  line-height: 1.6;
+}
