@@ -44,7 +44,7 @@ import {
   Zap,
   Smartphone,
 } from "lucide-react";
-import { Button, Modal, Panel } from "./components/ui";
+import { Button, ButtonLink, Modal, Panel } from "./components/ui";
 import Backdrop from "./components/Backdrop";
 import AlbumCover from "./components/AlbumCover";
 import WakeSlider from "./components/react-bits/WakeSlider";
@@ -1177,17 +1177,16 @@ export default function App() {
                   Екран шоу
                   <ArrowRight size={16} />
                 </Button>
-                <a
-                  className="button specular-button button-ghost tv-open"
+                <ButtonLink
+                  variant="ghost"
+                  className="tv-open"
                   href={audienceURL}
                   target="_blank"
                   rel="noopener"
                 >
-                  <span className="specular-button__label">
-                    <Expand size={18} />
-                    Окреме вікно для TV
-                  </span>
-                </a>
+                  <Expand size={18} />
+                  Окреме вікно для TV
+                </ButtonLink>
                 <Button
                   variant="ghost"
                   onClick={() => {

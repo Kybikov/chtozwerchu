@@ -10,7 +10,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { Button, Modal } from "./ui";
+import { Button, ButtonLink, Modal } from "./ui";
 import WakeSlider from "./react-bits/WakeSlider";
 import type { PartyView } from "../lib/party";
 
@@ -179,15 +179,10 @@ export default function PartySound({
             {copied ? <Check size={18} /> : <Copy size={18} />}Скопіювати
             посилання TV
           </Button>
-          <a
-            className="button button-soft"
-            href={url}
-            target="_blank"
-            rel="noopener"
-          >
+          <ButtonLink variant="soft" href={url} target="_blank" rel="noopener">
             <Monitor size={18} />
             Відкрити TV у новому вікні
-          </a>
+          </ButtonLink>
           <p>
             TV отримує сцену й команди музики. Приховані картки та керування
             балами залишаються на пульті ведучого.

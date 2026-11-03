@@ -30,7 +30,7 @@ import {
   Zap,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { Button, Modal, Panel } from "./ui";
+import { Button, ButtonLink, Modal, Panel } from "./ui";
 import Backdrop from "./Backdrop";
 import { Brand } from "./Home";
 import { AccountButton, useIdentity } from "../lib/identity";
@@ -632,10 +632,10 @@ export default function PartyScreen() {
           <p role={party.error ? "alert" : "status"}>
             {party.error || "Зачекайте, поки екран приєднається до кімнати."}
           </p>
-          <a href="/" className="button button-soft">
+          <ButtonLink href="/" variant="soft">
             На головну
             <ArrowLeft size={18} />
-          </a>
+          </ButtonLink>
           <PWAUpdateControl compact={false} />
         </Panel>
       </div>
@@ -1511,8 +1511,8 @@ export default function PartyScreen() {
             {copied ? <Check size={18} /> : <Copy size={18} />}
             {copied ? "Посилання скопійовано" : "Скопіювати запрошення"}
           </Button>
-          <a
-            className="button button-soft"
+          <ButtonLink
+            variant="soft"
             href={audienceURL}
             target="_blank"
             rel="noopener"
@@ -1520,7 +1520,7 @@ export default function PartyScreen() {
             <Monitor size={18} />
             Відкрити глядацьку сцену
             <ArrowRight size={18} />
-          </a>
+          </ButtonLink>
           <p>
             Для іншого пристрою потрібна доступна йому адреса. localhost
             відкривається лише на поточному комп’ютері.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, type ButtonHTMLAttributes, type AnchorHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
 
 import './SpecularButton.css';
 
@@ -12,6 +12,8 @@ export type SpecularButtonSize = 'sm' | 'md' | 'lg';
 export interface SpecularButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'type'> {
   /** Studio adaptation: reserve WebGL for the primary action, keep other controls lightweight. */
   effects?: boolean;
+  /** Studio adaptation: use the same surface on a native navigation link. */
+  linkProps?: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'children' | 'className' | 'style'>;
   children?: ReactNode;
   size?: SpecularButtonSize;
   radius?: number;
@@ -235,10 +237,11 @@ const SpecularButton = ({
   onClick,
   className = '',
   type = 'button',
+  linkProps,
   style,
   ...rest
 }: SpecularButtonProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wakeRef = useRef<(() => void) | null>(null);
   const settings: Settings = {
@@ -475,27 +478,42 @@ const SpecularButton = ({
     wakeRef.current?.();
   });
 
+  const surfaceClass = `specular-button specular-button--${size}${className ? ` ${className}` : ''}`;
+  const surfaceStyle = {
+    '--sb-radius': `${radius}px`,
+    '--sb-tint': tint,
+    '--sb-tint-opacity': tintOpacity,
+    '--sb-blur': `${blur}px`,
+    '--sb-text-color': textColor,
+    ...style
+  } as CSSProperties;
+  const content = (
+    <>
+      {effects && <canvas ref={canvasRef} className="specular-button__light" aria-hidden="true" />}
+      <span className="specular-button__label">{children}</span>
+    </>
+  );
+  if (linkProps) return (
+    <a
+      {...linkProps}
+      ref={element => { buttonRef.current = element; }}
+      className={surfaceClass}
+      style={surfaceStyle}
+    >
+      {content}
+    </a>
+  );
   return (
     <button
-      ref={buttonRef}
+      ref={element => { buttonRef.current = element; }}
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`specular-button specular-button--${size}${className ? ` ${className}` : ''}`}
-      style={
-        {
-          '--sb-radius': `${radius}px`,
-          '--sb-tint': tint,
-          '--sb-tint-opacity': tintOpacity,
-          '--sb-blur': `${blur}px`,
-          '--sb-text-color': textColor,
-          ...style
-        } as CSSProperties
-      }
+      className={surfaceClass}
+      style={surfaceStyle}
       {...rest}
     >
-      {effects && <canvas ref={canvasRef} className="specular-button__light" aria-hidden="true" />}
-      <span className="specular-button__label">{children}</span>
+      {content}
     </button>
   );
 };

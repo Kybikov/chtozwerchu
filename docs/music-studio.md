@@ -124,3 +124,12 @@ defer reloading busy clients.
 See studio-network.md for the protocol, persistence and operational limits. The
 existing same-browser BroadcastChannel audience remains available for local play.
 The new phone mode uses a server-authoritative WebSocket room and three roles.
+
+## Посилання 1.36
+
+ButtonLink у ui.tsx використовує ту саму поверхню SpecularButton, що й Button.
+Для навігації додано linkProps: компонент створює нативний anchor із href,
+target і rel замість вкладення кнопки в посилання. Вміст і стилі поверхні
+спільні; шейдер не змінений. Джерело повторно звірено з живим реєстром
+https://reactbits.dev/r/SpecularButton-TS-CSS.json. Це локальна адаптація,
+а не властивість, заявлена upstream. Ефекти для ButtonLink вимкнені.

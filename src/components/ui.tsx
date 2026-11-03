@@ -4,6 +4,39 @@ import { X } from "lucide-react";
 import SpecularButton from "./react-bits/SpecularButton";
 import SpotlightCard from "./react-bits/SpotlightCard";
 
+const buttonAppearance = {
+  autoAnimate: false,
+  radius: 14,
+  tint: "#ffffff",
+  tintOpacity: 0.035,
+  blur: 0,
+  textColor: "currentColor",
+};
+type ButtonAppearance = {
+  variant?: "soft" | "primary" | "ghost" | "danger";
+};
+
+export function ButtonLink({
+  children,
+  variant = "soft",
+  className = "",
+  style,
+  ...props
+}: ComponentProps<"a"> & ButtonAppearance) {
+  return (
+    <SpecularButton
+      {...buttonAppearance}
+      effects={false}
+      followMouse={false}
+      className={`button button-${variant} ${className}`}
+      style={style}
+      linkProps={props}
+    >
+      {children}
+    </SpecularButton>
+  );
+}
+
 export function Button({
   children,
   variant = "soft",
@@ -16,14 +49,9 @@ export function Button({
 }) {
   return (
     <SpecularButton
+      {...buttonAppearance}
       effects={shine}
-      autoAnimate={false}
       followMouse={shine}
-      radius={14}
-      tint="#ffffff"
-      tintOpacity={0.035}
-      blur={0}
-      textColor="currentColor"
       className={`button button-${variant} ${className}`}
       {...props}
     >

@@ -21,7 +21,7 @@ import {
   Volume2,
   Zap,
 } from "lucide-react";
-import { Button, Modal, Panel } from "./ui";
+import { Button, ButtonLink, Modal, Panel } from "./ui";
 import AlbumCover from "./AlbumCover";
 import { usePWAActivity } from "../lib/pwa";
 import { PWAUpdateControl } from "./PWAUpdate";
@@ -196,9 +196,9 @@ export default function RemotePanel() {
             </strong>
             <p>{room.error || "Підключаємося до сцени…"}</p>
             {room.terminal && (
-              <a className="button specular-button" href="/">
+              <ButtonLink variant="soft" href="/">
                 Повернутися до гри
-              </a>
+              </ButtonLink>
             )}
           </div>
         )}
@@ -600,17 +600,15 @@ export default function RemotePanel() {
                 <History size={18} />
                 Історія раундів
               </Button>
-              <a
-                className="button specular-button button-ghost"
+              <ButtonLink
+                variant="ghost"
                 href={roomURL(connection.code, "audience")}
                 target="_blank"
                 rel="noopener"
               >
-                <span className="specular-button__label">
-                  <Monitor size={18} />
-                  Екран глядача
-                </span>
-              </a>
+                <Monitor size={18} />
+                Екран глядача
+              </ButtonLink>
             </div>
           </>
         )}

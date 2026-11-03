@@ -10,7 +10,7 @@ import {
   ArrowLeft,
   Check,
 } from "lucide-react";
-import { Button, Modal } from "./ui";
+import { Button, ButtonLink, Modal } from "./ui";
 import StageControls from "./StageControls";
 import { usePWAActivity } from "../lib/pwa";
 import { PWAUpdateControl } from "./PWAUpdate";
@@ -398,17 +398,16 @@ export default function NetworkStation({
             </span>
           </div>
         )}
-        <a
-          className="button specular-button button-primary full-width remote-open"
+        <ButtonLink
+          variant="primary"
+          className="full-width remote-open"
           href={url}
           target="_blank"
           rel="noopener"
         >
-          <span className="specular-button__label">
-            <Smartphone size={18} />
-            Відкрити пульт
-          </span>
-        </a>
+          <Smartphone size={18} />
+          Відкрити пульт
+        </ButtonLink>
         <Button
           className="full-width"
           onClick={() =>
