@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PartyView } from "./party";
 import type { Team } from "./music";
 import { RoomClock } from "./roomClock";
+import { partyHostLink, readPartyHostLink } from "./partyHostLink";
 
 type Access = {
   code: string;
@@ -30,6 +31,13 @@ function saved(): Access | null {
   }
 }
 function locationOptions() {
+  const restoreURL = new URL(location.href);
+  if (new URLSearchParams(restoreURL.hash.slice(1)).has("host")) {
+    const recovered = readPartyHostLink(restoreURL);
+    restoreURL.hash = "";
+    history.replaceState(null, "", restoreURL);
+    if (recovered) sessionStorage.setItem(playerKey, JSON.stringify(recovered));
+  }
   const p = new URLSearchParams(location.search),
     code = (p.get("code") || "").toUpperCase();
   const watching = p.get("watch") === "1",
@@ -298,6 +306,18 @@ export function useParty() {
     send,
     action,
     leave,
+    hostLink: () => {
+      const a = access.current;
+      return stateRef.current?.you?.host &&
+        a &&
+        a.code === stateRef.current.code
+        ? partyHostLink(location.origin, {
+            ...a,
+            name: stateRef.current.you.name,
+            team: stateRef.current.you.team,
+          })
+        : "";
+    },
     watching: options.watching,
     isTV: options.tv && tvAuthenticated,
     tvRequested: options.tv,

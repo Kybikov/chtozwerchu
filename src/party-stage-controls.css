@@ -81,3 +81,24 @@
     grid-template-columns: 1fr;
   }
 }
+.party-invite .party-host-recovery {
+  width: 100%;
+  text-align: left;
+  margin-top: 12px;
+  padding: 24px;
+}
+.party-host-recovery h3 {
+  font:
+    550 30px/1.25 "Oswald Variable",
+    sans-serif;
+  margin: 14px 0;
+}
+.party-host-recovery p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+.party-host-recovery .button {
+  width: 100%;
+}

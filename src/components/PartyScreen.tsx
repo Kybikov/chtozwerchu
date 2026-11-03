@@ -1525,6 +1525,38 @@ export default function PartyScreen() {
             Для іншого пристрою потрібна доступна йому адреса. localhost
             відкривається лише на поточному комп’ютері.
           </p>
+          {host && !stageOnly && !party.watching && (
+            <Panel className="party-host-recovery">
+              <span className="section-label">
+                <ShieldCheck size={18} /> ОСОБИСТИЙ ПУЛЬТ
+              </span>
+              <h3>Повернися до своєї гри</h3>
+              <p>
+                Збережи це посилання для себе: воно поверне керування після
+                закриття вкладки або на іншому пристрої. Не надсилай його
+                гравцям.
+              </p>
+              <Button
+                onClick={async () => {
+                  const link = party.hostLink();
+                  if (!link) return;
+                  try {
+                    await navigator.clipboard.writeText(link);
+                    setNotice(
+                      "Особисте посилання скопійовано. Збережи його для себе.",
+                    );
+                  } catch {
+                    setNotice(
+                      "Копіювання недоступне. Спробуй у звичайному браузері.",
+                    );
+                  }
+                }}
+              >
+                <Copy size={18} />
+                Скопіювати особистий пульт
+              </Button>
+            </Panel>
+          )}
         </div>
       </Modal>
       <Modal
