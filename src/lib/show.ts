@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { appEntryURL } from "./appEntry";
 import type { Phase, Session, Team, WordCue } from "./music";
 
 // Audience data deliberately excludes the target answer until the reveal.
@@ -21,6 +22,16 @@ export type ShowState = Pick<
 };
 
 export function useShowBroadcast(state: ShowState, enabled = true) {
+  const [online, setOnline] = useState(() => navigator.onLine);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
   const room = useRef("");
   if (!room.current) {
     const saved = sessionStorage.getItem("khz:show-room");
@@ -46,5 +57,9 @@ export function useShowBroadcast(state: ShowState, enabled = true) {
       channel.close();
     };
   }, [enabled]);
-  return `/?screen=show&room=${room.current}`;
+  return appEntryURL(
+    `/?screen=show&room=${room.current}`,
+    location.origin,
+    online,
+  );
 }

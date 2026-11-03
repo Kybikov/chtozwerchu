@@ -13,6 +13,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Button, ButtonLink, Modal } from "./ui";
 import WakeSlider from "./react-bits/WakeSlider";
 import type { PartyView } from "../lib/party";
+import { appEntryURL } from "../lib/appEntry";
 
 export default function PartySound({
   state,
@@ -45,7 +46,10 @@ export default function PartySound({
   useEffect(() => setVolume(state.media?.volume ?? 65), [state.media?.volume]);
   useEffect(() => () => clearTimeout(timer.current), []);
   const m = state.media;
-  const url = `${location.origin}/?screen=party&code=${state.code}&watch=1&audio=1#tv=${encodeURIComponent(tvToken)}`;
+  const url = appEntryURL(
+    `${location.origin}/?screen=party&code=${state.code}&watch=1&audio=1#tv=${encodeURIComponent(tvToken)}`,
+    location.origin,
+  );
   const enable = async () => {
     setUnlocking(true);
     await allowSound();

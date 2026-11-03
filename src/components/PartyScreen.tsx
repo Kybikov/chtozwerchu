@@ -56,6 +56,7 @@ import WakeSlider from "./react-bits/WakeSlider";
 import ScreenAwakeButton from "./ScreenAwakeButton";
 import CountUp from "./react-bits/CountUp/CountUp";
 import type { Team } from "../lib/music";
+import { appEntryURL } from "../lib/appEntry";
 import "../party-setup.css";
 import "../party-lobby.css";
 import "../party-play.css";
@@ -177,7 +178,12 @@ export default function PartyScreen() {
           : previous
         : [...previous, type],
     );
-  const inviteURL = s ? `${location.origin}/?screen=party&code=${s.code}` : "";
+  const inviteURL = s
+    ? appEntryURL(
+        `${location.origin}/?screen=party&code=${s.code}`,
+        location.origin,
+      )
+    : "";
   const audienceURL = `${inviteURL}&watch=1`;
   const copy = async () => {
     try {

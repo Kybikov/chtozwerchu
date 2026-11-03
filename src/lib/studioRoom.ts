@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { appEntryURL } from "./appEntry";
 import {
   activeCue,
   type Session,
@@ -94,7 +95,7 @@ export function roomURL(
   u.searchParams.set("screen", role === "host" ? "remote" : "room");
   u.searchParams.set("room", code);
   if (token) u.hash = new URLSearchParams({ token }).toString();
-  return u.href;
+  return appEntryURL(u.href, location.origin);
 }
 export function linkConnection(role: "host" | "audience"): Connection {
   const code = new URLSearchParams(location.search).get("room") ?? "";

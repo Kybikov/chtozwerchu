@@ -21,6 +21,7 @@ import { savedRoom } from "../lib/studioRoom";
 import AppInstall from "./AppInstall";
 import { usePWAActivity } from "../lib/pwa";
 import { PWAUpdateControl } from "./PWAUpdate";
+import { appEntryURL, publicRoomEntryURL } from "../lib/appEntry";
 
 export function Brand() {
   return (
@@ -45,7 +46,10 @@ export default function Home() {
   const [joinError, setJoinError] = useState("");
   usePWAActivity(join, true);
   const active = savedRoom();
-  const goMusic = () => location.assign("/?screen=studio");
+  const goMusic = () =>
+    location.assign(
+      appEntryURL("/?screen=studio", location.origin, navigator.onLine),
+    );
   const enterRoom = (event: React.FormEvent) => {
     event.preventDefault();
     const clean = code.trim().toUpperCase();
@@ -53,11 +57,7 @@ export default function Home() {
       setJoinError("Код має містити 5 або 6 латинських літер і цифр.");
       return;
     }
-    location.assign(
-      clean.length === 6
-        ? `/?screen=room&code=${encodeURIComponent(clean)}`
-        : `/?screen=party&code=${encodeURIComponent(clean)}`,
-    );
+    location.assign(publicRoomEntryURL(clean, location.origin));
   };
   return (
     <div className="app-shell platform-home">
@@ -235,7 +235,13 @@ export default function Home() {
                   <Smartphone size={16} /> Вхід за кодом
                 </span>
               </div>
-              <Button onClick={() => location.assign("/?screen=party")}>
+              <Button
+                onClick={() =>
+                  location.assign(
+                    appEntryURL("/?screen=party", location.origin),
+                  )
+                }
+              >
                 Вечір конкурсів
                 <ArrowRight size={20} />
               </Button>
@@ -310,7 +316,7 @@ export default function Home() {
         <Brand />
         <span>Зроблено для ваших вечорів.</span>
         <AppInstall />
-        <span className="home-version">СТУДІЯ 1.36.0</span>
+        <span className="home-version">СТУДІЯ 1.37.0</span>
       </footer>
       <Modal
         open={join}
