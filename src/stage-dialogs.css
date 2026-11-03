@@ -1,0 +1,91 @@
+/* Shared-screen controls use the same distance-reading scale as the show.
+   Personal controls and portrait phones retain their existing layout. */
+@media (min-width: 960px) and (min-height: 540px) {
+  .modal-content.show-stage-dialog {
+    --show-copy: clamp(18px, 2.2svh, 44px);
+    --show-caption: clamp(16px, 1.8svh, 36px);
+    --show-action: clamp(20px, 2.5svh, 54px);
+    --show-heading: clamp(36px, 4.4svh, 92px);
+    --party-copy: var(--show-copy);
+    --party-caption: var(--show-caption);
+    --party-label: var(--show-caption);
+    --party-action: var(--show-action);
+    width: min(clamp(760px, 105svh, 1800px), calc(100vw - 64px));
+    max-height: calc(100svh - 64px);
+    padding: clamp(24px, 3svh, 64px);
+  }
+  .modal-content.show-stage-dialog .modal-heading h2 {
+    font-size: clamp(44px, 5.5svh, 112px);
+  }
+  .modal-content.show-stage-dialog .modal-heading p {
+    max-width: none;
+    font-size: var(--show-copy);
+  }
+  .modal-content.show-stage-dialog .button.specular-button {
+    font-size: var(--show-action);
+    min-height: clamp(56px, 7svh, 152px);
+    padding: clamp(12px, 1.6svh, 34px);
+  }
+  .modal-content.show-stage-dialog .button.icon-button {
+    width: clamp(48px, 6svh, 128px);
+    height: clamp(48px, 6svh, 128px);
+    min-height: 0;
+    padding: 12px;
+  }
+  .modal-content.show-stage-dialog .button svg {
+    width: 1.2em;
+    height: 1.2em;
+    flex-shrink: 0;
+  }
+  .modal-content.show-stage-dialog .section-label,
+  .modal-content.show-stage-dialog .party-guess > label,
+  .modal-content.show-stage-dialog .buzz-button small,
+  .modal-content.show-stage-dialog .buzzer-claim > span,
+  .modal-content.show-stage-dialog .round-history small {
+    font-size: var(--show-caption);
+  }
+  .modal-content.show-stage-dialog .party-control-panel > h3,
+  .modal-content.show-stage-dialog .party-match-history h3,
+  .modal-content.show-stage-dialog .buzzer-claim h3 {
+    font-size: var(--show-heading);
+    overflow-wrap: anywhere;
+  }
+  .modal-content.show-stage-dialog .party-shared-note,
+  .modal-content.show-stage-dialog .round-history p {
+    font-size: var(--show-copy);
+  }
+  .modal-content.show-stage-dialog .party-guess input {
+    font-size: var(--show-action);
+    min-height: clamp(56px, 7svh, 152px);
+  }
+  .modal-content.show-stage-dialog .party-guess > .button {
+    height: auto;
+  }
+  .modal-content.show-stage-dialog .party-controls {
+    gap: clamp(18px, 2.4svh, 52px);
+  }
+  .modal-content.show-stage-dialog .party-match-history li > div > span {
+    font-size: var(--show-caption);
+  }
+  .modal-content.show-stage-dialog .party-match-history li > div > strong,
+  .modal-content.show-stage-dialog .round-history strong {
+    font-size: var(--show-action);
+  }
+  .modal-content.show-stage-dialog .party-match-history li,
+  .modal-content.show-stage-dialog .round-history li {
+    gap: clamp(12px, 2svh, 42px);
+    padding-block: clamp(14px, 2svh, 42px);
+    font-size: var(--show-action);
+  }
+  .modal-content.show-stage-dialog .round-history li > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .modal-content.show-stage-dialog .history-score {
+    font-size: var(--show-copy);
+  }
+  .modal-content.show-stage-dialog .history-score b,
+  .modal-content.show-stage-dialog .answer-timer-control > strong {
+    font-size: clamp(48px, 7svh, 144px);
+  }
+}

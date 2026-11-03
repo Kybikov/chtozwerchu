@@ -1483,7 +1483,7 @@ export default function PartyScreen() {
             ? "Результати завершених конкурсів. Команди можуть зіграти реванш із тими самими налаштуваннями."
             : "Пауза, відповіді й наступний конкурс. Приватні картки відкриваються лише в особистому пульті."
         }
-        className="party-stage-control-dialog party-play-shell"
+        className="party-stage-control-dialog party-play-shell show-stage-dialog"
       >
         {sheet === "controls" && stageOnly && renderHistory()}
         {sheet === "controls" && stageOnly && renderControls(true)}

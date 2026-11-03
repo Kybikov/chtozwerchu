@@ -1717,7 +1717,7 @@ export default function App() {
             onOpenChange={(v) => !v && setSheet(null)}
             title="Хто продовжив пісню?"
             description="Зарахуй 3 бали команді, яка продовжила пісню. Відповідь відкриється після оцінки."
-            className="stage-verdict"
+            className="stage-verdict show-stage-dialog"
           >
             <RoundVerdictControls
               names={session.names}
@@ -2004,6 +2004,7 @@ export default function App() {
           <Modal
             open={sheet === "history"}
             onOpenChange={(v) => !v && setSheet(null)}
+            className={stageOnly ? "show-stage-dialog" : undefined}
             title="Кожен хіт — у рахунок"
             description={`${session.history.length} із ${session.rounds} раундів зіграно. За влучне продовження — 3 бали.`}
             wide
