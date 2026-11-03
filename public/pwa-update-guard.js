@@ -3,7 +3,12 @@
   const isApp = (client) => {
     try {
       const url = new URL(client.url);
-      return url.origin === self.location.origin && url.pathname === "/";
+      // Client.url keeps the document's creation URL after replaceState.
+      // Recovery windows still belong to the app even when the address bar is /.
+      return (
+        url.origin === self.location.origin &&
+        ["/", "/index.html", "/api/app-shell"].includes(url.pathname)
+      );
     } catch {
       return false;
     }

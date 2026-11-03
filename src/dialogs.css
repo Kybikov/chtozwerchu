@@ -136,8 +136,29 @@
   min-height: 44px;
   font-size: clamp(14px, 1.5vmin, 32px);
 }
+.answer-controls .verdict-team-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.modal-content.stage-verdict .answer-timer-control {
+  flex-wrap: wrap;
+}
+.modal-content.stage-verdict .answer-timer-control > strong {
+  font-size: clamp(44px, 6vmin, 72px);
+}
+.modal-content.stage-verdict .answer-controls .button {
+  min-height: 56px;
+  font-size: clamp(18px, 2.3vmin, 26px);
+}
+.modal-content.stage-verdict .action-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
 @media (max-width: 560px) {
+  .modal-content.stage-verdict .action-pair {
+    grid-template-columns: 1fr;
+  }
   .modal-content:not(:where(.account-modal)) .modal-heading h2 {
     font-size: 34px;
   }

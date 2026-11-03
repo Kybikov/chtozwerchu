@@ -53,6 +53,7 @@ import WakeSlider from "./components/react-bits/WakeSlider";
 import SquishSwitch from "./components/react-bits/SquishSwitch";
 import ShowStage, { Scoreboard } from "./components/ShowStage";
 import StageControls from "./components/StageControls";
+import RoundVerdictControls from "./components/RoundVerdictControls";
 import { useShowBroadcast, type ShowState } from "./lib/show";
 import { useAnswerClock } from "./lib/useAnswerClock";
 import { scoreRound, undoRound, nextPlayableTarget } from "./lib/match";
@@ -128,6 +129,7 @@ type Sheet =
   | "reset"
   | "history"
   | "connect"
+  | "stage_verdict"
   | null;
 export default function App() {
   const identity = useIdentity();
@@ -708,6 +710,18 @@ export default function App() {
         target: s.target,
       }),
     );
+  };
+  const undoAward = (event?: { detail: number }) => {
+    if (
+      phase !== "result" ||
+      (event && event.detail > 1) ||
+      performance.now() < interactionUntil.current
+    )
+      return;
+    setSession(undoRound);
+    scoreLock.current = false;
+    setAwarded(null);
+    setPhase("answer");
   };
   const nextRound = async (event?: { detail: number }) => {
     if (trackBusy || sourceBusy || !player.ready || advancing.current) return;
@@ -1587,48 +1601,13 @@ export default function App() {
                     </div>
                   )}
                   {phase === "answer" && (
-                    <div className="answer-controls">
-                      <div className="answer-timer-control">
-                        <strong>{answerClock.remaining} с</strong>
-                        <Button
-                          onClick={answerClock.toggle}
-                          disabled={answerClock.remaining === 0}
-                        >
-                          {answerClock.paused ? (
-                            <Play size={16} />
-                          ) : (
-                            <Pause size={16} />
-                          )}
-                          {answerClock.paused
-                            ? "Продовжити відлік"
-                            : "Пауза відліку"}
-                        </Button>
-                      </div>
-                      <span>Хто продовжив пісню?</span>
-                      <div className="action-pair">
-                        <Button
-                          className="award-girls"
-                          onClick={() => award("girls")}
-                        >
-                          <Check size={15} />
-                          {session.names.girls}
-                        </Button>
-                        <Button
-                          className="award-boys"
-                          onClick={() => award("boys")}
-                        >
-                          <Check size={15} />
-                          {session.names.boys}
-                        </Button>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        className="full-width"
-                        onClick={() => award(null)}
-                      >
-                        Цього разу ніхто
-                      </Button>
-                    </div>
+                    <RoundVerdictControls
+                      names={session.names}
+                      remaining={answerClock.remaining}
+                      paused={answerClock.paused}
+                      onToggle={answerClock.toggle}
+                      onAward={award}
+                    />
                   )}
                   {phase === "result" && (
                     <>
@@ -1646,12 +1625,7 @@ export default function App() {
                       <Button
                         className="full-width"
                         variant="ghost"
-                        onClick={() => {
-                          setSession(undoRound);
-                          scoreLock.current = false;
-                          setAwarded(null);
-                          setPhase("answer");
-                        }}
+                        onClick={undoAward}
                       >
                         Виправити оцінку
                       </Button>
@@ -1735,6 +1709,41 @@ export default function App() {
                   {player.playing ? "Пауза" : "Продовжити"}
                 </Button>
               )}
+              {phase === "answer" && (
+                <Button
+                  variant="primary"
+                  onClick={() => setSheet("stage_verdict")}
+                >
+                  <Check size={17} /> Оцінити відповідь
+                </Button>
+              )}
+              {phase === "result" && (
+                <>
+                  <Button
+                    variant="primary"
+                    onClick={nextRound}
+                    disabled={trackBusy || sourceBusy || !player.ready}
+                  >
+                    {session.round >= session.rounds
+                      ? "Показати фінал"
+                      : "Наступний раунд"}
+                    <ArrowRight size={17} />
+                  </Button>
+                  <Button variant="ghost" onClick={undoAward}>
+                    Виправити оцінку
+                  </Button>
+                </>
+              )}
+              {phase === "final" && (
+                <>
+                  <Button onClick={() => setSheet("history")}>
+                    Підсумки гри
+                  </Button>
+                  <Button variant="primary" onClick={() => setSheet("reset")}>
+                    Граємо ще
+                  </Button>
+                </>
+              )}
               <Button
                 aria-label="Повний екран"
                 onClick={() => void fullscreen()}
@@ -1744,6 +1753,25 @@ export default function App() {
             </StageControls>
           )}
 
+          <Modal
+            open={sheet === "stage_verdict" && phase === "answer"}
+            onOpenChange={(v) => !v && setSheet(null)}
+            title="Хто продовжив пісню?"
+            description="Зарахуй 3 бали команді, яка продовжила пісню. Відповідь відкриється після оцінки."
+            className="stage-verdict"
+          >
+            <RoundVerdictControls
+              names={session.names}
+              remaining={answerClock.remaining}
+              paused={answerClock.paused}
+              onToggle={answerClock.toggle}
+              onAward={(team) => {
+                award(team);
+                setSheet(null);
+              }}
+              showPrompt={false}
+            />
+          </Modal>
           <Modal
             open={sheet === "programme_order"}
             onOpenChange={(v) => !v && setSheet(null)}
@@ -2349,7 +2377,9 @@ export default function App() {
             description="Обидві команди почнуть із нуля. Обраний трек залишиться, програму вечора буде вимкнено."
           >
             <div className="action-pair">
-              <Button onClick={() => setSheet("settings")}>Зберегти гру</Button>
+              <Button onClick={() => setSheet(stageOnly ? null : "settings")}>
+                Зберегти гру
+              </Button>
               <Button
                 variant="primary"
                 onClick={() => {

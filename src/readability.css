@@ -80,10 +80,33 @@
     flex: none;
     margin: 0;
   }
+  .stage-only .studio-layout {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    width: 100%;
+  }
+  .stage-only .show-column {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    gap: clamp(12px, 2vmin, 40px);
+  }
   .stage-only .show-stage {
     flex: 1;
     min-height: 0;
     height: auto;
+  }
+  .stage-only .show-stage > .stage-content {
+    min-height: 0;
+  }
+  .stage-only .stage-topline,
+  .stage-only .stage-bottomline {
+    flex: none;
   }
   .stage-only .team-meta strong {
     font-size: clamp(28px, 3vmin, 72px);
@@ -110,10 +133,24 @@
     font-size: clamp(15px, 2vmin, 44px);
     max-width: 55%;
   }
-  .stage-only .stage-content .lyric-live {
+  .stage-only .phase-playing .stage-content {
+    gap: clamp(8px, 1.4vmin, 18px);
+    padding: clamp(16px, 2.4vmin, 32px) clamp(24px, 3.5vmin, 60px);
+  }
+  .stage-only .phase-playing .equalizer {
+    flex: none;
+    height: clamp(32px, 5.5vmin, 70px);
+    margin-bottom: 0;
+  }
+  .stage-only .phase-playing .equalizer i {
+    height: calc(8px + mod(var(--bar) * 17, 62) * 0.52px);
+  }
+  .stage-only .phase-playing .stage-content h2.lyric-live {
+    flex: none;
     font-size: clamp(52px, 7vmin, 160px);
-    line-height: 1.2;
-    max-width: min(90%, 28ch);
+    line-height: 1.16;
+    max-width: 100%;
+    width: 100%;
     text-wrap: balance;
   }
   .stage-only .phase-ready .stage-content h2:not(.stage-blur) {

@@ -49,6 +49,24 @@ export function PWAUpdateDialog() {
       setRecoveryAvailable(false);
     }
   }, [updateOpen]);
+  const check = async () => {
+    setChecking(true);
+    setNotice("");
+    try {
+      const supported = await checkForUpdate();
+      setNotice(
+        supported
+          ? "Перевірку завершено. Завантаження нової версії може тривати кілька секунд."
+          : "Перевірка оновлень недоступна в цьому браузері.",
+      );
+    } catch {
+      setNotice(
+        "Не вдалося перевірити оновлення. Перевір з’єднання й спробуй ще раз.",
+      );
+    } finally {
+      setChecking(false);
+    }
+  };
   return (
     <Modal
       open={updateOpen}
@@ -94,7 +112,7 @@ export function PWAUpdateDialog() {
         {needsUpdate ? (
           <Button
             variant="primary"
-            disabled={busy || applying}
+            disabled={busy || applying || checking}
             onClick={async () => {
               setApplying(true);
               setNotice("");
@@ -140,27 +158,16 @@ export function PWAUpdateDialog() {
           <Button
             variant="primary"
             disabled={checking}
-            onClick={async () => {
-              setChecking(true);
-              setNotice("");
-              try {
-                const supported = await checkForUpdate();
-                setNotice(
-                  supported
-                    ? "Перевірку завершено. Завантаження нової версії може тривати кілька секунд."
-                    : "Перевірка оновлень недоступна в цьому браузері.",
-                );
-              } catch {
-                setNotice(
-                  "Не вдалося перевірити оновлення. Перевір з’єднання й спробуй ще раз.",
-                );
-              } finally {
-                setChecking(false);
-              }
-            }}
+            onClick={check}
           >
             <RefreshCw size={18} className={checking ? "spin" : ""} />
             {checking ? "Перевіряємо…" : "Перевірити оновлення"}
+          </Button>
+        )}
+        {needsUpdate && (
+          <Button disabled={checking || applying} onClick={check}>
+            <RefreshCw size={18} className={checking ? "spin" : ""} />
+            {checking ? "Перевіряємо…" : "Перевірити ще раз"}
           </Button>
         )}
         {recoveryAvailable && (

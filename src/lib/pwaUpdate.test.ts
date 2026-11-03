@@ -108,6 +108,38 @@ describe("waiting worker update guard", () => {
     expect(await state.apply()).toMatchObject({ status: "blocked", busy: 1 });
     expect(state.skipWaiting).not.toHaveBeenCalled();
   });
+  it.each(["/api/app-shell", "/index.html"])(
+    "accepts an idle request from a window created at %s",
+    async (pathname) => {
+      const state = worker([
+        client("recovered", false, `https://show.test${pathname}?screen=studio`),
+      ]);
+      expect(await state.apply()).toMatchObject({
+        status: "applied",
+        busy: 0,
+        unknown: 0,
+      });
+      expect(state.skipWaiting).toHaveBeenCalledOnce();
+    },
+  );
+  it.each(["/api/app-shell", "/index.html"])(
+    "counts a busy window created at %s when another window requests an update",
+    async (pathname) => {
+      const state = worker([
+        client("home", false),
+        client("recovered", true, `https://show.test${pathname}?screen=studio`),
+      ]);
+      expect(await state.apply()).toMatchObject({ status: "blocked", busy: 1 });
+      expect(state.skipWaiting).not.toHaveBeenCalled();
+    },
+  );
+  it("refuses a recovery URL on another origin", async () => {
+    const foreign = client("foreign", false, "https://other.test/api/app-shell");
+    const state = worker([client("home", false), foreign]);
+    expect(await state.apply(foreign)).toBeUndefined();
+    expect(state.matchAll).not.toHaveBeenCalled();
+    expect(state.skipWaiting).not.toHaveBeenCalled();
+  });
   it("fails closed for old or unresponsive windows", async () => {
     vi.useFakeTimers();
     const state = worker([client("home", false), client("old", null)]);
